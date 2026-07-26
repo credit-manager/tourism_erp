@@ -1,0 +1,253 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .l-page{--text:#172033;--muted:#7b8798;--card:#fff;--border:#e8eee9;direction:inherit}
+  .l-page .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px;flex-wrap:wrap}
+  .l-page .page-head h1{margin:0;font-size:28px;font-weight:950;color:var(--text)}
+  .l-page .page-head p{margin-top:7px;font-size:13px;color:var(--muted)}
+  .l-page .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}
+  .l-page .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);padding:18px;min-height:124px;position:relative;overflow:hidden}
+  .l-page .kpi-card::after{content:"";position:absolute;left:-45px;bottom:-50px;width:120px;height:120px;border-radius:999px;background:rgba(26,86,219,0.06)}
+  .l-page .kpi-icon{width:46px;height:46px;border-radius:17px;display:inline-flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px;position:relative;z-index:1}
+  .l-page .kpi-icon.green{background:#edf9f3;color:#20b874}
+  .l-page .kpi-icon.blue{background:#eef3ff;color:#1a56db}
+  .l-page .kpi-icon.yellow{background:#fff7df;color:#b17a00}
+  .l-page .kpi-icon.red{background:#fff0f2;color:#ef5b6c}
+  .l-page .kpi-label{color:var(--muted);font-size:12px;font-weight:800;margin-bottom:5px;position:relative;z-index:1}
+  .l-page .kpi-value{color:var(--text);font-size:28px;font-weight:950;direction:ltr;text-align:right;position:relative;z-index:1}
+  .l-page .card{border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);margin-bottom:18px;overflow:hidden}
+  .l-page .card-head{padding:19px 22px 0;display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .l-page .card-head h2{margin:0;font-size:16px;font-weight:950;color:var(--text)}
+  .l-page .card-head .badge{font-size:12px;color:var(--muted);background:#fbfdfc;border:1px solid var(--border);border-radius:13px;padding:7px 11px;font-weight:800}
+  .l-page .card-body{padding:18px 22px 22px}
+  .l-page table{width:100%;border-collapse:collapse;font-size:13px}
+  .l-page th{background:#fbfdfc;color:var(--muted);padding:12px 8px;font-size:12px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+  .l-page td{padding:13px 8px;border-bottom:1px solid #edf2ef;color:var(--text);text-align:center;vertical-align:middle}
+  .l-page tr:hover td{background:#fbfdfc}
+  .l-page .money{font-weight:950;direction:ltr;white-space:nowrap}
+  .l-page .money-positive{color:#11885a;font-weight:950;direction:ltr;white-space:nowrap}
+  .l-page .money-negative{color:#d14454;font-weight:950;direction:ltr;white-space:nowrap}
+  .l-page .soft-badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap}
+  .l-page .badge-green{background:#eafff4;color:#11885a}
+  .l-page .badge-yellow{background:#fff7df;color:#986a00}
+  .l-page .badge-red{background:#fff0f2;color:#c7384c}
+  .l-page .badge-blue{background:#eef3ff;color:#1a56db}
+  .l-page .badge-gray{background:#f1f5f9;color:#64748b}
+  .l-page .badge-purple{background:#f3eeff;color:#7c3aed}
+  .l-page .empty-state{padding:40px;text-align:center;color:var(--muted);font-size:14px}
+  .l-page .filter-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+  .l-page .filter-bar select{padding:10px 14px;border:1px solid var(--border);border-radius:14px;font-size:14px;font-weight:700;color:var(--text);background:var(--card);min-width:260px}
+  .l-page .filter-bar .btn-go{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;font-size:14px;font-weight:800;border-radius:14px;border:none;background:#1a56db;color:#fff;cursor:pointer;transition:all .15s}
+  .l-page .filter-bar .btn-go:hover{background:#1243b0}
+  .l-page .v-btn{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;border-radius:10px;font-size:11px;font-weight:800;border:none;cursor:pointer;text-decoration:none;white-space:nowrap;transition:all .15s}
+  .l-page .v-btn-outline{background:#fff;color:#64748b;border:1px solid #e2e8f0}
+  .l-page .v-btn-outline:hover{background:#f8fafc;color:#172033;border-color:#cbd5e1}
+  .l-page .alert-item{display:flex;align-items:center;gap:12px;padding:12px 16px;border-radius:16px;margin-bottom:8px;font-size:13px;font-weight:700}
+  .l-page .alert-overdue{background:#fff0f2;border:1px solid #ffd7dd;color:#c7384c}
+  .l-page .alert-due-soon{background:#fff7df;border:1px solid #fcedc0;color:#986a00}
+  .l-page .aging-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin-bottom:18px}
+  .l-page .aging-item{background:#fbfdfc;border:1px solid var(--border);border-radius:18px;padding:16px;text-align:center}
+  .l-page .aging-item .label{font-size:11px;font-weight:800;color:var(--muted);margin-bottom:6px}
+  .l-page .aging-item .value{font-size:22px;font-weight:950;direction:ltr;color:var(--text)}
+  .l-page .aging-item.danger .value{color:#d14454}
+  .l-page .aging-item.warn .value{color:#b17a00}
+  .l-page .aging-item.ok .value{color:#11885a}
+  .l-page .due-list{list-style:none;padding:0;margin:0}
+  .l-page .due-list li{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #edf2ef;font-size:13px}
+  .l-page .due-list li:last-child{border-bottom:none}
+</style>
+<div class="l-page">
+  {% if error %}
+  <div style="background:#fff0f2;border:1px solid #ffd7dd;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#d14454;font-size:14px;font-weight:700;">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+  </div>
+  {% endif %}
+
+  <div class="page-head">
+    <div>
+      <h1>{{ L("كشف حساب الموردين", "Supplier Ledger") }}</h1>
+      <p>{{ L("رصيد تراكمي وتحليل Aging وفواتير مستحقة", "Cumulative balance, aging analysis, and due invoices") }}</p>
+    </div>
+  </div>
+
+  <form class="filter-bar" method="get" action="/suppliers/ledger">
+    <select name="supplier_id" onchange="this.form.submit()">
+      <option value="">{{ L("اختر المورد...", "Select supplier...") }}</option>
+      {% for s in suppliers %}
+      <option value="{{ s.id }}" {% if selected_id == s.id %}selected{% endif %}>{{ s.name }}</option>
+      {% endfor %}
+    </select>
+    {% if selected %}
+    <a href="/suppliers/ledger" class="btn-go" style="background:#64748b">× {{ L("إلغاء التصفية", "Clear") }}</a>
+    {% endif %}
+  </form>
+
+  {% if not selected %}
+  <div class="card">
+    <div class="card-body">
+      <div class="empty-state">
+        <i class="bi bi-search" style="font-size:32px;display:block;margin-bottom:12px;color:#cbd5e1"></i>
+        {{ L("اختر مورداً من القائمة أعلاه لعرض كشف الحساب", "Select a supplier from the list above to view the ledger") }}
+      </div>
+    </div>
+  </div>
+  {% else %}
+  {% if alerts %}
+  <div style="margin-bottom:18px">
+    {% for a in alerts %}
+    <div class="alert-item {{ 'alert-overdue' if a.type == 'overdue' else 'alert-due-soon' }}">
+      <i class="bi {{ 'bi-exclamation-triangle-fill' if a.type == 'overdue' else 'bi-clock-fill' }}"></i>
+      {% if a.type == 'overdue' %}
+        {{ L("فاتورة", "Invoice") }} <strong>{{ a.invoice.invoice_number }}</strong>
+        {{ L("متأخرة", "overdue by") }} <strong>{{ a.days }}</strong> {{ L("يوم", "days") }}
+        — <strong>{{ a.invoice.total_amount|c }}</strong>
+      {% else %}
+        {{ L("فاتورة", "Invoice") }} <strong>{{ a.invoice.invoice_number }}</strong>
+        {{ L("مستحقة خلال", "due in") }} <strong>{{ a.days }}</strong> {{ L("أيام", "days") }}
+        — <strong>{{ a.invoice.total_amount|c }}</strong>
+      {% endif %}
+    </div>
+    {% endfor %}
+  </div>
+  {% endif %}
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon blue"><i class="bi bi-calculator"></i></div>
+      <div class="kpi-label">{{ L("الرصيد الحالي", "Current Balance") }}</div>
+      <div class="kpi-value" style="color:{% if entries and entries[-1].balance > 0 %}#11885a{% elif entries and entries[-1].balance < 0 %}#d14454{% else %}#172033{% endif %}">
+        {{ (entries[-1].balance if entries else 0)|c }}
+      </div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon red"><i class="bi bi-exclamation-circle"></i></div>
+      <div class="kpi-label">{{ L("متأخر", "Overdue") }}</div>
+      <div class="kpi-value">{{ (aging.days_31_60 + aging.days_61_90 + aging.days_90_plus)|c }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon yellow"><i class="bi bi-clock"></i></div>
+      <div class="kpi-label">{{ L("مستحق قريباً", "Due Soon (7d)") }}</div>
+      <div class="kpi-value">{{ due_soon|sum(attribute='total_amount')|c }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon green"><i class="bi bi-check-circle"></i></div>
+      <div class="kpi-label">{{ L("جاري", "Current") }}</div>
+      <div class="kpi-value">{{ aging.current|c }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2><i class="bi bi-clock-history"></i> {{ L("تحليل Aging", "Aging Analysis") }}</h2>
+    </div>
+    <div class="card-body">
+      <div class="aging-grid">
+        <div class="aging-item ok">
+          <div class="label">{{ L("0-30 يوم", "0-30 Days") }}</div>
+          <div class="value">{{ aging.current|c }}</div>
+        </div>
+        <div class="aging-item warn">
+          <div class="label">{{ L("31-60 يوم", "31-60 Days") }}</div>
+          <div class="value">{{ aging.days_31_60|c }}</div>
+        </div>
+        <div class="aging-item warn">
+          <div class="label">{{ L("61-90 يوم", "61-90 Days") }}</div>
+          <div class="value">{{ aging.days_61_90|c }}</div>
+        </div>
+        <div class="aging-item danger">
+          <div class="label">{{ L("+90 يوم", "90+ Days") }}</div>
+          <div class="value">{{ aging.days_90_plus|c }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  {% if due_soon %}
+  <div class="card">
+    <div class="card-head">
+      <h2><i class="bi bi-calendar-event"></i> {{ L("فواتير مستحقة خلال 7 أيام", "Invoices Due Within 7 Days") }}</h2>
+      <span class="badge">{{ due_soon|length }}</span>
+    </div>
+    <div class="card-body">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:18%">{{ L("رقم الفاتورة", "Invoice #") }}</th>
+            <th style="width:15%">{{ L("التاريخ", "Date") }}</th>
+            <th style="width:15%">{{ L("تاريخ الاستحقاق", "Due Date") }}</th>
+            <th style="width:15%">{{ L("المبلغ", "Amount") }}</th>
+            <th style="width:12%">{{ L("الحالة", "Status") }}</th>
+            <th style="width:10%">{{ L("إجراء", "Action") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in due_soon %}
+          <tr>
+            <td style="font-weight:700">{{ inv.invoice_number }}</td>
+            <td>{{ inv.invoice_date }}</td>
+            <td style="color:#d14454;font-weight:700">{{ inv.due_date }}</td>
+            <td class="money">{{ inv.total_amount|c }}</td>
+            <td><span class="soft-badge badge-yellow">{{ inv.status }}</span></td>
+            <td><a href="/suppliers/invoices/{{ inv.id }}" class="v-btn v-btn-outline"><i class="bi bi-eye"></i></a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="card">
+    <div class="card-head">
+      <h2><i class="bi bi-journal-text"></i> {{ L("كشف حساب", "Ledger") }} — {{ selected.name }}</h2>
+      <span class="badge">{{ entries|length }} {{ L("حركة", "entries") }}</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th style="width:11%">{{ L("التاريخ", "Date") }}</th>
+            <th style="width:10%">{{ L("النوع", "Type") }}</th>
+            <th style="width:15%">{{ L("المرجع", "Reference") }}</th>
+            <th style="width:20%">{{ L("البيان", "Description") }}</th>
+            <th style="width:13%">{{ L("مدين", "Debit") }}</th>
+            <th style="width:13%">{{ L("دائن", "Credit") }}</th>
+            <th style="width:13%">{{ L("الرصيد", "Balance") }}</th>
+            <th style="width:5%">{{ L("إجراء", "") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% if not entries %}
+          <tr><td colspan="8" class="empty-state">{{ L("لا توجد حركات لهذا المورد", "No entries for this supplier") }}</td></tr>
+          {% endif %}
+          {% for e in entries %}
+          <tr>
+            <td>{{ e.date }}</td>
+            <td>
+              {% if e.type == 'invoice' %}
+              <span class="soft-badge badge-blue">{{ L("فاتورة", "Invoice") }}</span>
+              {% else %}
+              <span class="soft-badge badge-purple">{{ L("دفعة", "Payment") }}</span>
+              {% endif %}
+            </td>
+            <td style="font-weight:700;font-size:12px">{{ e.ref }}</td>
+            <td style="text-align:right;font-size:12px;color:var(--muted)">{{ e.description }}</td>
+            <td class="money-positive">{{ e.debit|c if e.debit > 0 else '—' }}</td>
+            <td class="money-negative">{{ e.credit|c if e.credit > 0 else '—' }}</td>
+            <td class="money" style="color:{% if e.balance > 0 %}#11885a{% elif e.balance < 0 %}#d14454{% else %}#172033{% endif %}">
+              {{ e.balance|c }}
+            </td>
+            <td>
+              {% if e.link %}
+              <a href="{{ e.link }}" class="v-btn v-btn-outline"><i class="bi bi-box-arrow-up-left"></i></a>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

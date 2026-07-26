@@ -1,0 +1,135 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .frm-page{--text:#172033;--muted:#7b8798;--card:#fff;--border:#e8eee9;direction:inherit;max-width:900px;margin:0 auto}
+  .frm-page .page-head{margin-bottom:22px}
+  .frm-page .page-head h1{margin:0;font-size:26px;font-weight:950;color:var(--text)}
+  .frm-page .page-head p{margin-top:5px;font-size:13px;color:var(--muted)}
+  .frm-page .card{border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);padding:24px;margin-bottom:18px}
+  .frm-page .card h3{margin:0 0 16px;font-size:15px;font-weight:950;color:var(--text)}
+  .frm-page .form-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:14px}
+  .frm-page .field-block{}
+  .frm-page .field-block label{display:block;font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:5px}
+  .frm-page .field-block input,.frm-page .field-block select,.frm-page .field-block textarea{width:100%;padding:10px 13px;border:1px solid #dfe7e3;border-radius:13px;font-size:13px;background:#fff;box-sizing:border-box}
+  .frm-page .field-block input:focus,.frm-page .field-block select:focus{border-color:#1a56db;outline:none;box-shadow:0 0 0 3px rgba(26,86,219,0.1)}
+  .frm-page .form-hint{padding:14px;border-radius:18px;background:linear-gradient(135deg,#edf9f3,#fff);border:1px solid var(--border);color:var(--muted);font-size:12px;line-height:1.8;margin-bottom:16px}
+  .frm-page .line-row{display:flex;gap:8px;align-items:center;padding:10px 14px;border:1px solid #edf2ef;border-radius:14px;margin-bottom:8px;background:#fbfdfc;flex-wrap:wrap}
+  .frm-page .line-row:hover{background:#fff;border-color:var(--border)}
+  .frm-page .line-row > *{flex:1;min-width:110px}
+  .frm-page .line-row select,.frm-page .line-row input{padding:8px 10px;border:1px solid #dfe7e3;border-radius:10px;font-size:12px;background:#fff;width:100%;box-sizing:border-box}
+  .frm-page .line-row .rm-line{flex:0 0 auto;min-width:auto;padding:6px 12px;font-size:12px;border-radius:10px}
+  .frm-page .add-line-btn{display:inline-flex;align-items:center;gap:6px;padding:9px 18px;font-size:13px;font-weight:800;border-radius:12px;border:1px dashed var(--border);background:transparent;color:var(--muted);cursor:pointer;margin-top:6px;transition:all .15s}
+  .frm-page .add-line-btn:hover{background:#fbfdfc;color:#1a56db;border-color:#1a56db}
+  .frm-page .btn-save{display:inline-flex;align-items:center;gap:8px;padding:12px 28px;font-size:15px;font-weight:800;border-radius:14px;border:none;background:#11885a;color:#fff;cursor:pointer;transition:all .15s}
+  .frm-page .btn-save:hover{background:#0d6e49}
+  .frm-page .v-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;font-size:14px;font-weight:800;border-radius:13px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+  .frm-page .v-btn-outline{background:#fff;color:#64748b;border:2px solid #e2e8f0}
+  .frm-page .v-btn-outline:hover{background:#f8fafc;color:#172033;border-color:#cbd5e1}
+  .frm-page .v-btn-danger{background:#fee2e4;color:#c7384c}
+  .frm-page .v-btn-danger:hover{background:#fcced1}
+  .frm-page .action-bar{display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end}
+</style>
+<div class="frm-page">
+  <div class="page-head">
+    <div style="display:flex;justify-content:flex-end">
+      <a href="/suppliers/confirmations" class="v-btn v-btn-outline" style="margin-bottom:10px;padding:7px 16px;font-size:12px"><i class="bi bi-arrow-right"></i> {{ L("العودة", "Back") }}</a>
+    </div>
+    <h1>{{ L("إضافة تأكيد مورد", "Add Supplier Confirmation") }}</h1>
+    <p>{{ L("تسجيل تأكيد مورد على تكاليف حجوزات محددة", "Record supplier confirmation on specific booking costs") }}</p>
+  </div>
+  <form method="post" action="/suppliers/confirmations/add">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <div class="card">
+      <h3><i class="bi bi-info-circle"></i> {{ L("معلومات التأكيد", "Confirmation Info") }}</h3>
+      <div class="form-row">
+        <div class="field-block">
+          <label>{{ L("المورد", "Supplier") }}</label>
+          <select name="supplier_id" required>
+            <option value="">{{ L("اختر المورد...", "Select supplier...") }}</option>
+            {% for s in suppliers %}
+            <option value="{{ s.id }}">{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field-block">
+          <label>{{ L("تاريخ التأكيد", "Confirmation Date") }}</label>
+          <input type="date" name="confirmation_date" value="{{ today() }}" required>
+        </div>
+        <div class="field-block">
+          <label>{{ L("العملة", "Currency") }}</label>
+          <select name="currency_id" onchange="autoFillExchangeRate('currency_id','exchange_rate')">
+            <option value="">{{ L("الأساسية", "Base") }}</option>
+            {% for c in currencies %}
+            <option value="{{ c.id }}" data-rate="{{ c.exchange_rate }}">{{ c.code }} - {{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div class="field-block">
+          <label>{{ L("سعر الصرف", "Exchange Rate") }}</label>
+          <input name="exchange_rate" id="exchange_rate" type="number" step="0.000001" value="1.0">
+        </div>
+        <div class="field-block">
+          <label>{{ L("ملاحظات", "Notes") }}</label>
+          <input type="text" name="notes" placeholder="{{ L("اختياري", "Optional") }}">
+        </div>
+      </div>
+    </div>
+    <div class="card">
+      <h3><i class="bi bi-list-check"></i> {{ L("بنود التأكيد", "Confirmation Lines") }}</h3>
+      <div class="form-hint">
+        <i class="bi bi-lightbulb"></i>
+        {{ L("اختر الحجوزات المراد تأكيدها مع التكلفة المؤكدة من المورد. يمكنك إضافة عدة بنود.", "Select bookings to confirm with the confirmed cost from the supplier. You can add multiple lines.") }}
+      </div>
+      <div id="lines"></div>
+      <div id="line-template" style="display:none">
+        <div class="line-row">
+          <select class="reservation-select">
+            <option value="">{{ L("اختر الحجز...", "Select booking...") }}</option>
+            {% for r in reservations %}
+            <option value="{{ r.id }}" data-cost="{{ r.stay_cost }}">{{ r.booking_number or r.id }} - {{ r.guest_name }} ({{ r.hotel.name if r.hotel else '' }})</option>
+            {% endfor %}
+          </select>
+          <input class="line-cost" type="number" step="0.01" placeholder="{{ L("التكلفة المؤكدة", "Confirmed cost") }}">
+          <input class="line-notes" type="text" placeholder="{{ L("ملاحظات", "Notes") }}">
+          <button type="button" class="v-btn v-btn-danger rm-line" style="padding:6px 12px;font-size:12px">
+            <i class="bi bi-trash3"></i> {{ L("حذف", "Remove") }}
+          </button>
+        </div>
+      </div>
+      <button type="button" class="add-line-btn" id="add-line-btn">
+        <i class="bi bi-plus-lg"></i> {{ L("إضافة بند", "Add Line") }}
+      </button>
+    </div>
+    <div class="action-bar">
+      <button type="submit" class="btn-save">
+        <i class="bi bi-check-lg"></i> {{ L("حفظ التأكيد", "Save Confirmation") }}
+      </button>
+      <a href="/suppliers/confirmations" class="v-btn v-btn-outline">
+        <i class="bi bi-x-lg"></i> {{ L("إلغاء", "Cancel") }}
+      </a>
+    </div>
+  </form>
+</div>
+<script>
+let lineIdx = 0;
+document.getElementById('add-line-btn')?.addEventListener('click', function(){
+  const tmpl = document.getElementById('line-template').cloneNode(true);
+  tmpl.style.display='';
+  tmpl.removeAttribute('id');
+  const updateNames = (el) => {
+    if(el.classList.contains('reservation-select')) el.name = `lines[${lineIdx}][reservation_id]`;
+    if(el.classList.contains('line-cost')) el.name = `lines[${lineIdx}][confirmed_cost]`;
+    if(el.classList.contains('line-notes')) el.name = `lines[${lineIdx}][notes]`;
+  };
+  tmpl.querySelectorAll('input,select').forEach(updateNames);
+  tmpl.querySelector('.rm-line')?.addEventListener('click', function(){ this.closest('.line-row').remove(); });
+  const sel = tmpl.querySelector('.reservation-select');
+  if(sel) sel.value = '';
+  document.getElementById('lines').appendChild(tmpl);
+  lineIdx++;
+});
+document.querySelectorAll('.rm-line').forEach(btn => {
+  btn.addEventListener('click', function(){ this.closest('.line-row').remove(); });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,596 @@
+<!DOCTYPE html>
+{% set lang = request.session.get("lang", "en") %}
+{% macro L(ar, en) %}{{ ar if lang == "ar" else en }}{% endmacro %}
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ L("قسيمة حجز", "Booking Voucher") }} {{ r.booking_number }}</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    font-family: 'Tajawal', sans-serif;
+    background: #eef4f0;
+    color: #172033;
+  }
+
+  .voucher-page {
+    min-height: 100vh;
+    padding: 28px;
+  }
+
+  .print-actions {
+    max-width: 900px;
+    margin: 0 auto 14px;
+    display: flex;
+    justify-content: flex-end;
+    gap: 10px;
+  }
+
+  .print-btn {
+    min-height: 42px;
+    border: 0;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #bfd175, #b8c96a);
+    color: #172033;
+    padding: 9px 16px;
+    font-size: 13px;
+    font-weight: 950;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 10px 22px rgba(103, 197, 80, 0.24);
+  }
+
+  .voucher {
+    max-width: 900px;
+    margin: 0 auto;
+    background: #ffffff;
+    border-radius: 28px;
+    border: 1px solid #e4ebe6;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.08);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .voucher::before {
+    content: "";
+    position: absolute;
+    width: 280px;
+    height: 280px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+    top: -120px;
+    left: -110px;
+  }
+
+  .voucher::after {
+    content: "";
+    position: absolute;
+    width: 220px;
+    height: 220px;
+    border-radius: 999px;
+    background: rgba(103, 197, 80, 0.22);
+    bottom: -105px;
+    right: -90px;
+  }
+
+  .voucher-inner {
+    position: relative;
+    z-index: 2;
+    padding: 34px;
+  }
+
+  .voucher-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 22px;
+    padding-bottom: 22px;
+    border-bottom: 1px solid #e4ebe6;
+    margin-bottom: 22px;
+  }
+
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .brand-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #20b874, #11885a);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 12px 28px rgba(26, 86, 219, 0.22);
+  }
+
+  .brand-title {
+    font-size: 22px;
+    font-weight: 950;
+    color: #172033;
+    line-height: 1.2;
+  }
+
+  .brand-title span {
+    color: #20b874;
+  }
+
+  .brand-sub {
+    margin-top: 5px;
+    color: #708093;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .voucher-number {
+    text-align: left;
+  }
+
+  .voucher-number .label {
+    color: #708093;
+    font-size: 12px;
+    font-weight: 850;
+    margin-bottom: 6px;
+  }
+
+  .voucher-number .number {
+    color: #11885a;
+    font-size: 22px;
+    font-weight: 950;
+    direction: ltr;
+  }
+
+  .voucher-number .date {
+    color: #708093;
+    font-size: 12px;
+    font-weight: 750;
+    margin-top: 4px;
+  }
+
+  .section {
+    border: 1px solid #e4ebe6;
+    border-radius: 22px;
+    background: #ffffff;
+    margin-bottom: 16px;
+    overflow: hidden;
+  }
+
+  .section-head {
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    padding: 15px 18px;
+    background: #fbfdfc;
+    border-bottom: 1px solid #e4ebe6;
+  }
+
+  .section-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 14px;
+    background: #edf9f3;
+    color: #20b874;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 16px;
+  }
+
+  .section-title {
+    font-size: 15px;
+    font-weight: 950;
+    color: #172033;
+  }
+
+  .section-body {
+    padding: 14px 18px 16px;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0 20px;
+  }
+
+  .info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 11px 0;
+    border-bottom: 1px dashed #e5ebe7;
+    min-height: 44px;
+  }
+
+  .info-row:last-child,
+  .info-row:nth-last-child(2):nth-child(odd) {
+    border-bottom: 0;
+  }
+
+  .info-label {
+    color: #708093;
+    font-size: 13px;
+    font-weight: 850;
+    white-space: nowrap;
+  }
+
+  .info-value {
+    color: #172033;
+    font-size: 13px;
+    font-weight: 950;
+    text-align: left;
+  }
+
+  .money {
+    direction: ltr;
+    font-weight: 950;
+  }
+
+  .money.green {
+    color: #11885a;
+  }
+
+  .money.red {
+    color: #eb5d6c;
+  }
+
+  .invoice-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .invoice-card {
+    border: 1px solid #e4ebe6;
+    border-radius: 18px;
+    background: #fbfdfc;
+    padding: 15px;
+  }
+
+  .invoice-card .invoice-label {
+    color: #708093;
+    font-size: 12px;
+    font-weight: 850;
+    margin-bottom: 8px;
+  }
+
+  .invoice-card .invoice-value {
+    color: #172033;
+    font-size: 21px;
+    font-weight: 950;
+    direction: ltr;
+  }
+
+  .invoice-card.total {
+    background: #edf9f3;
+  }
+
+  .invoice-card.total .invoice-value {
+    color: #11885a;
+  }
+
+  .invoice-card.remaining {
+    background: #fff1f3;
+  }
+
+  .invoice-card.remaining .invoice-value {
+    color: #eb5d6c;
+  }
+
+  .notes-box {
+    color: #708093;
+    font-size: 13px;
+    line-height: 1.9;
+    font-weight: 750;
+  }
+
+  .voucher-footer {
+    margin-top: 24px;
+    padding-top: 18px;
+    border-top: 1px solid #e4ebe6;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+    color: #708093;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .footer-code {
+    direction: ltr;
+    color: #11885a;
+    font-weight: 950;
+  }
+
+  @media print {
+    @page {
+      size: A4;
+      margin: 12mm;
+    }
+
+    body {
+      background: #ffffff !important;
+    }
+
+    .no-print {
+      display: none !important;
+    }
+
+    .voucher-page {
+      min-height: auto;
+      padding: 0;
+    }
+
+    .voucher {
+      max-width: none;
+      border-radius: 0;
+      border: 0;
+      box-shadow: none;
+    }
+
+    .voucher-inner {
+      padding: 0;
+    }
+
+    .section,
+    .invoice-card {
+      break-inside: avoid;
+    }
+  }
+
+  @media (max-width: 720px) {
+    .voucher-page {
+      padding: 16px;
+    }
+
+    .voucher-inner {
+      padding: 22px;
+    }
+
+    .voucher-header,
+    .voucher-footer {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .voucher-number {
+      text-align: right;
+    }
+
+    .info-grid,
+    .invoice-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .info-row:nth-last-child(2):nth-child(odd) {
+      border-bottom: 1px dashed #e5ebe7;
+    }
+  }
+</style>
+</head>
+
+<body>
+  <div class="voucher-page">
+
+    <div class="print-actions no-print">
+      <button onclick="window.print()" class="print-btn">
+        <i class="bi bi-printer"></i>
+        طباعة / حفظ PDF
+      </button>
+    </div>
+
+    <main class="voucher">
+      <div class="voucher-inner">
+
+        <header class="voucher-header">
+          <div class="brand">
+            <div class="brand-icon">
+              <i class="bi bi-airplane-fill"></i>
+            </div>
+            <div>
+              <div class="brand-title">Tourism<span>ERP</span></div>
+              <div class="brand-sub">{{ L("قسيمة حجز", "Booking Voucher") }}</div>
+            </div>
+          </div>
+
+          <div class="voucher-number">
+            <div class="label">{{ L("رقم الحجز", "Booking Number") }}</div>
+            <div class="number">{{ r.booking_number }}</div>
+            <div class="date">{{ r.created_date }}</div>
+          </div>
+        </header>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-icon">
+              <i class="bi bi-person-vcard"></i>
+            </div>
+            <div class="section-title">{{ L("بيانات العميل", "Guest Information") }}</div>
+          </div>
+
+          <div class="section-body">
+            <div class="info-grid">
+              <div class="info-row">
+                <span class="info-label">{{ L("الاسم", "Name") }}</span>
+                <span class="info-value">{{ r.customer.name if r.customer else r.guest_name }}</span>
+              </div>
+
+              <div class="info-row">
+                <span class="info-label">{{ L("الهاتف", "Phone") }}</span>
+                <span class="info-value">{{ r.phone or '-' }}</span>
+              </div>
+
+              <div class="info-row">
+                <span class="info-label">{{ L("الجنسية", "Nationality") }}</span>
+                <span class="info-value">{{ r.nationality or '-' }}</span>
+              </div>
+
+              <div class="info-row">
+                <span class="info-label">{{ L("عدد البالغين / الأطفال", "Adults / Children") }}</span>
+                <span class="info-value">{{ r.adults or 0 }} / {{ r.children or 0 }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-icon">
+              <i class="bi bi-buildings"></i>
+            </div>
+            <div class="section-title">{{ L("تفاصيل الإقامة", "Stay Details") }}</div>
+          </div>
+
+          <div class="section-body">
+            <div class="info-grid">
+              <div class="info-row">
+                <span class="info-label">{{ L("الفندق", "Hotel") }}</span>
+                <span class="info-value">{{ r.hotel.name if r.hotel else '-' }}</span>
+              </div>
+
+              <div class="info-row">
+                <span class="info-label">{{ L("نوع الغرفة", "Room Type") }}</span>
+                <span class="info-value">{{ r.room_type or '-' }} / {{ r.room_count or 0 }} {{ L('غرف', 'rooms') }}</span>
+              </div>
+
+              <div class="info-row">
+                <span class="info-label">{{ L("نوع الإقامة", "Stay Type") }}</span>
+                <span class="info-value">
+                  {{ r.stay_type or '-' }}
+                  {% if r.meal_plan %}
+                    — {{ r.meal_plan }}
+                  {% endif %}
+                </span>
+              </div>
+
+              <div class="info-row">
+                <span class="info-label">{{ L("عدد الليالي", "Nights") }}</span>
+                <span class="info-value">{{ r.nights or 0 }}</span>
+              </div>
+
+              <div class="info-row">
+                <span class="info-label">{{ L("تاريخ الوصول", "Check-in Date") }}</span>
+                <span class="info-value">{{ r.checkin_date or '-' }} {{ r.checkin_time or '' }}</span>
+              </div>
+
+              <div class="info-row">
+                <span class="info-label">{{ L("تاريخ المغادرة", "Check-out Date") }}</span>
+                <span class="info-value">{{ r.checkout_date or '-' }} {{ r.checkout_time or '' }}</span>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {% if r.flight_number or r.driver_name or r.guide_name %}
+        <section class="section">
+          <div class="section-head">
+            <div class="section-icon">
+              <i class="bi bi-bus-front"></i>
+            </div>
+            <div class="section-title">{{ L("الانتقالات", "Transfers") }}</div>
+          </div>
+
+          <div class="section-body">
+            <div class="info-grid">
+              {% if r.flight_number %}
+              <div class="info-row">
+                <span class="info-label">{{ L("رقم الرحلة", "Flight Number") }}</span>
+                <span class="info-value">{{ r.flight_number }}</span>
+              </div>
+              {% endif %}
+
+              {% if r.driver_name %}
+              <div class="info-row">
+                <span class="info-label">{{ L("السائق", "Driver") }}</span>
+                <span class="info-value">{{ r.driver_name }}</span>
+              </div>
+              {% endif %}
+
+              {% if r.guide_name %}
+              <div class="info-row">
+                <span class="info-label">{{ L("المرشد", "Guide") }}</span>
+                <span class="info-value">{{ r.guide_name }}</span>
+              </div>
+              {% endif %}
+            </div>
+          </div>
+        </section>
+        {% endif %}
+
+        <section class="section">
+          <div class="section-head">
+            <div class="section-icon">
+              <i class="bi bi-receipt"></i>
+            </div>
+            <div class="section-title">{{ L("الفاتورة", "Invoice") }}</div>
+          </div>
+
+          <div class="section-body">
+            <div class="invoice-grid">
+              <div class="invoice-card total">
+                <div class="invoice-label">{{ L("الإجمالي المستحق", "Total Due") }}</div>
+                <div class="invoice-value">{{ "%.2f"|format(r.net_sale_price or 0) }}</div>
+              </div>
+
+              <div class="invoice-card">
+                <div class="invoice-label">{{ L("المسدد", "Paid") }}</div>
+                <div class="invoice-value">{{ "%.2f"|format(r.paid_to_office or 0) }}</div>
+              </div>
+
+              <div class="invoice-card remaining">
+                <div class="invoice-label">{{ L("المتبقي", "Remaining") }}</div>
+                <div class="invoice-value">{{ "%.2f"|format(r.remaining_to_office or 0) }}</div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        {% if r.notes %}
+        <section class="section">
+          <div class="section-head">
+            <div class="section-icon">
+              <i class="bi bi-chat-left-text"></i>
+            </div>
+            <div class="section-title">{{ L("ملاحظات", "Notes") }}</div>
+          </div>
+
+          <div class="section-body">
+            <div class="notes-box">
+              {{ r.notes }}
+            </div>
+          </div>
+        </section>
+        {% endif %}
+
+        <footer class="voucher-footer">
+          <div>{{ L("تم إصدار هذه القسيمة بواسطة", "This voucher was issued by") }} Tourism ERP</div>
+          <div class="footer-code">{{ r.booking_number }}</div>
+        </footer>
+
+      </div>
+    </main>
+
+  </div>
+</body>
+</html>

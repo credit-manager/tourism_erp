@@ -1,0 +1,50 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.alerts-page{--red:#ef5b6c;--red-soft:#fff0f2;--yellow:#f5c84c;--yellow-soft:#fff7df;--green-dark:#11885a;--text:#172033;--muted:#7b8798;--border:#e8eee9}
+.alerts-page h1{font-size:24px;font-weight:950;color:var(--text);margin-bottom:18px}
+.alert-card{background:#fff;border:1px solid var(--border);border-radius:24px;padding:18px 22px;margin-bottom:16px;box-shadow:0 8px 20px rgba(0,0,0,.04)}
+.alert-card h2{font-size:15px;font-weight:950;margin:0 0 12px}
+.alert-card h2 .count{font-size:12px;color:var(--muted);font-weight:800}
+.alert-item{display:flex;justify-content:space-between;align-items:center;padding:10px 0;border-bottom:1px solid #edf2ef;font-size:13px}
+.alert-item:last-child{border-bottom:0}
+.alert-item .customer{font-weight:900;color:var(--green-dark)}
+.alert-item .date{font-weight:800}
+.overdue{color:var(--red)}
+.upcoming{color:var(--yellow)}
+.empty-state{padding:30px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+<div class="alerts-page">
+<h1>{{ L("التنبيهات", "Alerts") }}</h1>
+
+<div class="alert-card">
+  <h2>{{ L("متأخر", "Overdue Follow-ups") }} <span class="count">({{ overdue|length }})</span></h2>
+  {% if overdue %}
+  {% for op in overdue %}
+  <div class="alert-item">
+    <div><span class="customer">{{ op.customer.name if op.customer else '—' }}</span> — {{ op.destination or '' }}</div>
+    <div><span class="date overdue">{{ op.next_followup_date.strftime('%Y-%m-%d') }}</span> &middot; <span class="stage-badge stage-{{ op.stage.replace(' ', '') }}">{{ {'Lead': L('عميل محتمل', 'Lead'), 'Qualified': L('مؤهل', 'Qualified'), 'Quotation Sent': L('عرض سعر', 'Quotation Sent'), 'Negotiation': L('تفاوض', 'Negotiation'), 'Won': L('فوز', 'Won'), 'Lost': L('خسارة', 'Lost')}.get(op.stage, op.stage) }}</span></div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty-state">{{ L("لا توجد متابعات متأخرة", "No overdue follow-ups") }}</div>
+  {% endif %}
+</div>
+
+<div class="alert-card">
+  <h2>{{ L("قادم", "Upcoming Follow-ups") }} <span class="count">({{ upcoming|length }})</span></h2>
+  {% if upcoming %}
+  {% for op in upcoming %}
+  <div class="alert-item">
+    <div><span class="customer">{{ op.customer.name if op.customer else '—' }}</span> — {{ op.destination or '' }}</div>
+    <div><span class="date upcoming">{{ op.next_followup_date.strftime('%Y-%m-%d') }}</span> &middot; <span class="stage-badge stage-{{ op.stage.replace(' ', '') }}">{{ op.stage }}</span></div>
+  </div>
+  {% endfor %}
+  {% else %}
+  <div class="empty-state">{{ L("لا توجد متابعات قادمة", "No upcoming follow-ups") }}</div>
+  {% endif %}
+</div>
+
+<a href="/sales-pipeline" class="save-btn" style="display:inline-flex;text-decoration:none;padding:10px 24px;"><i class="bi bi-arrow-right"></i> {{ L("العودة للوحة", "Back to Board") }}</a>
+</div>
+{% endblock %}

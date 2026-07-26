@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.qview-page{--primary:#20b874;--primary-dark:#11885a;--text:#182033;--muted:#708093;--border:#e2e8f0;max-width:960px;margin:0 auto}
+.qview-page h1{font-size:28px;font-weight:950;color:var(--text);margin:0;letter-spacing:-.3px}
+.qview-page .sub{color:var(--muted);font-size:14px;margin:4px 0 0;display:flex;align-items:center;gap:6px}
+.qview-page .sub i{font-size:16px}
+.qview-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:22px;flex-wrap:wrap;gap:14px}
+.qview-actions{display:flex;gap:10px;flex-wrap:wrap}
+.qview-actions .btn{height:42px;padding:0 22px;border:0;border-radius:14px;font-size:13px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;gap:7px;text-decoration:none;transition:all .2s ease;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.qview-actions .btn-primary{background:linear-gradient(135deg,#bfd175,#a8bb5c);color:#172033;box-shadow:0 6px 20px rgba(191,209,117,.3)}
+.qview-actions .btn-primary:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(191,209,117,.4)}
+.qview-actions .btn-success{background:linear-gradient(135deg,#10b981,#059669);color:#fff;box-shadow:0 6px 20px rgba(16,185,129,.3)}
+.qview-actions .btn-success:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(16,185,129,.4)}
+.qview-actions .btn-ghost{background:#fff;border:1.5px solid var(--border);color:var(--muted)}
+.qview-actions .btn-ghost:hover{color:var(--text);border-color:#cbd5e1;background:#f8fafc}
+.qview-actions .btn-danger{background:linear-gradient(135deg,#ef4444,#dc2626);color:#fff;box-shadow:0 6px 20px rgba(239,68,68,.25)}
+.qview-actions .btn-danger:hover{transform:translateY(-2px);box-shadow:0 8px 24px rgba(239,68,68,.35)}
+.qview-card{background:#fff;border:1px solid var(--border);border-radius:28px;padding:32px;box-shadow:0 20px 48px -12px rgba(15,23,42,.08)}
+.qview-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 32px;margin-bottom:4px}
+.qview-grid .full{grid-column:1/-1}
+.qview-field{background:#f8fafc;border-radius:16px;padding:14px 18px;border:1px solid #f1f5f9}
+.qview-field label{font-size:11px;font-weight:900;color:var(--muted);display:block;margin-bottom:4px;letter-spacing:.3px}
+.qview-field .val{font-size:15px;font-weight:800;color:var(--text)}
+.qview-table-wrap{border-radius:18px;border:1px solid var(--border);overflow:hidden;margin-top:22px}
+.qview-table{width:100%;border-collapse:collapse;font-size:13px}
+.qview-table thead{background:linear-gradient(135deg,#f0fdf4,#ecfdf5)}
+.qview-table th{color:#3a5a45;padding:13px 14px;font-size:11px;font-weight:950;text-align:center;letter-spacing:.3px;border-bottom:1px solid #d4e6dd}
+.qview-table td{padding:12px 14px;text-align:center;border-bottom:1px solid #f1f5f9;color:var(--text);transition:.1s}
+.qview-table tbody tr:hover td{background:#f8fcf9}
+.qview-table tbody tr:last-child td{border-bottom:0}
+.qview-table .item-badge{display:inline-block;padding:3px 12px;border-radius:999px;font-size:10px;font-weight:950;background:#f1f5f9;color:#475569}
+.qview-totals{margin-top:20px;background:#f8fafc;border-radius:18px;padding:20px 24px;margin-inline-start:auto;width:300px;border:1px solid #f1f5f9}
+.qview-totals .tr{display:flex;justify-content:space-between;padding:8px 0;font-size:13px;border-bottom:1px solid #edf2ef}
+.qview-totals .tr:last-child{border-bottom:0;font-size:17px;font-weight:950;color:var(--primary-dark);padding-top:10px;margin-top:2px}
+.qview-totals .tr.total-row{border-top:2px solid var(--primary-dark);margin-top:6px;padding-top:10px}
+.qview-status-bar{display:flex;gap:12px;margin-bottom:22px;flex-wrap:wrap;align-items:center}
+.qview-status-bar .stat-item{display:inline-flex;align-items:center;gap:6px;padding:7px 16px;border-radius:999px;font-size:13px;font-weight:800;background:#f8fafc;border:1px solid var(--border);color:var(--muted)}
+.qview-status-bar .stat-item i{font-size:15px}
+.status-badge{padding:8px 20px;border-radius:999px;font-size:13px;font-weight:950;display:inline-flex;align-items:center;gap:6px;box-shadow:0 2px 8px rgba(0,0,0,.04)}
+.status-draft{background:#f1f5f9;color:#475569}
+.status-sent{background:#dbeafe;color:#1e40af}
+.status-accepted{background:#d1fae5;color:#065f46}
+.status-rejected{background:#fee2e2;color:#991b1b}
+.status-expired{background:#fef3c7;color:#92400e}
+.qview-notes{padding:18px 20px;border-radius:16px;background:#fafcff;border:1px solid #e8edf5;margin-top:20px}
+.qview-notes label{font-size:11px;font-weight:900;color:var(--muted);display:block;margin-bottom:6px;letter-spacing:.3px}
+.qview-notes .text{font-size:14px;color:var(--text);line-height:1.7;white-space:pre-wrap}
+.qview-footer{display:flex;align-items:center;gap:12px;margin-top:22px;flex-wrap:wrap;padding-top:20px;border-top:1px solid var(--border)}
+.qview-footer .status-form{display:flex;align-items:center;gap:10px;flex-wrap:wrap;flex:1}
+.qview-footer .status-form select{height:40px;border:1.5px solid var(--border);border-radius:12px;padding:0 14px;font-size:13px;font-weight:700;background:#fff;min-width:140px}
+.qview-footer .status-form select:focus{outline:0;border-color:var(--primary)}
+.qview-footer .btn-sm{height:40px;padding:0 18px;border-radius:12px;font-size:12px;font-weight:900;border:1.5px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:.14s}
+.qview-footer .btn-sm:hover{color:var(--text);border-color:#cbd5e1;background:#f8fafc}
+.qview-footer .btn-sm-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.qview-footer .btn-sm-primary:hover{background:var(--primary-dark);border-color:var(--primary-dark);color:#fff}
+</style>
+<div class="qview-page">
+<div class="qview-header">
+  <div>
+    <h1>{{ q.quote_number }}</h1>
+    <p class="sub"><i class="bi bi-file-text"></i> {{ L("عرض سعر", "Quotation") }} — <strong>{{ q.customer.name if q.customer else '—' }}</strong></p>
+  </div>
+  <div class="qview-actions">
+    <a href="/quotations/{{ q.id }}/pdf" class="btn btn-ghost" target="_blank"><i class="bi bi-filetype-pdf"></i> PDF</a>
+    <a href="/quotations/{{ q.id }}/send?method=email" class="btn btn-ghost"><i class="bi bi-envelope-fill"></i> {{ L("بريد", "Email") }}</a>
+    <a href="/quotations/{{ q.id }}/send?method=whatsapp" class="btn btn-ghost"><i class="bi bi-whatsapp"></i> WhatsApp</a>
+    {% if q.status != 'accepted' and q.status != 'rejected' %}
+    <form method="post" action="/quotations/{{ q.id }}/accept" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="btn btn-success"><i class="bi bi-check-circle-fill"></i> {{ L("قبول وتحويل", "Accept & Convert") }}</button>
+    </form>
+    {% endif %}
+    {% if q.reservation_id %}
+    <a href="/reservations/{{ q.reservation_id }}/edit" class="btn btn-primary"><i class="bi bi-calendar-check"></i> {{ L("عرض الحجز", "View Reservation") }}</a>
+    {% endif %}
+  </div>
+</div>
+
+<div class="qview-status-bar">
+  <span class="status-badge status-{{ q.status }}"><i class="bi bi-circle-fill" style="font-size:8px"></i> {{ {'draft': L('مسودة','Draft'), 'sent': L('مرسل','Sent'), 'accepted': L('مقبول','Accepted'), 'rejected': L('مرفوض','Rejected'), 'expired': L('منتهي','Expired')}.get(q.status, q.status) }}</span>
+  <span class="stat-item"><i class="bi bi-tag"></i> v{{ q.version }}</span>
+  {% if q.validity_date %}
+  <span class="stat-item"><i class="bi bi-calendar"></i> {{ L("صلاحية حتى", "Valid until") }} {{ q.validity_date.strftime('%Y-%m-%d') }}</span>
+  {% endif %}
+  {% if q.created_at %}
+  <span class="stat-item"><i class="bi bi-clock"></i> {{ q.created_at.strftime('%Y-%m-%d') }}</span>
+  {% endif %}
+</div>
+
+<div class="qview-card">
+<div class="qview-grid">
+  <div class="qview-field">
+    <label><i class="bi bi-person"></i> {{ L("العميل", "Customer") }}</label>
+    <div class="val">{{ q.customer.name if q.customer else '—' }}</div>
+  </div>
+  <div class="qview-field">
+    <label><i class="bi bi-hash"></i> {{ L("رقم العرض", "Quote #") }}</label>
+    <div class="val">{{ q.quote_number }}</div>
+  </div>
+  <div class="qview-field">
+    <label><i class="bi bi-calendar-plus"></i> {{ L("التاريخ", "Date") }}</label>
+    <div class="val">{{ q.created_at.strftime('%Y-%m-%d') if q.created_at else '—' }}</div>
+  </div>
+  <div class="qview-field">
+    <label><i class="bi bi-arrow-repeat"></i> {{ L("آخر تحديث", "Last Update") }}</label>
+    <div class="val">{{ q.updated_at.strftime('%Y-%m-%d') if q.updated_at else '—' }}</div>
+  </div>
+</div>
+
+{% if q.items %}
+<div class="qview-table-wrap">
+<table class="qview-table">
+<thead><tr>
+  <th>#</th><th>{{ L("النوع", "Type") }}</th><th>{{ L("الوصف", "Description") }}</th>
+  <th>{{ L("سعر التكلفة", "Cost") }}</th><th>{{ L("سعر البيع", "Price") }}</th><th>{{ L("الكمية", "Qty") }}</th><th>{{ L("الإجمالي", "Total") }}</th>
+</tr></thead>
+<tbody>
+{% for it in q.items %}
+<tr>
+  <td style="font-weight:900;color:var(--muted)">{{ loop.index }}</td>
+  <td><span class="item-badge">{{ {'hotel': L('فندق','Hotel'), 'transport': L('نقل','Transport'), 'visa': L('تأشيرة','Visa'), 'ticket': L('تذكرة','Ticket'), 'insurance': L('تأمين','Insurance'), 'trip': L('رحلة','Trip'), 'service': L('خدمة','Service'), 'other': L('أخرى','Other')}.get(it.item_type, it.item_type) }}</span></td>
+  <td style="font-weight:700;text-align:start">{{ it.description }}</td>
+  <td dir="ltr">{{ "%.2f"|format(it.cost_price or 0) }}</td>
+  <td dir="ltr" style="font-weight:800;color:var(--primary-dark)">{{ "%.2f"|format(it.sale_price or 0) }}</td>
+  <td><span style="background:#f1f5f9;padding:2px 10px;border-radius:8px;font-weight:800">x{{ it.qty }}</span></td>
+  <td dir="ltr" style="font-weight:950;color:var(--primary-dark);font-size:15px">{{ "%.2f"|format(it.total or 0) }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% endif %}
+
+<div class="qview-totals">
+  <div class="tr"><span>{{ L("المجموع الفرعي", "Subtotal") }}</span><span dir="ltr" style="font-weight:800">{{ "%.2f"|format(q.subtotal or 0) }}</span></div>
+  {% if q.discount_value and q.discount_value > 0 %}
+  <div class="tr"><span>{{ L("الخصم", "Discount") }} ({{ q.discount_type == 'percentage' and (q.discount_value|string+'%') or (q.discount_value|string) }})</span><span dir="ltr" style="color:#dc2626;font-weight:800">-{{ "%.2f"|format(q.discount_value or 0) }}</span></div>
+  {% endif %}
+  {% if q.tax_percentage and q.tax_percentage > 0 %}
+  <div class="tr"><span>{{ L("الضريبة", "Tax") }} ({{ "%.2f"|format(q.tax_percentage) }}%)</span><span dir="ltr">{{ "%.2f"|format(q.tax_amount or 0) }}</span></div>
+  {% endif %}
+  <div class="tr total-row"><span>{{ L("الإجمالي النهائي", "Grand Total") }}</span><span dir="ltr" style="font-size:20px">{{ "%.2f"|format(q.grand_total or 0) }}</span></div>
+</div>
+
+{% if q.notes %}
+<div class="qview-notes">
+  <label><i class="bi bi-sticky"></i> {{ L("ملاحظات", "Notes") }}</label>
+  <div class="text">{{ q.notes }}</div>
+</div>
+{% endif %}
+{% if q.terms_conditions %}
+<div class="qview-notes" style="background:#fafcfa;border-color:#e4ebe6">
+  <label><i class="bi bi-file-text"></i> {{ L("الشروط والأحكام", "Terms & Conditions") }}</label>
+  <div class="text">{{ q.terms_conditions }}</div>
+</div>
+{% endif %}
+</div>
+
+<div class="qview-footer">
+  <form method="post" action="/quotations/{{ q.id }}/status" class="status-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <span style="font-size:13px;font-weight:900;color:var(--muted)">{{ L("تحديث الحالة:", "Update Status:") }}</span>
+    <select name="status">
+      <option value="draft" {{ 'selected' if q.status=='draft' }}>{{ L("مسودة", "Draft") }}</option>
+      <option value="sent" {{ 'selected' if q.status=='sent' }}>{{ L("مرسل", "Sent") }}</option>
+      <option value="accepted" {{ 'selected' if q.status=='accepted' }}>{{ L("مقبول", "Accepted") }}</option>
+      <option value="rejected" {{ 'selected' if q.status=='rejected' }}>{{ L("مرفوض", "Rejected") }}</option>
+      <option value="expired" {{ 'selected' if q.status=='expired' }}>{{ L("منتهي", "Expired") }}</option>
+    </select>
+    <button class="btn-sm btn-sm-primary"><i class="bi bi-check-lg"></i> {{ L("تحديث", "Update") }}</button>
+  </form>
+  <form method="post" action="/quotations/{{ q.id }}/version" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button class="btn-sm"><i class="bi bi-files"></i> {{ L("إنشاء نسخة", "Create Version") }}</button>
+  </form>
+  <a href="/quotations" class="btn-sm" style="display:inline-flex;align-items:center"><i class="bi bi-arrow-right"></i> {{ L("عودة", "Back") }}</a>
+</div>
+</div>
+{% endblock %}

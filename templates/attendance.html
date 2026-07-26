@@ -1,0 +1,277 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .at-page{
+    --primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --yellow:#f4c44d;--yellow-soft:#fff8de;
+    --red:#eb5d6c;--red-soft:#fff1f3;
+    --purple:#8a7cf7;--purple-soft:#f4f1ff;
+    --text:#182033;--muted:#708093;--border:#e4ebe6;
+    direction:inherit;
+  }
+  .at-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:6px;flex-wrap:wrap;}
+  .at-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);}
+  .at-header p{margin:6px 0 0;color:var(--muted);font-size:13px;font-weight:700;}
+  .at-header .filter-row{display:flex;gap:10px;align-items:center;background:#fff;border:1px solid var(--border);border-radius:16px;padding:8px 14px;}
+  .at-header .filter-row input,.at-header .filter-row select{height:42px;border:1.5px solid #dde7e1;border-radius:12px;padding:0 12px;font-size:13px;background:#fafefc;}
+  .at-header .filter-row input:focus,.at-header .filter-row select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.1);}
+
+  .nav-strip{display:flex;gap:8px;flex-wrap:wrap;margin:14px 0;}
+  .nav-strip a{min-height:42px;border-radius:14px;font-weight:900;font-size:12px;color:var(--primary-dark);text-decoration:none;padding:0 16px;border:1px solid var(--border);background:#fbfdfc;display:inline-flex;align-items:center;gap:7px;transition:.14s;white-space:nowrap;}
+  .nav-strip a:hover{background:var(--primary-soft);border-color:var(--primary);transform:translateY(-1px);}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:18px;}
+  .kpi-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;}
+  .kpi-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+  .kpi-icon.g{background:var(--primary-soft);color:var(--primary);}
+  .kpi-icon.b{background:#f0f5ff;color:#2563eb;}
+  .kpi-icon.r{background:var(--red-soft);color:var(--red);}
+  .kpi-icon.y{background:var(--yellow-soft);color:#986a00;}
+  .kpi-icon.p{background:var(--purple-soft);color:#7c3aed;}
+  .kpi-info{flex:1;min-width:0;}
+  .kpi-info .lbl{font-size:11px;font-weight:850;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .kpi-info .val{font-size:20px;font-weight:950;color:var(--text);direction:ltr;text-align:right;}
+
+  .two-col{display:grid;grid-template-columns:1fr 360px;gap:18px;align-items:start;}
+  .main-card{background:#fff;border:1px solid var(--border);border-radius:22px;overflow:hidden;}
+  .card-head{padding:16px 20px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .card-head h2{margin:0;font-size:15px;font-weight:950;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .card-head h2 i{color:var(--primary);}
+  .card-chip{padding:5px 11px;border:1px solid var(--border);border-radius:999px;background:#fbfdfc;color:var(--muted);font-size:11px;font-weight:850;white-space:nowrap;}
+  .card-body{padding:16px 20px 20px;}
+
+  .tbl-scroll{overflow-x:auto;padding-bottom:4px;}
+  .tbl-scroll::-webkit-scrollbar{height:8px;}
+  .tbl-scroll::-webkit-scrollbar-thumb{background:#d4ddd7;border-radius:999px;}
+  .tbl-scroll::-webkit-scrollbar-track{background:#f3f7f5;border-radius:999px;}
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
+  .tbl th{background:#f8fcfa;color:var(--muted);padding:11px 8px;font-size:11px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;}
+  .tbl td{padding:11px 8px;border-bottom:1px solid #edf2ef;text-align:center;color:var(--text);vertical-align:middle;}
+  .tbl tr:hover td{background:#fbfefc;}
+
+  .emp-name{color:var(--primary-dark);font-weight:950;}
+  .soft-badge{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap;}
+  .badge-green{background:#eafff4;color:var(--primary-dark);}
+  .badge-red{background:var(--red-soft);color:#c7384c;}
+  .badge-yellow{background:var(--yellow-soft);color:#986a00;}
+  .badge-purple{background:var(--purple-soft);color:#7c3aed;}
+  .badge-gray{background:#f1f5f9;color:#64748b;}
+  .day-info{font-size:11px;color:var(--muted);margin-top:2px;}
+  .empty-msg{padding:32px 20px;text-align:center;color:var(--muted);font-size:13px;font-weight:800;}
+
+  .sidebar-card{background:#fff;border:1px solid var(--border);border-radius:22px;overflow:hidden;}
+  .sb-head{padding:16px 18px 0;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;}
+  .sb-head h3{margin:0;font-size:14px;font-weight:950;color:var(--text);display:flex;align-items:center;gap:7px;}
+  .sb-head h3 i{color:var(--primary);}
+  .sb-head .chip{padding:4px 9px;border:1px solid var(--border);border-radius:999px;background:#fbfdfc;color:var(--muted);font-size:10px;font-weight:850;}
+  .sb-body{padding:14px 18px 18px;}
+
+  .mark-form{display:flex;flex-direction:column;gap:8px;}
+  .mark-form select,.mark-form input,.mark-form .fi{height:42px;border:1.5px solid #dde7e1;border-radius:12px;padding:0 12px;font-size:13px;background:#fafefc;width:100%;box-sizing:border-box;}
+  .mark-form select:focus,.mark-form input:focus,.mark-form .fi:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.1);}
+
+  .btn{min-height:42px;border-radius:14px;font-weight:900;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;border:0;cursor:pointer;transition:.18s ease;white-space:nowrap;text-decoration:none;letter-spacing:.2px;}
+  .btn:hover{transform:translateY(-1px);filter:brightness(.97);}
+  .btn:active{transform:translateY(0);}
+  .btn-lime{background:linear-gradient(135deg,#c9dd6e,#b3c45f);color:#1a2a16;box-shadow:0 8px 18px rgba(172,197,80,.32);}
+  .btn-green{background:linear-gradient(135deg,#2ec182,#11885a);color:#fff;box-shadow:0 8px 18px rgba(32,184,116,.30);}
+  .btn-red{background:linear-gradient(135deg,#f16476,#c7384c);color:#fff;box-shadow:0 8px 18px rgba(199,56,76,.30);}
+  .btn-full{width:100%;}
+  .btn-auto{width:auto;}
+  .divider{border:0;border-top:1px solid var(--border);margin:14px 0;}
+  .quick-label{font-size:12px;font-weight:900;color:var(--muted);margin-bottom:8px;text-align:center;}
+  .quick-grid{display:flex;gap:8px;}
+  .quick-grid form{flex:1;min-width:0;}
+  .quick-grid .fi{width:100%;height:46px;border:1.5px solid #dde7e1;border-radius:12px;padding:0 12px;font-size:13px;font-weight:700;background:#fafefc;box-sizing:border-box;margin-bottom:8px;}
+  .quick-grid .fi:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.1);}
+  .quick-grid .btn-full{min-height:46px;font-size:13px;}
+  .sb-hint{padding:10px 12px;border-radius:12px;border:1px solid var(--border);background:linear-gradient(135deg,var(--primary-soft),#fff);color:var(--muted);font-size:11px;line-height:1.7;margin-bottom:12px;}
+
+  .err-box{background:var(--red-soft);border:1px solid var(--red);color:#c7384c;padding:12px 18px;border-radius:16px;margin-bottom:16px;font-weight:800;display:flex;align-items:center;gap:10px;}
+
+  @media(max-width:1100px){.kpi-row{grid-template-columns:repeat(3,1fr);}.two-col{grid-template-columns:1fr;}}
+  @media(max-width:700px){.kpi-row{grid-template-columns:1fr;}.at-header,.card-head,.sb-head{flex-direction:column;align-items:stretch;}}
+</style>
+
+<div class="at-page">
+
+{% if request.query_params.get('error') == 'no_checkin' %}
+<div class="err-box"><i class="bi bi-exclamation-triangle-fill"></i> {{ L("لم يتم العثور على تسجيل دخول. قم بتسجيل الدخول أولاً.", "No check-in record found. Please check in first.") }}</div>
+{% endif %}
+
+<div class="at-header">
+  <div>
+    <h1>{{ L("الحضور والانصراف", "Attendance & Departure") }}</h1>
+    <p>{{ L("تسجيل ومتابعة حضور الموظفين", "Track employee attendance") }}</p>
+  </div>
+  <form method="get" action="/attendance" class="filter-row">
+    <input type="date" name="day" value="{{ selected_date }}">
+    <input type="month" name="month" value="{{ selected_month }}">
+    <button class="btn btn-lime"><i class="bi bi-eye"></i> {{ L("عرض", "View") }}</button>
+  </form>
+</div>
+
+<div class="nav-strip">
+  <a href="/attendance/log"><i class="bi bi-list-ul"></i> {{ L("سجل الحضور", "Log") }}</a>
+  <a href="/attendance/report"><i class="bi bi-graph-up"></i> {{ L("تقرير شهري", "Report") }}</a>
+  {% if has_permission(current_user, "attendance.approve") %}
+  <a href="/attendance/approve"><i class="bi bi-check2-all"></i> {{ L("اعتماد", "Approve") }}</a>
+  {% endif %}
+  {% if has_permission(current_user, "leaves.manage") %}
+  <a href="/leave-balance"><i class="bi bi-pie-chart"></i> {{ L("رصيد الإجازات", "Balance") }}</a>
+  {% endif %}
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-icon g"><i class="bi bi-people-fill"></i></div>
+    <div class="kpi-info"><div class="lbl">{{ L("إجمالي الموظفين", "Total Employees") }}</div><div class="val">{{ employees|length }}</div></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon b"><i class="bi bi-check2-circle"></i></div>
+    <div class="kpi-info"><div class="lbl">{{ L("حضور", "Present") }}</div><div class="val">{{ total_present }}</div></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon r"><i class="bi bi-x-circle"></i></div>
+    <div class="kpi-info"><div class="lbl">{{ L("غياب", "Absent") }}</div><div class="val">{{ total_absent }}</div></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon y"><i class="bi bi-clock-history"></i></div>
+    <div class="kpi-info"><div class="lbl">{{ L("إجازة", "Leave") }}</div><div class="val">{{ total_leave }}</div></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon p"><i class="bi bi-calendar-event"></i></div>
+    <div class="kpi-info"><div class="lbl">{{ L("عطلة", "Holiday") }}</div><div class="val">{{ today_holidays|length }}</div></div>
+  </div>
+</div>
+
+<div class="two-col">
+  <div class="main-card">
+    <div class="card-head">
+      <h2><i class="bi bi-table"></i> {{ L("ملخص الشهر", "Monthly Summary") }}</h2>
+      <span class="card-chip">{{ selected_month }}</span>
+    </div>
+    <div class="card-body">
+      <div class="tbl-scroll">
+        <table class="tbl">
+          <thead>
+            <tr>
+              <th>{{ L("الموظف", "Employee") }}</th>
+              <th>{{ L("حضور", "Present") }}</th>
+              <th>{{ L("غياب", "Absent") }}</th>
+              <th>{{ L("إجازة", "Leave") }}</th>
+              <th>{{ L("عطلة", "Holiday") }}</th>
+              <th>{{ L("حالة اليوم", "Today") }}</th>
+              <th>{{ L("اعتماد", "Appr.") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for row in summary %}
+            {% set dr = day_records.get(row.employee.id) %}
+            <tr>
+              <td><span class="emp-name">{{ row.employee.name }}</span></td>
+              <td><span class="soft-badge badge-green">{{ row.present }}</span></td>
+              <td><span class="soft-badge badge-red">{{ row.absent }}</span></td>
+              <td><span class="soft-badge badge-yellow">{{ row.leave }}</span></td>
+              <td><span class="soft-badge badge-purple">{{ row.holiday }}</span></td>
+              <td>
+                {% if dr and dr.status == 'present' %}
+                  <span class="soft-badge badge-green">{{ L("حاضر", "Present") }}</span>
+                  {% if dr.check_in %}<div class="day-info">{{ dr.check_in.strftime("%H:%M") }}{% if dr.check_out %} → {{ dr.check_out.strftime("%H:%M") }}{% endif %}</div>{% endif %}
+                {% elif dr and dr.status == 'absent' %}
+                  <span class="soft-badge badge-red">{{ L("غائب", "Absent") }}</span>
+                {% elif dr and dr.status == 'leave' %}
+                  <span class="soft-badge badge-yellow">{{ L("إجازة", "Leave") }}</span>
+                {% elif dr and dr.status == 'holiday' %}
+                  <span class="soft-badge badge-purple">{{ L("عطلة", "Holiday") }}</span>
+                {% else %}
+                  <span class="soft-badge badge-gray">{{ L("غير مسجل", "N/R") }}</span>
+                {% endif %}
+              </td>
+              <td>
+                {% if dr %}
+                  {% if dr.approved %}<span class="soft-badge badge-green">{{ L("معتمد", "Yes") }}</span>
+                  {% else %}<span class="soft-badge badge-gray">{{ L("معلق", "Pending") }}</span>{% endif %}
+                {% else %}
+                  <span class="soft-badge badge-gray">—</span>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+            {% if not summary %}
+            <tr><td colspan="7"><div class="empty-msg">{{ L("لا توجد بيانات لهذا الشهر", "No data for this month") }}</div></td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  {% if has_permission(current_user, "attendance.manage") %}
+  <div class="sidebar-card">
+    <div class="sb-head">
+      <h3><i class="bi bi-pencil-square"></i> {{ L("تسجيل حضور", "Log Attendance") }}</h3>
+      <span class="chip">{{ selected_date }}</span>
+    </div>
+    <div class="sb-body">
+      <div class="sb-hint"><i class="bi bi-info-circle"></i> {{ L("سجّل الحضور أو استخدم الدخول/الخروج بالوقت.", "Mark attendance or use check-in/out.") }}</div>
+
+      <form method="post" action="/attendance/mark" class="mark-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <select name="employee_id" required>
+          <option value="">{{ L("اختر الموظف", "Select Employee") }}</option>
+          {% for emp in employees %}
+            <option value="{{ emp.id }}">{{ emp.name }}</option>
+          {% endfor %}
+        </select>
+        <select name="status">
+          <option value="present">{{ L("حاضر", "Present") }}</option>
+          <option value="absent">{{ L("غائب", "Absent") }}</option>
+          <option value="leave">{{ L("إجازة", "Leave") }}</option>
+        </select>
+        <select name="shift_id">
+          <option value="0">{{ L("بدون وردية", "No Shift") }}</option>
+          {% for s in shifts %}
+            <option value="{{ s.id }}">{{ s.name }} ({{ s.start_time.strftime("%H:%M") }}→{{ s.end_time.strftime("%H:%M") }})</option>
+          {% endfor %}
+        </select>
+        <input type="date" name="date" value="{{ selected_date }}">
+        <input name="notes" placeholder="{{ L("ملاحظات", "Notes") }}">
+        <button class="btn btn-lime btn-full"><i class="bi bi-check2"></i> {{ L("حفظ الحالة", "Save Status") }}</button>
+      </form>
+
+      <hr class="divider">
+
+      <div class="quick-label">{{ L("تسجيل الدخول / الخروج", "Check In / Out") }}</div>
+      <div class="quick-grid">
+        <form method="post" action="/attendance/checkin">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select name="employee_id" required class="fi" style="margin-bottom:6px">
+            {% for emp in employees %}
+              <option value="{{ emp.id }}">{{ emp.name }}</option>
+            {% endfor %}
+          </select>
+          <input type="date" name="date" value="{{ selected_date }}" class="fi" style="margin-bottom:6px">
+          <button class="btn btn-green btn-full"><i class="bi bi-box-arrow-in-left"></i> {{ L("دخول", "Check In") }}</button>
+        </form>
+        <form method="post" action="/attendance/checkout">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select name="employee_id" required class="fi" style="margin-bottom:6px">
+            {% for emp in employees %}
+              <option value="{{ emp.id }}">{{ emp.name }}</option>
+            {% endfor %}
+          </select>
+          <input type="date" name="date" value="{{ selected_date }}" class="fi" style="margin-bottom:6px">
+          <button class="btn btn-red btn-full"><i class="bi bi-box-arrow-right"></i> {{ L("خروج", "Check Out") }}</button>
+        </form>
+      </div>
+
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+</div>
+{% endblock %}

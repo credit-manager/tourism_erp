@@ -1,0 +1,1321 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% set lang = LANG(request) if LANG is defined else "en" %}
+{% set is_en = lang == 'en' %}
+
+{% set D = {
+  "dashboard_title": {"ar": "لوحة التحكم الرئيسية", "en": "Main Dashboard"},
+  "dashboard_subtitle": {"ar": "نظرة منظمة على الحجوزات، الإيرادات، التحصيلات، الفنادق، وحركة اليوم.", "en": "Organized overview of bookings, revenue, collections, hotels, and today's activity."},
+
+  "total_bookings": {"ar": "إجمالي الحجوزات", "en": "Total Bookings"},
+  "total_bookings_note": {"ar": "إجمالي عدد الحجوزات داخل النظام", "en": "Total number of bookings in the system"},
+
+  "total_revenue": {"ar": "إجمالي الإيرادات", "en": "Total Revenue"},
+  "total_revenue_note": {"ar": "إجمالي أسعار البيع للحجوزات", "en": "Total booking sales amount"},
+
+  "gross_profit": {"ar": "الربح الإجمالي", "en": "Gross Profit"},
+  "gross_profit_note": {"ar": "قبل العمولات والمصروفات", "en": "Before commissions and expenses"},
+
+  "pending_payments": {"ar": "مدفوعات معلقة", "en": "Pending Payments"},
+  "pending_payments_note": {"ar": "إجمالي المتبقي على العملاء", "en": "Total outstanding from customers"},
+
+  "today_arrivals": {"ar": "وصول اليوم", "en": "Today Arrivals"},
+  "today_arrivals_note": {"ar": "حجوزات متوقع وصولها اليوم", "en": "Bookings expected to arrive today"},
+
+  "today_departures": {"ar": "مغادرة اليوم", "en": "Today Departures"},
+  "today_departures_note": {"ar": "حجوزات تغادر اليوم", "en": "Bookings departing today"},
+
+  "today": {"ar": "اليوم", "en": "Today"},
+  "gross": {"ar": "Gross", "en": "Gross"},
+  "pending": {"ar": "معلق", "en": "Pending"},
+
+  "booking_revenue_performance": {"ar": "أداء الحجوزات والإيرادات", "en": "Bookings & Revenue Performance"},
+  "last_14_days": {"ar": "آخر 14 يوم", "en": "Last 14 Days"},
+
+  "reservation_status": {"ar": "الحالة العامة للحجوزات", "en": "Booking Status"},
+  "status": {"ar": "Status", "en": "Status"},
+
+  "recent_bookings": {"ar": "آخر الحجوزات", "en": "Recent Bookings"},
+  "recent": {"ar": "Recent", "en": "Recent"},
+  "booking_no": {"ar": "رقم الحجز", "en": "Booking No."},
+  "customer": {"ar": "العميل", "en": "Customer"},
+  "hotel": {"ar": "الفندق", "en": "Hotel"},
+  "arrival": {"ar": "الوصول", "en": "Arrival"},
+  "amount": {"ar": "المبلغ", "en": "Amount"},
+  "payment": {"ar": "الدفع", "en": "Payment"},
+  "paid": {"ar": "مسدد", "en": "Paid"},
+  "open": {"ar": "مفتوح", "en": "Open"},
+  "no_bookings": {"ar": "لا توجد حجوزات بعد", "en": "No bookings yet"},
+
+  "today_activity": {"ar": "حركة اليوم", "en": "Today's Activity"},
+  "active": {"ar": "نشط", "en": "Active"},
+  "follow": {"ar": "متابعة", "en": "Follow"},
+  "important": {"ar": "مهم", "en": "Important"},
+  "booking_word": {"ar": "حجز", "en": "booking(s)"},
+  "pending_collections": {"ar": "تحصيلات معلقة", "en": "Pending Collections"},
+
+  "top": {"ar": "Top", "en": "Top"},
+
+  "revenue_vs_cost": {"ar": "الإيرادات مقابل التكلفة", "en": "Revenue vs Cost"},
+  "revenue_cost": {"ar": "Revenue / Cost", "en": "Revenue / Cost"},
+
+  "profit_summary": {"ar": "ملخص الربحية", "en": "Profit Summary"},
+  "net_profit": {"ar": "صافي الربح", "en": "Net Profit"},
+  "total_expenses": {"ar": "إجمالي المصروفات", "en": "Total Expenses"},
+
+  "booking_sources": {"ar": "مصادر الحجوزات", "en": "Booking Sources"},
+  "source": {"ar": "Source", "en": "Source"},
+
+  "top_agents": {"ar": "أفضل المندوبين", "en": "Top Agents"},
+  "agents": {"ar": "Agents", "en": "Agents"},
+  "total_commissions": {"ar": "إجمالي العمولات", "en": "Total Commissions"},
+  "no_agents": {"ar": "لا توجد بيانات مندوبين", "en": "No agent data"},
+
+  "highest_pending": {"ar": "أعلى المبالغ المعلقة", "en": "Highest Outstanding Amounts"},
+  "follow_up": {"ar": "Follow up", "en": "Follow up"},
+  "no_pending_amounts": {"ar": "لا توجد مبالغ معلقة", "en": "No outstanding amounts"},
+
+  "quick_add_booking": {"ar": "إضافة حجز", "en": "New Booking"},
+  "quick_collection": {"ar": "تحصيل", "en": "Collection"},
+  "quick_expense": {"ar": "مصروف", "en": "Expense"},
+  "quick_reports": {"ar": "تقارير", "en": "Reports"},
+  "quick_board": {"ar": "لوحة الحجز", "en": "Booking Board"},
+
+  "revenue": {"ar": "الإيرادات", "en": "Revenue"},
+  "bookings": {"ar": "الحجوزات", "en": "Bookings"},
+  "cost": {"ar": "التكلفة", "en": "Cost"},
+  "expenses": {"ar": "المصروفات", "en": "Expenses"},
+
+  "draft": {"ar": "مسودة", "en": "Draft"},
+  "pending_status": {"ar": "قيد الانتظار", "en": "Pending"},
+  "confirmed": {"ar": "مؤكد", "en": "Confirmed"},
+  "checked_in": {"ar": "تسكين", "en": "Checked In"},
+  "checked_out": {"ar": "مغادرة", "en": "Checked Out"},
+  "cancelled": {"ar": "ملغي", "en": "Cancelled"},
+  "closed": {"ar": "مغلق", "en": "Closed"},
+
+  "direct": {"ar": "مباشر", "en": "Direct"},
+  "online": {"ar": "أونلاين", "en": "Online"},
+  "agency": {"ar": "وكالة", "en": "Agency"},
+  "b2b": {"ar": "شركة", "en": "B2B"},
+  "other": {"ar": "أخرى", "en": "Other"},
+
+  "credit_alerts": {"ar": "إنذارات الائتمان", "en": "Credit Alerts"},
+  "alerts": {"ar": "تنبيهات", "en": "Alerts"},
+  "overdue_payments": {"ar": "مدفوعات متأخرة", "en": "Overdue Payments"},
+  "view": {"ar": "عرض", "en": "View"},
+  "outstanding_label": {"ar": "مستحق", "en": "Outstanding"},
+  "exceeded": {"ar": "متجاوز", "en": "Exceeded"},
+  "no_alerts": {"ar": "لا توجد إنذارات", "en": "No alerts"},
+  "bookings_label": {"ar": "حجوزات", "en": "bookings"}
+} %}
+
+{% macro L(key) -%}
+  {{ D.get(key, {}).get(lang, D.get(key, {}).get('en', key)) }}
+{%- endmacro %}
+
+{% set STATUS_TEXT = {
+  "draft": D["draft"],
+  "pending": D["pending_status"],
+  "confirmed": D["confirmed"],
+  "checked_in": D["checked_in"],
+  "checked_out": D["checked_out"],
+  "cancelled": D["cancelled"],
+  "closed": D["closed"]
+} %}
+
+{% set SOURCE_TEXT = {
+  "direct": D["direct"],
+  "online": D["online"],
+  "agency": D["agency"],
+  "b2b": D["b2b"],
+  "other": D["other"]
+} %}
+
+<style>
+  .erp-dashboard {
+    --ink: #101826;
+    --green: #0e6b64;
+    --green-dark: #0a4f4a;
+    --green-soft: #eaf3f1;
+    --lime: #b8873b;
+    --brass: #b8873b;
+    --brass-dark: #8f6a2c;
+    --yellow: #c99a3d;
+    --yellow-soft: #f9f0dc;
+    --red: #b0463f;
+    --red-soft: #fbeeec;
+    --blue: #3b6fa0;
+    --blue-soft: #eaf1f8;
+    --purple: #6a5a8c;
+    --purple-soft: #f0edf5;
+    --orange: #b8873b;
+    --orange-soft: #f9f0dc;
+    --teal: #0e6b64;
+    --teal-soft: #eaf3f1;
+    --text: #16202e;
+    --muted: #736a58;
+    --border: #e6ddc8;
+    --card: #ffffff;
+    direction: {{ 'ltr' if is_en else 'rtl' }};
+  }
+
+  .dash-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .dash-hero h1 {
+    margin: 0;
+    font-size: 30px;
+    font-weight: 950;
+    color: var(--text);
+    letter-spacing: -0.5px;
+  }
+
+  .dash-hero p {
+    margin-top: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .dash-date {
+    background: #fff;
+    border: 1px solid var(--border);
+    color: var(--muted);
+    padding: 10px 14px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 900;
+    box-shadow: 0 12px 28px rgba(15, 23, 42, 0.04);
+    white-space: nowrap;
+  }
+
+  /* ─── Quick Actions ─── */
+  .quick-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 22px;
+  }
+  .quick-action-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 18px;
+    border-radius: 14px;
+    font-size: 12px;
+    font-weight: 900;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--text);
+    transition: all 0.18s ease;
+    box-shadow: 0 4px 12px rgba(15,23,42,0.04);
+    cursor: pointer;
+    text-decoration: none;
+  }
+  .quick-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(15,23,42,0.08);
+    border-color: var(--green);
+    color: var(--green-dark);
+  }
+  .quick-action-btn i { font-size: 16px; }
+
+  /* ─── KPI Cards ─── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .kpi-card,
+  .dash-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.045);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .kpi-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 24px 50px rgba(15, 23, 42, 0.07);
+  }
+
+  .kpi-card {
+    padding: 18px;
+    min-height: 132px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::after {
+    content: "";
+    position: absolute;
+    left: -45px;
+    bottom: -50px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+    transition: transform 0.3s ease;
+  }
+
+  .kpi-card:hover::after {
+    transform: scale(1.15);
+  }
+
+  html[dir="ltr"] .kpi-card::after {
+    left: auto;
+    right: -45px;
+  }
+
+  .kpi-card.accent-green::after { background: rgba(32,184,116,0.08); }
+  .kpi-card.accent-yellow::after { background: rgba(245,200,76,0.10); }
+  .kpi-card.accent-red::after { background: rgba(239,91,108,0.08); }
+  .kpi-card.accent-blue::after { background: rgba(59,130,246,0.08); }
+  .kpi-card.accent-purple::after { background: rgba(139,124,246,0.08); }
+  .kpi-card.accent-orange::after { background: rgba(245,158,11,0.08); }
+
+  .kpi-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    transition: transform 0.2s ease;
+  }
+
+  .kpi-card:hover .kpi-icon {
+    transform: scale(1.08);
+  }
+
+  .erp-dashboard .kpi-icon.green { background: var(--green-soft); color: var(--green); }
+  .erp-dashboard .kpi-icon.yellow { background: var(--yellow-soft); color: #b17a00; }
+  .erp-dashboard .kpi-icon.red { background: var(--red-soft); color: var(--red); }
+  .erp-dashboard .kpi-icon.blue { background: var(--blue-soft); color: var(--blue); }
+  .erp-dashboard .kpi-icon.purple { background: var(--purple-soft); color: var(--purple); }
+  .erp-dashboard .kpi-icon.orange { background: var(--orange-soft); color: #d97706; }
+  .erp-dashboard .kpi-icon.teal { background: var(--teal-soft); color: #0d9488; }
+
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    color: var(--text);
+    font-size: 29px;
+    font-weight: 950;
+    line-height: 1.1;
+    direction: ltr;
+    text-align: {{ 'left' if is_en else 'right' }};
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-note {
+    margin-top: 9px;
+    font-size: 11px;
+    color: var(--muted);
+    position: relative;
+    z-index: 1;
+  }
+
+  .trend {
+    font-size: 11px;
+    font-weight: 950;
+    padding: 6px 9px;
+    border-radius: 999px;
+  }
+
+  .trend.up {
+    color: var(--green-dark);
+    background: var(--green-soft);
+  }
+
+  /* ─── توقيع بصري: كروت الـ KPI بشكل "كعب تذكرة صعود" ─── */
+  .kpi-card {
+    border-inline-start: 3px solid var(--brass);
+  }
+
+  .ticket-tear {
+    margin: 12px 0 9px;
+    border-top: 1.5px dashed rgba(184, 135, 59, .45);
+    position: relative;
+    z-index: 1;
+  }
+
+  .ticket-tear::before,
+  .ticket-tear::after {
+    content: "";
+    position: absolute;
+    top: -6px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: #f7f3ea;
+  }
+
+  .ticket-tear::before { inset-inline-start: -18px; }
+  .ticket-tear::after { inset-inline-end: -18px; }
+
+  .kpi-card .kpi-value {
+    font-family: "El Messiri", "Cairo", sans-serif;
+    letter-spacing: 0.3px;
+  }
+
+  .trend.down {
+    color: var(--red);
+    background: var(--red-soft);
+  }
+
+  /* ─── Grid Layouts ─── */
+  .dash-grid-main {
+    display: grid;
+    grid-template-columns: 1.45fr 0.95fr;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .dash-grid-three {
+    display: grid;
+    grid-template-columns: 1.25fr 0.9fr 0.9fr;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .dash-card { transition: transform 0.2s ease, box-shadow 0.2s ease; }
+  .dash-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 22px 48px rgba(15, 23, 42, 0.06);
+  }
+
+  .dash-card-head {
+    padding: 19px 22px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .dash-card-head h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 950;
+  }
+
+  .dash-card-head span {
+    font-size: 12px;
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 7px 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .dash-card-body {
+    padding: 18px 22px 22px;
+  }
+
+  .chart-lg {
+    height: 320px;
+  }
+
+  .chart-md {
+    height: 250px;
+  }
+
+  .chart-lg canvas,
+  .chart-md canvas {
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* ─── Table ─── */
+  .clean-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 12px;
+  }
+
+  .clean-table th {
+    background: #fbfdfc;
+    color: var(--muted);
+    padding: 13px 10px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .clean-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .clean-table tr:hover td {
+    background: #fbfdfc;
+  }
+
+  /* ─── Badges ─── */
+  .soft-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .badge-green { background: var(--green-soft); color: var(--green-dark); }
+  .badge-yellow { background: var(--yellow-soft); color: #7a5a1f; }
+  .badge-red { background: var(--red-soft); color: #8a332d; }
+  .badge-blue { background: var(--blue-soft); color: #234868; }
+  .badge-gray { background: #f1ede1; color: #736a58; }
+  .badge-purple { background: var(--purple-soft); color: #4d4066; }
+
+  /* ─── Info / List Items ─── */
+  .info-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .info-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 13px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: #fff;
+    transition: 0.15s ease;
+  }
+
+  .info-row:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 10px 22px rgba(15, 23, 42, 0.045);
+  }
+
+  .info-left {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    min-width: 0;
+  }
+
+  .avatar-soft {
+    width: 42px;
+    height: 42px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, var(--green-soft), var(--lime));
+    color: var(--green-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 950;
+    flex-shrink: 0;
+  }
+
+  .info-title {
+    font-size: 13px;
+    color: var(--text);
+    font-weight: 950;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .info-sub {
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  /* ─── Profit Summary ─── */
+  .profit-summary {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .profit-box {
+    padding: 15px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: #fbfdfc;
+    transition: background 0.2s ease;
+  }
+
+  .profit-box:hover {
+    background: #f5fdf7;
+  }
+
+  .profit-box .label {
+    font-size: 11px;
+    color: var(--muted);
+    font-weight: 800;
+  }
+
+  .profit-box .value {
+    margin-top: 4px;
+    font-size: 23px;
+    font-weight: 950;
+    direction: ltr;
+    text-align: {{ 'left' if is_en else 'right' }};
+  }
+
+  /* ─── Empty State ─── */
+  .empty-state {
+    padding: 28px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  /* ─── Responsive ─── */
+  @media (max-width: 1400px) {
+    .kpi-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+    .dash-grid-main,
+    .dash-grid-three {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 768px) {
+    .dash-hero {
+      flex-direction: column;
+    }
+    .kpi-grid {
+      grid-template-columns: 1fr;
+    }
+    .dash-hero h1 {
+      font-size: 23px;
+    }
+    .profit-summary {
+      grid-template-columns: 1fr;
+    }
+    .quick-actions {
+      justify-content: center;
+    }
+  }
+</style>
+
+<div class="erp-dashboard">
+
+  <div class="dash-hero">
+    <div>
+      <h1>{{ L("dashboard_title") }}</h1>
+      <p>{{ L("dashboard_subtitle") }}</p>
+    </div>
+
+    <div class="dash-date">
+      <i class="bi bi-calendar3"></i>
+      {{ today() }}
+    </div>
+  </div>
+
+  <div class="quick-actions">
+    <a href="/reservations" class="quick-action-btn"><i class="bi bi-plus-circle"></i> {{ L("quick_add_booking") }}</a>
+    <a href="/collections" class="quick-action-btn"><i class="bi bi-cash-coin"></i> {{ L("quick_collection") }}</a>
+    <a href="/expenses" class="quick-action-btn"><i class="bi bi-receipt"></i> {{ L("quick_expense") }}</a>
+    <a href="/reports" class="quick-action-btn"><i class="bi bi-bar-chart"></i> {{ L("quick_reports") }}</a>
+    <a href="/reservations/board" class="quick-action-btn"><i class="bi bi-columns-gap"></i> {{ L("quick_board") }}</a>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card accent-green">
+      <div class="kpi-top">
+        <div class="kpi-icon green"><i class="bi bi-calendar-check"></i></div>
+        <span class="trend {{ 'up' if bookings_trend >= 0 else 'down' }}">
+          {{ bookings_trend }}%
+        </span>
+      </div>
+      <div class="kpi-label">{{ L("total_bookings") }}</div>
+      <div class="kpi-value"><span class="kpi-counter" data-target="{{ bookings_count }}">0</span></div>
+      <div class="ticket-tear"></div>
+      <div class="kpi-note">{{ L("total_bookings_note") }}</div>
+    </div>
+
+    <div class="kpi-card accent-green">
+      <div class="kpi-top">
+        <div class="kpi-icon green"><i class="bi bi-cash-stack"></i></div>
+        <span class="trend {{ 'up' if revenue_trend >= 0 else 'down' }}">
+          {{ revenue_trend }}%
+        </span>
+      </div>
+      <div class="kpi-label">{{ L("total_revenue") }}</div>
+      <div class="kpi-value"><span class="kpi-counter" data-target="{{ "%.0f"|format(total_revenue) }}">0</span></div>
+      <div class="ticket-tear"></div>
+      <div class="kpi-note">{{ L("total_revenue_note") }}</div>
+    </div>
+
+    <div class="kpi-card accent-yellow">
+      <div class="kpi-top">
+        <div class="kpi-icon yellow"><i class="bi bi-coin"></i></div>
+        <span class="soft-badge badge-yellow">{{ L("gross") }}</span>
+      </div>
+      <div class="kpi-label">{{ L("gross_profit") }}</div>
+      <div class="kpi-value"><span class="kpi-counter" data-target="{{ "%.0f"|format(gross_profit_total) }}">0</span></div>
+      <div class="ticket-tear"></div>
+      <div class="kpi-note">{{ L("gross_profit_note") }}</div>
+    </div>
+
+    <div class="kpi-card accent-red">
+      <div class="kpi-top">
+        <div class="kpi-icon red"><i class="bi bi-credit-card-2-front"></i></div>
+        <span class="soft-badge badge-red">{{ L("pending") }}</span>
+      </div>
+      <div class="kpi-label">{{ L("pending_payments") }}</div>
+      <div class="kpi-value"><span class="kpi-counter" data-target="{{ "%.0f"|format(pending_payments) }}">0</span></div>
+      <div class="ticket-tear"></div>
+      <div class="kpi-note">{{ L("pending_payments_note") }}</div>
+    </div>
+
+    <div class="kpi-card accent-blue">
+      <div class="kpi-top">
+        <div class="kpi-icon blue"><i class="bi bi-box-arrow-in-right"></i></div>
+        <span class="soft-badge badge-blue">{{ L("today") }}</span>
+      </div>
+      <div class="kpi-label">{{ L("today_arrivals") }}</div>
+      <div class="kpi-value"><span class="kpi-counter" data-target="{{ today_departures|length }}">0</span></div>
+      <div class="ticket-tear"></div>
+      <div class="kpi-note">{{ L("today_arrivals_note") }}</div>
+    </div>
+
+    <div class="kpi-card accent-purple">
+      <div class="kpi-top">
+        <div class="kpi-icon purple"><i class="bi bi-box-arrow-right"></i></div>
+        <span class="soft-badge badge-gray">{{ L("today") }}</span>
+      </div>
+      <div class="kpi-label">{{ L("today_departures") }}</div>
+      <div class="kpi-value"><span class="kpi-counter" data-target="{{ today_checkouts|length }}">0</span></div>
+      <div class="ticket-tear"></div>
+      <div class="kpi-note">{{ L("today_departures_note") }}</div>
+    </div>
+  </div>
+
+  <div class="dash-grid-main">
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>{{ L("booking_revenue_performance") }}</h2>
+        <span>{{ L("last_14_days") }}</span>
+      </div>
+      <div class="dash-card-body">
+        <div class="chart-lg">
+          <canvas id="mainTrendChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>{{ L("reservation_status") }}</h2>
+        <span>{{ L("status") }}</span>
+      </div>
+      <div class="dash-card-body">
+        <div class="chart-md">
+          <canvas id="statusChart"></canvas>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mt-4">
+          {% for key, count in status_counts.items() %}
+            {% set badge_class = {'draft':'badge-gray','pending':'badge-yellow','confirmed':'badge-green','checked_in':'badge-blue','checked_out':'badge-green','cancelled':'badge-red','closed':'badge-gray'}.get(key,'badge-gray') %}
+            <span class="soft-badge {{ badge_class }}">
+              {{ STATUS_TEXT.get(key, {}).get(lang, STATUS_LABELS.get(key, key)) }}: {{ count }}
+            </span>
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-grid-three">
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>{{ L("recent_bookings") }}</h2>
+        <span>{{ L("recent") }}</span>
+      </div>
+
+      <div class="dash-card-body overflow-x-auto">
+        <table class="clean-table">
+          <thead>
+            <tr>
+              <th>{{ L("booking_no") }}</th>
+              <th>{{ L("customer") }}</th>
+              <th>{{ L("hotel") }}</th>
+              <th>{{ L("arrival") }}</th>
+              <th>{{ L("amount") }}</th>
+              <th>{{ L("payment") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for b in recent_bookings %}
+            <tr>
+              <td class="font-bold" style="color: var(--green-dark);">{{ b.booking_number }}</td>
+              <td>{{ b.customer.name if b.customer else b.guest_name }}</td>
+              <td>{{ b.hotel.name if b.hotel else '-' }}</td>
+              <td>{{ b.checkin_date or '-' }}</td>
+              <td class="font-bold">{{ "%.0f"|format(b.company_cost or 0) }}</td>
+              <td>
+                <span class="soft-badge {{ 'badge-green' if b.is_paid_in_full else 'badge-yellow' }}">
+                  {{ L("paid") if b.is_paid_in_full else L("open") }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+
+            {% if not recent_bookings %}
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">{{ L("no_bookings") }}</div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>{{ L("today_activity") }}</h2>
+        <span>{{ L("today") }}</span>
+      </div>
+
+      <div class="dash-card-body">
+        <div class="info-list">
+          <div class="info-row">
+            <div class="info-left">
+              <div class="avatar-soft"><i class="bi bi-box-arrow-in-right"></i></div>
+              <div>
+                <div class="info-title">{{ L("today_arrivals") }}</div>
+                <div class="info-sub">{{ today_departures|length }} {{ L("booking_word") }}</div>
+              </div>
+            </div>
+            <span class="soft-badge badge-green">{{ L("active") }}</span>
+          </div>
+
+          <div class="info-row">
+            <div class="info-left">
+              <div class="avatar-soft"><i class="bi bi-box-arrow-right"></i></div>
+              <div>
+                <div class="info-title">{{ L("today_departures") }}</div>
+                <div class="info-sub">{{ today_checkouts|length }} {{ L("booking_word") }}</div>
+              </div>
+            </div>
+            <span class="soft-badge badge-blue">{{ L("follow") }}</span>
+          </div>
+
+          <div class="info-row">
+            <div class="info-left">
+              <div class="avatar-soft"><i class="bi bi-exclamation-circle"></i></div>
+              <div>
+                <div class="info-title">{{ L("pending_collections") }}</div>
+                <div class="info-sub">{{ outstanding|length }} {{ L("booking_word") }}</div>
+              </div>
+            </div>
+            <span class="soft-badge badge-yellow">{{ L("important") }}</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>{{ L("credit_alerts") }}</h2>
+        <span>{{ L("alerts") }}</span>
+      </div>
+      <div class="dash-card-body">
+        {% if overdue_reservations %}
+        <div class="info-row" style="border-color:#fef3c7;background:#fffbeb;border-radius:12px;padding:12px;margin-bottom:10px">
+          <div class="info-left">
+            <div class="avatar-soft" style="background:#fef3c7;color:#92400e"><i class="bi bi-clock-history"></i></div>
+            <div>
+              <div class="info-title" style="color:#92400e;font-weight:950">{{ L("overdue_payments") }}</div>
+              <div class="info-sub">{{ overdue_reservations|length }} {{ L("bookings_label") }} — {{ "%.2f"|format(overdue_total) }}</div>
+            </div>
+          </div>
+          <a href="/reservations?overdue=1" class="soft-badge badge-yellow" style="text-decoration:none">{{ L("view") }}</a>
+        </div>
+        {% endif %}
+        {% for ec in exceeded_customers %}
+        <div class="info-row" style="border-color:#fee2e2;background:#fef2f2;border-radius:12px;padding:12px;margin-bottom:6px">
+          <div class="info-left">
+            <div class="avatar-soft" style="background:#fee2e2;color:#991b1b"><i class="bi bi-exclamation-triangle"></i></div>
+            <div>
+              <div class="info-title" style="color:#991b1b;font-weight:950">{{ ec.name }}</div>
+              <div class="info-sub">{{ L("outstanding_label") }}: {{ "%.2f"|format(ec.outstanding) }} / {{ "%.2f"|format(ec.limit) }}</div>
+            </div>
+          </div>
+          <a href="/reports/customer-credit" class="soft-badge badge-red" style="text-decoration:none">{{ L("exceeded") }}</a>
+        </div>
+        {% endfor %}
+        {% if not overdue_reservations and not exceeded_customers %}
+        <div class="empty-state"><i class="bi bi-check-circle" style="color:#059669;font-size:24px;display:block;margin-bottom:6px"></i>{{ L("no_alerts") }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+  </div>
+
+  <div class="dash-grid-main">
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>{{ L("revenue_vs_cost") }}</h2>
+        <span>{{ L("revenue_cost") }}</span>
+      </div>
+      <div class="dash-card-body">
+        <div class="chart-lg">
+          <canvas id="revenueCostChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>{{ L("profit_summary") }}</h2>
+        <span>{{ profit_margin }}%</span>
+      </div>
+
+      <div class="dash-card-body">
+        <div class="profit-summary">
+          <div class="profit-box">
+            <div class="label">{{ L("net_profit") }}</div>
+            <div class="value" style="color:{{ '#0a4f4a' if net_profit >= 0 else '#b0463f' }};">
+              {{ "%.0f"|format(net_profit) }}
+            </div>
+          </div>
+
+          <div class="profit-box">
+            <div class="label">{{ L("total_expenses") }}</div>
+            <div class="value" style="color:#172033;">
+              {{ "%.0f"|format(total_expenses) }}
+            </div>
+          </div>
+        </div>
+
+        <div class="chart-md">
+          <canvas id="profitChart"></canvas>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="dash-grid-three">
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>{{ L("booking_sources") }}</h2>
+        <span>{{ L("source") }}</span>
+      </div>
+      <div class="dash-card-body">
+        <div class="chart-md">
+          <canvas id="sourceChart"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>{{ L("top_agents") }}</h2>
+        <span>{{ L("agents") }}</span>
+      </div>
+      <div class="dash-card-body">
+        {% if top_agents %}
+          {% for name, total in top_agents[:5] %}
+          <div class="info-row mb-3">
+            <div class="info-left">
+              <div class="avatar-soft">{{ (name or '?')[:1] }}</div>
+              <div>
+                <div class="info-title">{{ name }}</div>
+                <div class="info-sub">{{ L("total_commissions") }}</div>
+              </div>
+            </div>
+            <div class="font-black" style="color:var(--green-dark);">
+              {{ "%.0f"|format(total) }}
+            </div>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">{{ L("no_agents") }}</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <div class="dash-card">
+      <div class="dash-card-head">
+        <h2>{{ L("highest_pending") }}</h2>
+        <span>{{ L("follow_up") }}</span>
+      </div>
+
+      <div class="dash-card-body">
+        {% if outstanding %}
+          {% for r in outstanding[:5] %}
+          <div class="info-row mb-3">
+            <div>
+              <div class="info-title">{{ r.customer.name if r.customer else r.guest_name }}</div>
+              <div class="info-sub">{{ r.booking_number }}</div>
+            </div>
+            <span class="soft-badge badge-red">
+              {{ "%.0f"|format(r.remaining_to_office) }}
+            </span>
+          </div>
+          {% endfor %}
+        {% else %}
+          <div class="empty-state">{{ L("no_pending_amounts") }}</div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    if (typeof Chart === 'undefined') return;
+
+    const palette = {
+      green: '#0e6b64',
+      greenDark: '#0a4f4a',
+      greenGrad: ['rgba(14,107,100,0.32)', 'rgba(14,107,100,0.02)'],
+      lime: '#b8873b',
+      yellow: '#c99a3d',
+      red: '#b0463f',
+      blue: '#3b6fa0',
+      blueGrad: ['rgba(59,111,160,0.22)', 'rgba(59,111,160,0.02)'],
+      purple: '#6a5a8c',
+      orange: '#b8873b',
+      teal: '#0e6b64',
+      gray: '#a89e88',
+      grid: 'rgba(115, 106, 88, 0.12)',
+      text: '#736a58'
+    };
+
+    const chartLabels = {{ chart_labels|tojson }};
+    const dailyRevenue = {{ daily_revenue|tojson }};
+    const dailyCounts = {{ daily_counts|tojson }};
+    const dailyCost = {{ daily_cost|tojson }};
+
+    const statusLabels = [
+      {% for key in status_counts.keys() %}
+        {{ STATUS_TEXT.get(key, {}).get(lang, STATUS_LABELS.get(key, key))|tojson }}{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ];
+    const statusValues = {{ status_counts.values()|list|tojson }};
+
+    const sourceLabels = [
+      {% for key in source_counts.keys() %}
+        {{ SOURCE_TEXT.get(key, {}).get(lang, key)|tojson }}{% if not loop.last %},{% endif %}
+      {% endfor %}
+    ];
+    const sourceValues = {{ source_counts.values()|list|tojson }};
+
+    const netProfit = Number({{ net_profit|tojson }}) || 0;
+    const totalExpenses = Number({{ total_expenses|tojson }}) || 0;
+
+    Chart.defaults.font.family = "'Cairo', 'Inter', system-ui, sans-serif";
+    Chart.defaults.color = palette.text;
+
+    // ── Shared helpers ──
+    function createGradient(ctx, c1, c2) {
+      const g = ctx.createLinearGradient(0, 0, 0, 320);
+      g.addColorStop(0, c1);
+      g.addColorStop(1, c2);
+      return g;
+    }
+
+    function doughnutCenterText(plugin) {
+      return {
+        id: 'centerText',
+        beforeDraw(chart) {
+          const {width, height, ctx} = chart;
+          ctx.save();
+          const text = plugin(chart);
+          if (!text) return;
+          ctx.textAlign = 'center';
+          ctx.textBaseline = 'middle';
+          ctx.font = `950 ${text.size}px 'Cairo','Inter',sans-serif`;
+          ctx.fillStyle = text.color || '#172033';
+          ctx.fillText(text.label, width / 2, height / 2);
+          if (text.sub) {
+            ctx.font = `700 11px 'Cairo','Inter',sans-serif`;
+            ctx.fillStyle = palette.text;
+            ctx.fillText(text.sub, width / 2, height / 2 + (text.size * 0.7));
+          }
+          ctx.restore();
+        }
+      };
+    }
+
+    // ── Main Trend Chart ──
+    const mainEl = document.getElementById('mainTrendChart');
+    if (mainEl) {
+      const ctx = mainEl.getContext('2d');
+      new Chart(mainEl, {
+        type: 'line',
+        data: {
+          labels: chartLabels,
+          datasets: [
+            {
+              label: {{ L("revenue")|tojson }},
+              data: dailyRevenue,
+              borderColor: palette.green,
+              backgroundColor: createGradient(ctx, ...palette.greenGrad),
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 7,
+              pointBackgroundColor: '#fff',
+              pointBorderColor: palette.green,
+              pointBorderWidth: 2.5,
+              borderWidth: 2.5
+            },
+            {
+              label: {{ L("bookings")|tojson }},
+              data: dailyCounts,
+              borderColor: palette.blue,
+              backgroundColor: createGradient(ctx, ...palette.blueGrad),
+              fill: true,
+              tension: 0.4,
+              pointRadius: 4,
+              pointHoverRadius: 7,
+              pointBackgroundColor: '#fff',
+              pointBorderColor: palette.blue,
+              pointBorderWidth: 2.5,
+              borderWidth: 2.5,
+              yAxisID: 'y1'
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'index', intersect: false },
+          animation: { duration: 1000, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, padding: 16 } },
+            tooltip: {
+              backgroundColor: '#fff',
+              titleColor: '#172033',
+              bodyColor: '#6b7280',
+              borderColor: '#e8eee9',
+              borderWidth: 1,
+              cornerRadius: 12,
+              padding: 12,
+              boxPadding: 6
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+            y: { beginAtZero: true, grid: { color: palette.grid }, ticks: { font: { size: 10 } } },
+            y1: {
+              beginAtZero: true,
+              grid: { display: false },
+              position: 'right',
+              ticks: { font: { size: 10 } }
+            }
+          }
+        }
+      });
+    }
+
+    // ── Status Donut ──
+    const statusEl = document.getElementById('statusChart');
+    if (statusEl) {
+      const total = statusValues.reduce((a, b) => a + b, 0);
+      new Chart(statusEl, {
+        type: 'doughnut',
+        data: {
+          labels: statusLabels,
+          datasets: [{
+            data: statusValues,
+            backgroundColor: [palette.green, palette.yellow, palette.red, palette.blue, palette.purple, palette.gray],
+            borderWidth: 0,
+            hoverOffset: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '72%',
+          animation: { animateRotate: true, duration: 900, easing: 'easeOutElastic' },
+          plugins: {
+            legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 }, padding: 14 } },
+            tooltip: {
+              callbacks: {
+                label: ctx => ` ${ctx.label}: ${ctx.parsed} (${((ctx.parsed / total) * 100).toFixed(1)}%)`
+              }
+            }
+          }
+        },
+        plugins: [doughnutCenterText(() => ({
+          label: total,
+          sub: {{ L("total_bookings")|tojson }},
+          size: 28,
+          color: '#172033'
+        }))]
+      });
+    }
+
+    // ── Revenue vs Cost Bar ──
+    const revCostEl = document.getElementById('revenueCostChart');
+    if (revCostEl) {
+      new Chart(revCostEl, {
+        type: 'bar',
+        data: {
+          labels: chartLabels,
+          datasets: [
+            {
+              label: {{ L("revenue")|tojson }},
+              data: dailyRevenue,
+              backgroundColor: palette.green,
+              borderRadius: 8,
+              barThickness: 14
+            },
+            {
+              label: {{ L("cost")|tojson }},
+              data: dailyCost,
+              backgroundColor: palette.lime,
+              borderRadius: 8,
+              barThickness: 14
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          animation: { duration: 800, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { position: 'top', labels: { usePointStyle: true, boxWidth: 8, padding: 16 } },
+            tooltip: {
+              backgroundColor: '#fff',
+              titleColor: '#172033',
+              bodyColor: '#6b7280',
+              borderColor: '#e8eee9',
+              borderWidth: 1,
+              cornerRadius: 12,
+              padding: 12
+            }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 10 } } },
+            y: { beginAtZero: true, grid: { color: palette.grid }, ticks: { font: { size: 10 } } }
+          }
+        }
+      });
+    }
+
+    // ── Profit Donut ──
+    const profitEl = document.getElementById('profitChart');
+    if (profitEl) {
+      const pTotal = (netProfit > 0 ? netProfit : 0) + (totalExpenses > 0 ? totalExpenses : 1);
+      new Chart(profitEl, {
+        type: 'doughnut',
+        data: {
+          labels: [{{ L("net_profit")|tojson }}, {{ L("expenses")|tojson }}],
+          datasets: [{
+            data: [netProfit > 0 ? netProfit : 0, totalExpenses > 0 ? totalExpenses : 1],
+            backgroundColor: [palette.green, '#edf2f0'],
+            borderWidth: 0,
+            hoverOffset: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '78%',
+          animation: { animateRotate: true, duration: 900, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, padding: 14 } }
+          }
+        },
+        plugins: [doughnutCenterText(() => ({
+          label: netProfit > 0 ? '{{ "%.0f"|format(net_profit) }}' : '0',
+          sub: {{ L("net_profit")|tojson }},
+          size: 26,
+          color: netProfit >= 0 ? palette.greenDark : palette.red
+        }))]
+      });
+    }
+
+    // ── Source Donut ──
+    const sourceEl = document.getElementById('sourceChart');
+    if (sourceEl) {
+      new Chart(sourceEl, {
+        type: 'doughnut',
+        data: {
+          labels: sourceLabels,
+          datasets: [{
+            data: sourceValues,
+            backgroundColor: [palette.green, palette.yellow, palette.blue, palette.purple, palette.gray],
+            borderWidth: 0,
+            hoverOffset: 0
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          cutout: '68%',
+          animation: { animateRotate: true, duration: 800, easing: 'easeOutQuart' },
+          plugins: {
+            legend: { position: 'bottom', labels: { usePointStyle: true, boxWidth: 8, font: { size: 11 }, padding: 14 } }
+          }
+        }
+      });
+    }
+
+    // ── KPI Counter Animation ──
+    document.querySelectorAll('.kpi-counter').forEach(el => {
+      const target = parseFloat(el.getAttribute('data-target'));
+      if (isNaN(target)) return;
+      const duration = 1200;
+      const step = target / (duration / 16);
+      let current = 0;
+      const update = () => {
+        current += step;
+        if (current >= target) {
+          el.textContent = target.toLocaleString();
+          return;
+        }
+        el.textContent = Math.floor(current).toLocaleString();
+        requestAnimationFrame(update);
+      };
+      update();
+    });
+  });
+</script>
+
+{% endblock %}

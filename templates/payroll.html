@@ -1,0 +1,401 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .payroll-page {
+    --green: #20b874;
+    --green-dark: #11885a;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f5c84c;
+    --yellow-soft: #fff7df;
+    --red: #ef5b6c;
+    --red-soft: #fff0f2;
+    --purple: #8b7cf6;
+    --purple-soft: #f3f0ff;
+    --text: #172033;
+    --muted: #7b8798;
+    --border: #e8eee9;
+    direction: inherit;
+  }
+
+  .payroll-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .payroll-head h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .payroll-head p {
+    margin-top: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .month-filter {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 10px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.04);
+  }
+
+  .month-filter input {
+    height: 42px;
+    border: 1px solid #dfe7e3;
+    border-radius: 13px;
+    padding: 0 12px;
+    font-size: 13px;
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .kpi-card,
+  .payroll-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.045);
+  }
+
+  .kpi-card {
+    padding: 18px;
+    min-height: 126px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::after {
+    content: "";
+    position: absolute;
+    left: -45px;
+    bottom: -50px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+  }
+
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-icon.green { background: var(--green-soft); color: var(--green); }
+  .kpi-icon.blue { background: var(--blue-soft); color: var(--blue); }
+  .kpi-icon.yellow { background: var(--yellow-soft); color: #b17a00; }
+  .kpi-icon.red { background: var(--red-soft); color: var(--red); }
+
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    color: var(--text);
+    font-size: 29px;
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .payroll-card-head {
+    padding: 19px 22px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .payroll-card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .payroll-card-head span {
+    font-size: 12px;
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 7px 11px;
+    font-weight: 800;
+  }
+
+  .payroll-card-body {
+    padding: 18px 22px 22px;
+  }
+
+  .payroll-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .payroll-table th {
+    background: #fbfdfc;
+    color: var(--muted);
+    padding: 13px 10px;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .payroll-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .payroll-table tr:hover td {
+    background: #fbfdfc;
+  }
+
+  .employee-name {
+    color: var(--green-dark);
+    font-weight: 950;
+  }
+
+  .soft-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .badge-green { background: #eafff4; color: var(--green-dark); }
+  .badge-blue { background: var(--blue-soft); color: #11885a; }
+  .badge-yellow { background: var(--yellow-soft); color: #986a00; }
+  .badge-red { background: var(--red-soft); color: #c7384c; }
+  .badge-gray { background: #f1f5f9; color: #64748b; }
+
+  .salary-value {
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+  }
+
+  .summary-row td {
+    background: #fbfdfc !important;
+    font-weight: 950;
+  }
+
+  .empty-state {
+    padding: 32px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1100px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 700px) {
+    .payroll-head,
+    .month-filter {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .kpi-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+{% set ns = namespace(total_commission=0, total_withdrawn=0, total_net=0) %}
+{% for row in payroll_rows %}
+  {% set ns.total_commission = ns.total_commission + (row.commission or 0) %}
+  {% set ns.total_withdrawn = ns.total_withdrawn + (row.withdrawn or 0) %}
+  {% set ns.total_net = ns.total_net + (row.net_due or 0) %}
+{% endfor %}
+
+<div class="payroll-page">
+
+  <div class="payroll-head">
+    <div>
+      <h1>{{ L("الرواتب الشهرية", "Monthly Salaries") }}</h1>
+      <p>{{ L("متابعة رواتب الموظفين، العمولات، المسحوبات، وصافي المستحق خلال الشهر.", "Track employee salaries, commissions, withdrawals, and net due for the month.") }}</p>
+    </div>
+
+    <form method="get" action="/payroll" class="month-filter">
+      <input type="month" name="month" value="{{ selected_month }}">
+      <button class="btn-add justify-center">
+        {{ L("تطبيق", "Apply") }}
+      </button>
+    </form>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon green">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div class="kpi-label">{{ L("عدد الموظفين", "Employee Count") }}</div>
+      <div class="kpi-value">{{ payroll_rows|length }}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon blue">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي الرواتب والعمولات", "Total Salaries & Commissions") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(grand_total or 0) }}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon red">
+        <i class="bi bi-cash"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي المسحوبات", "Total Withdrawals") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.total_withdrawn or 0) }}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon yellow">
+        <i class="bi bi-coin"></i>
+      </div>
+      <div class="kpi-label">{{ L("صافي المستحق", "Net Due") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.total_net or 0) }}</div>
+    </div>
+  </div>
+
+  <div class="payroll-card">
+    <div class="payroll-card-head">
+      <h2>{{ L("كشف الرواتب", "Payroll Sheet") }}</h2>
+      <span>{{ selected_month }}</span>
+    </div>
+
+    <div class="payroll-card-body overflow-x-auto">
+      <table class="payroll-table">
+        <thead>
+          <tr>
+            <th>{{ L("الموظف", "Employee") }}</th>
+            <th>{{ L("عدد الحجوزات", "Booking Count") }}</th>
+            <th>{{ L("الراتب الأساسي", "Basic Salary") }}</th>
+            <th>{{ L("العمولات", "Commissions") }}</th>
+            <th>{{ L("إجمالي الراتب", "Total Salary") }}</th>
+            <th>{{ L("المسحوب", "Withdrawn") }}</th>
+            <th>{{ L("الصافي المستحق", "Net Due") }}</th>
+            <th>{{ L("الحالة", "Status") }}</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for row in payroll_rows %}
+          <tr>
+            <td>
+              <span class="employee-name">
+                {{ row.employee.name }}
+              </span>
+            </td>
+
+            <td>
+              <span class="soft-badge badge-blue">
+                {{ row.reservations_count }}
+              </span>
+            </td>
+
+            <td class="salary-value">
+              {{ "%.2f"|format(row.employee.salary or 0) }}
+            </td>
+
+            <td class="salary-value" style="color: var(--green-dark);">
+              {{ "%.2f"|format(row.commission or 0) }}
+            </td>
+
+            <td class="salary-value">
+              {{ "%.2f"|format(row.total_salary or 0) }}
+            </td>
+
+            <td class="salary-value" style="color: var(--red);">
+              {{ "%.2f"|format(row.withdrawn or 0) }}
+            </td>
+
+            <td class="salary-value" style="color: {{ '#11885a' if row.net_due >= 0 else '#ef5b6c' }};">
+              {{ "%.2f"|format(row.net_due or 0) }}
+            </td>
+
+            <td>
+              {% if row.net_due > 0 %}
+                <span class="soft-badge badge-yellow">{{ L("مستحق", "Due") }}</span>
+              {% elif row.net_due == 0 %}
+                <span class="soft-badge badge-green">{{ L("مسدد", "Paid") }}</span>
+              {% else %}
+                <span class="soft-badge badge-red">{{ L("زيادة سحب", "Withdrawal Excess") }}</span>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+
+          {% if payroll_rows %}
+          <tr class="summary-row">
+            <td>{{ L("الإجمالي", "Total") }}</td>
+            <td></td>
+            <td></td>
+            <td class="salary-value">{{ "%.2f"|format(ns.total_commission or 0) }}</td>
+            <td class="salary-value">{{ "%.2f"|format(grand_total or 0) }}</td>
+            <td class="salary-value">{{ "%.2f"|format(ns.total_withdrawn or 0) }}</td>
+            <td class="salary-value">{{ "%.2f"|format(ns.total_net or 0) }}</td>
+            <td></td>
+          </tr>
+          {% endif %}
+
+          {% if not payroll_rows %}
+          <tr>
+            <td colspan="8">
+              <div class="empty-state">{{ L("لا توجد بيانات رواتب لهذا الشهر", "No payroll data for this month") }}</div>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

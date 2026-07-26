@@ -1,0 +1,28 @@
+<div data-unread-count="{{ unread_count }}">
+  <div class="notif-dd-head">
+    <span>{{ L("الإشعارات", "Notifications") }}{% if unread_count > 0 %} ({{ unread_count }}){% endif %}</span>
+    <a href="/notifications">{{ L("عرض الكل", "View all") }}</a>
+  </div>
+
+  {% for n in notifications %}
+  <a href="/notifications/{{ n.id }}/read" class="notif-item {{ 'unread' if not n.is_read else '' }}"
+     onclick="event.preventDefault();
+              fetch('/notifications/{{ n.id }}/read', {method:'POST', headers:{'Content-Type':'application/x-www-form-urlencoded'}, body:'csrf_token={{ csrf_token() }}'})
+                .then(function(){ {% if n.link %}window.location.href='{{ n.link }}';{% else %}window.location.href='/notifications';{% endif %} });">
+    <div class="t">
+      {% if n.category == 'danger' %}<i class="bi bi-exclamation-circle-fill" style="color:#b0463f"></i>
+      {% elif n.category == 'warning' %}<i class="bi bi-exclamation-triangle-fill" style="color:#c99a3d"></i>
+      {% elif n.category == 'success' %}<i class="bi bi-check-circle-fill" style="color:#0a4f4a"></i>
+      {% else %}<i class="bi bi-info-circle-fill" style="color:#736a58"></i>{% endif %}
+      {{ n.title }}
+    </div>
+    {% if n.body %}<div class="b">{{ n.body }}</div>{% endif %}
+    <div class="ts">{{ n.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+  </a>
+  {% else %}
+  <div class="notif-empty">
+    <i class="bi bi-bell-slash" style="font-size:22px;display:block;margin-bottom:8px;"></i>
+    {{ L("مفيش إشعارات دلوقتي", "No notifications yet") }}
+  </div>
+  {% endfor %}
+</div>

@@ -1,0 +1,682 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .pipeline-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --red:#ef5b6c;
+    --yellow:#f5c84c;
+    direction:inherit;
+  }
+
+  .pipeline-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:16px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+  }
+
+  .pipeline-header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .pipeline-header p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .header-actions{
+    display:flex;
+    gap:8px;
+    flex-wrap:wrap;
+    align-items:center;
+  }
+
+  .header-btn{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:10px 18px;
+    border-radius:14px;
+    font-size:13px;
+    font-weight:900;
+    text-decoration:none;
+    transition:.16s ease;
+    border:1px solid var(--border);
+    background:#fff;
+    color:var(--text);
+    box-shadow:0 6px 14px rgba(15,23,42,.05);
+    white-space:nowrap;
+  }
+
+  .header-btn:hover{
+    transform:translateY(-1px);
+    box-shadow:0 8px 20px rgba(15,23,42,.08);
+  }
+
+  .header-btn.primary{
+    background:linear-gradient(135deg,#c4d86b,#b8c96a);
+    border:0;
+    color:#172033;
+    box-shadow:0 8px 16px rgba(216,240,106,.22);
+  }
+
+  .header-btn.alert{
+    position:relative;
+  }
+
+  .alert-badge{
+    position:absolute;
+    top:-6px;
+    inset-inline-end:-6px;
+    min-width:20px;
+    height:20px;
+    border-radius:999px;
+    background:var(--red);
+    color:#fff;
+    font-size:10px;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:0 5px;
+  }
+
+  .pipeline-stats{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+
+  .stat-card{
+    background:#fff;
+    border:1px solid var(--border);
+    border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);
+    padding:18px;
+    min-height:118px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    left:-40px;
+    bottom:-45px;
+    width:110px;
+    height:110px;
+    border-radius:999px;
+    background:rgba(26,86,219,.06);
+  }
+
+  .stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    margin-bottom:12px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-icon.blue{ background:#f4fce8; color:#bfd175; }
+  .stat-icon.purple{ background:#f4f1ff; color:#8a7cf7; }
+  .stat-icon.green{ background:#edf9f3; color:#20b874; }
+  .stat-icon.orange{ background:#fff8de; color:#ab7700; }
+
+  .stat-label{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:850;
+    margin-bottom:5px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-value{
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+    direction:ltr;
+    text-align:right;
+    position:relative;
+    z-index:1;
+  }
+
+  .kanban-board{
+    display:flex;
+    gap:14px;
+    overflow-x:auto;
+    padding-bottom:16px;
+    min-height:400px;
+  }
+
+  .kanban-board::-webkit-scrollbar{
+    height:10px;
+  }
+
+  .kanban-board::-webkit-scrollbar-thumb{
+    background:#d4ddd7;
+    border-radius:999px;
+  }
+
+  .kanban-board::-webkit-scrollbar-track{
+    background:#f3f7f5;
+    border-radius:999px;
+  }
+
+  .kanban-column{
+    flex:0 0 270px;
+    min-width:260px;
+    background:#f8fcfa;
+    border-radius:16px;
+    padding:12px;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    transition:.18s ease;
+  }
+
+  .kanban-column.drag-over{
+    background:#f0f8f3;
+    box-shadow:0 0 0 2px var(--primary) inset;
+  }
+
+  .column-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:8px;
+    padding:10px 12px;
+    border-radius:12px;
+    font-size:13px;
+    font-weight:950;
+    margin-bottom:4px;
+  }
+
+  .column-header .count{
+    min-width:24px;
+    height:24px;
+    border-radius:999px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:11px;
+    font-weight:950;
+    background:rgba(255,255,255,.7);
+  }
+
+  .col-Lead{ background:#f1f5f9; color:#64748b; }
+  .col-Qualified{ background:#fef3c7; color:#92400e; }
+  .col-QuotationSent{ background:#dbeafe; color:#1e40af; }
+  .col-Negotiation{ background:#f3e8ff; color:#6b21a8; }
+  .col-Won{ background:#d1fae5; color:#065f46; }
+  .col-Lost{ background:#fee2e2; color:#991b1b; }
+
+  .kanban-cards{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+    flex:1;
+  }
+
+  .kanban-card{
+    background:#fff;
+    border-radius:16px;
+    padding:14px;
+    box-shadow:0 4px 14px rgba(15,23,42,.06);
+    border:1px solid #edf2ef;
+    cursor:grab;
+    transition:.18s ease;
+  }
+
+  .kanban-card:hover{
+    box-shadow:0 8px 24px rgba(15,23,42,.1);
+    transform:translateY(-2px);
+  }
+
+  .kanban-card:active{
+    cursor:grabbing;
+    opacity:.85;
+  }
+
+  .card-customer{
+    font-size:14px;
+    font-weight:950;
+    color:var(--primary-dark);
+    margin-bottom:4px;
+  }
+
+  .card-source{
+    font-size:11px;
+    color:var(--muted);
+    margin-bottom:8px;
+  }
+
+  .card-destination{
+    font-size:12px;
+    color:var(--text);
+    font-weight:800;
+    margin-bottom:6px;
+  }
+
+  .card-destination i{
+    color:var(--primary);
+    margin-inline-end:4px;
+  }
+
+  .card-details{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+    margin-bottom:8px;
+  }
+
+  .card-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:12px;
+  }
+
+  .card-row .label{
+    color:var(--muted);
+    font-weight:800;
+  }
+
+  .card-row .value{
+    color:var(--text);
+    font-weight:900;
+    direction:ltr;
+    text-align:right;
+  }
+
+  .probability-bar{
+    width:100%;
+    height:6px;
+    border-radius:999px;
+    background:#eef2f4;
+    margin:6px 0;
+    overflow:hidden;
+  }
+
+  .probability-fill{
+    height:100%;
+    border-radius:999px;
+    transition:.3s ease;
+  }
+
+  .prob-low{ background:var(--red); }
+  .prob-mid{ background:var(--yellow); }
+  .prob-high{ background:var(--primary); }
+
+  .card-notes{
+    font-size:11px;
+    color:var(--muted);
+    line-height:1.5;
+    margin:6px 0;
+    display:-webkit-box;
+    -webkit-line-clamp:2;
+    -webkit-box-orient:vertical;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .card-sales-rep{
+    font-size:11px;
+    color:var(--muted);
+    display:flex;
+    align-items:center;
+    gap:4px;
+    margin-top:4px;
+  }
+
+  .card-sales-rep i{
+    color:var(--primary);
+  }
+
+  .card-followup{
+    font-size:11px;
+    font-weight:900;
+    margin-top:6px;
+    display:flex;
+    align-items:center;
+    gap:4px;
+  }
+
+  .card-followup.overdue{
+    color:var(--red);
+  }
+
+  .card-followup.upcoming{
+    color:var(--text);
+  }
+
+  .card-actions{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-top:10px;
+    padding-top:10px;
+    border-top:1px solid #edf2ef;
+  }
+
+  .card-btn{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:4px;
+    padding:6px 12px;
+    border-radius:10px;
+    font-size:11px;
+    font-weight:900;
+    text-decoration:none;
+    transition:.15s ease;
+    border:1px solid #dde7e1;
+    background:#fff;
+    color:var(--text);
+  }
+
+  .card-btn:hover{
+    background:#fbfefc;
+    transform:translateY(-1px);
+  }
+
+  .card-btn.edit{
+    color:var(--primary-dark);
+  }
+
+  .card-btn.delete{
+    color:var(--red);
+    border-color:#f5d0d5;
+    background:#fff;
+    cursor:pointer;
+    font-size:0;
+    width:32px;
+    height:32px;
+    padding:0;
+  }
+
+  .card-btn.delete i{
+    font-size:13px;
+  }
+
+  .empty-column{
+    text-align:center;
+    padding:24px 12px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:800;
+  }
+
+  @media(max-width:700px){
+    .pipeline-header{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .pipeline-stats{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .header-actions{
+      flex-wrap:wrap;
+    }
+
+    .kanban-column{
+      flex:0 0 250px;
+      min-width:240px;
+    }
+  }
+</style>
+
+<div class="pipeline-page">
+
+  <div class="pipeline-header">
+    <div>
+      <h1>{{ L("فرص البيع", "Sales Opportunities") }}</h1>
+    </div>
+    <div class="header-actions">
+      <a href="/sales-pipeline/list" class="header-btn">
+        <i class="bi bi-list-ul"></i>
+        {{ L("قائمة الفرص", "List View") }}
+      </a>
+      <a href="/sales-pipeline/add" class="header-btn primary">
+        <i class="bi bi-plus-lg"></i>
+        {{ L("إضافة فرصة", "Add Opportunity") }}
+      </a>
+      <a href="/sales-pipeline/alerts" class="header-btn alert">
+        <i class="bi bi-bell-fill"></i>
+        {{ L("التنبيهات", "Alerts") }}
+        {% set alert_count = (overdue|default(0)) + (upcoming|default(0)) %}
+        {% if alert_count > 0 %}
+          <span class="alert-badge">{{ alert_count }}</span>
+        {% endif %}
+      </a>
+    </div>
+  </div>
+
+  <div class="pipeline-stats">
+    {% set ns = namespace(total=0, negotiation=0, won=0, active_value=0) %}
+    {% for op in opportunities %}
+      {% set ns.total = ns.total + 1 %}
+      {% if op.stage == 'Negotiation' %}
+        {% set ns.negotiation = ns.negotiation + 1 %}
+      {% endif %}
+      {% if op.stage == 'Won' %}
+        {% set ns.won = ns.won + 1 %}
+      {% endif %}
+      {% if op.stage not in ('Won', 'Lost') %}
+        {% set ns.active_value = ns.active_value + (op.expected_value or 0) %}
+      {% endif %}
+    {% endfor %}
+
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="bi bi-graph-up-arrow"></i>
+      </div>
+      <div class="stat-label">{{ L("إجمالي الفرص", "Total Opportunities") }}</div>
+      <div class="stat-value">{{ ns.total }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        <i class="bi bi-chat-dots-fill"></i>
+      </div>
+      <div class="stat-label">{{ L("قيد التفاوض", "In Negotiation") }}</div>
+      <div class="stat-value">{{ ns.negotiation }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="bi bi-trophy-fill"></i>
+      </div>
+      <div class="stat-label">{{ L("تم الفوز", "Won") }}</div>
+      <div class="stat-value">{{ ns.won }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon orange">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+      <div class="stat-label">{{ L("إجمالي القيمة المتوقعة", "Total Expected Value") }}</div>
+      <div class="stat-value">{{ "%.0f"|format(ns.active_value) }}</div>
+    </div>
+  </div>
+
+  <div class="kanban-board">
+    {% for stage in stages %}
+      {% set stage_key = stage.replace(' ', '') %}
+      <div class="kanban-column"
+           ondrop="drop(event, '{{ stage }}')"
+           ondragover="allowDrop(event)"
+           ondragenter="this.classList.add('drag-over')"
+           ondragleave="this.classList.remove('drag-over')">
+
+        <div class="column-header col-{{ stage_key }}">
+          <span>{{ {'Lead': L('عميل محتمل', 'Lead'), 'Qualified': L('مؤهل', 'Qualified'), 'Quotation Sent': L('عرض سعر', 'Quotation Sent'), 'Negotiation': L('تفاوض', 'Negotiation'), 'Won': L('فوز', 'Won'), 'Lost': L('خسارة', 'Lost')}.get(stage, stage) }}</span>
+          <span class="count">
+            {% set col_count = namespace(c=0) %}
+            {% for op in opportunities %}
+              {% if op.stage == stage %}
+                {% set col_count.c = col_count.c + 1 %}
+              {% endif %}
+            {% endfor %}
+            {{ col_count.c }}
+          </span>
+        </div>
+
+        <div class="kanban-cards">
+          {% for op in opportunities %}
+            {% if op.stage == stage %}
+              <div class="kanban-card"
+                   draggable="true"
+                   ondragstart="drag(event)"
+                   data-id="{{ op.id }}">
+
+                <div class="card-customer">
+                  {{ op.customer.name if op.customer else '-' }}
+                  {% if op.customer and op.customer.phone %}
+                    <span style="font-size:11px;color:var(--muted);font-weight:700;margin-inline-start:4px">{{ op.customer.phone }}</span>
+                  {% endif %}
+                </div>
+
+                <div class="card-source">{{ {'direct': L('مباشر', 'Direct'), 'facebook': L('فيسبوك', 'Facebook'), 'referral': L('توصية', 'Referral'), 'advertisement': L('إعلان', 'Advertisement'), 'walk_in': L('زيارة', 'Walk-in'), 'other': L('أخرى', 'Other')}.get(op.source, op.source or '') }}</div>
+
+                {% if op.destination %}
+                  <div class="card-destination">
+                    <i class="bi bi-geo-alt-fill"></i>{{ op.destination }}
+                  </div>
+                {% endif %}
+
+                <div class="card-details">
+                  {% if op.budget %}
+                  <div class="card-row">
+                    <span class="label">{{ L("الميزانية", "Budget") }}</span>
+                    <span class="value">{{ "%.0f"|format(op.budget) }}</span>
+                  </div>
+                  {% endif %}
+
+                  {% if op.travel_date %}
+                  <div class="card-row">
+                    <span class="label">{{ L("تاريخ السفر", "Travel Date") }}</span>
+                    <span class="value">{{ op.travel_date.strftime('%Y-%m-%d') }}</span>
+                  </div>
+                  {% endif %}
+
+                  {% if op.travelers_count %}
+                  <div class="card-row">
+                    <span class="label">{{ L("المسافرين", "Travelers") }}</span>
+                    <span class="value">{{ op.travelers_count }}</span>
+                  </div>
+                  {% endif %}
+                </div>
+
+                {% set prob = op.probability or 0 %}
+                <div class="probability-bar">
+                  <div class="probability-fill {% if prob < 30 %}prob-low{% elif prob <= 70 %}prob-mid{% else %}prob-high{% endif %}"
+                       style="width:{{ prob }}%"></div>
+                </div>
+
+                <div class="card-row">
+                  <span class="label">{{ L("الاحتمالية", "Prob.") }}</span>
+                  <span class="value">{{ prob }}%</span>
+                </div>
+
+                {% if op.expected_value %}
+                <div class="card-row">
+                  <span class="label">{{ L("القيمة المتوقعة", "Expected") }}</span>
+                  <span class="value" style="color:var(--primary-dark)">{{ "%.0f"|format(op.expected_value) }}</span>
+                </div>
+                {% endif %}
+
+                {% if op.sales_rep %}
+                  <div class="card-sales-rep">
+                    <i class="bi bi-person-fill"></i>
+                    {{ op.sales_rep.name }}
+                  </div>
+                {% endif %}
+
+                {% if op.next_followup_date %}
+                  {% set today_date = today() if today is defined else none %}
+                  <div class="card-followup {% if today_date and op.next_followup_date|string < today_date|string %}overdue{% else %}upcoming{% endif %}">
+                    <i class="bi bi-calendar-event"></i>
+                    {{ op.next_followup_date.strftime('%Y-%m-%d') }}
+                    {% if today_date and op.next_followup_date|string < today_date|string %}
+                      ({{ L("متأخر", "Overdue") }})
+                    {% endif %}
+                  </div>
+                {% endif %}
+
+                {% if op.notes %}
+                  <div class="card-notes">{{ op.notes }}</div>
+                {% endif %}
+
+                <div class="card-actions">
+                  <a href="/sales-pipeline/{{ op.id }}/edit" class="card-btn edit">
+                    <i class="bi bi-pencil-fill"></i>
+                    {{ L("تعديل", "Edit") }}
+                  </a>
+                  <form method="post" action="/sales-pipeline/{{ op.id }}/delete"
+                        onsubmit="return confirm('{{ L('تأكيد الحذف؟', 'Confirm delete?') }}')"
+                        style="margin:0">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="card-btn delete" type="submit" title="{{ L('حذف', 'Delete') }}">
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                  </form>
+                </div>
+              </div>
+            {% endif %}
+          {% else %}
+            <div class="empty-column">
+              {{ L("لا توجد فرص", "No opportunities") }}
+            </div>
+          {% endfor %}
+        </div>
+      </div>
+    {% endfor %}
+  </div>
+
+</div>
+
+<script>
+function allowDrop(ev) {
+  ev.preventDefault();
+}
+
+function drag(ev) {
+  ev.dataTransfer.setData("id", ev.target.dataset.id);
+}
+
+function drop(ev, stage) {
+  ev.preventDefault();
+  const el = ev.target.closest('.kanban-column');
+  if (el) el.classList.remove('drag-over');
+  const id = ev.dataTransfer.getData("id");
+  const form = new FormData();
+  form.append("stage", stage);
+  csrfFetch("/sales-pipeline/" + id + "/stage", { method: "POST", body: form })
+    .then(r => r.json())
+    .then(d => { if (d.ok) location.reload(); else alert("Error"); })
+    .catch(() => alert("Error"));
+}
+</script>
+
+{% endblock %}

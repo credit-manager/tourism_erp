@@ -1,0 +1,709 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .chart-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --blue:#bfd175;
+    --blue-soft:#f4fce8;
+    --yellow:#f4c44d;
+    --yellow-soft:#fff8de;
+    --purple:#8a7cf7;
+    --purple-soft:#f4f1ff;
+    --red:#eb5d6c;
+    --red-soft:#fff1f3;
+    --orange:#f59e0b;
+    --orange-soft:#fff7ed;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --card:#ffffff;
+    direction: inherit;
+  }
+
+  .chart-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:20px;
+  }
+
+  .chart-header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .chart-header p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .balance-links-group{
+    display:inline-flex;
+    align-items:center;
+    gap:0;
+    border-radius:15px;
+    overflow:hidden;
+    box-shadow:0 8px 16px rgba(103,197,80,.24);
+  }
+  .balance-links-group .balance-link{
+    border-radius:0;
+    box-shadow:none;
+  }
+  .balance-links-divider{
+    width:1px;
+    height:24px;
+    background:rgba(0,0,0,.12);
+    margin:0 6px;
+    flex:0 0 auto;
+  }
+
+  .balance-link{
+    min-height:43px;
+    border:0;
+    border-radius:15px;
+    background:linear-gradient(135deg,var(--lime),#b8c96a);
+    color:#172033;
+    font-size:13px;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:10px 16px;
+    cursor:pointer;
+    box-shadow:0 8px 16px rgba(103, 197, 80,.24);
+    transition:.16s ease;
+    white-space:nowrap;
+  }
+
+  .balance-link:hover{
+    transform:translateY(-1px);
+    filter:brightness(.98);
+  }
+
+  .chart-stats{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+
+  .stat-card,
+  .main-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);
+  }
+
+  .stat-card{
+    padding:18px;
+    min-height:118px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    left:-40px;
+    bottom:-45px;
+    width:110px;
+    height:110px;
+    border-radius:999px;
+    background:rgba(26,86,219,.06);
+  }
+
+  .stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    margin-bottom:12px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-icon.asset{ background:var(--primary-soft); color:var(--primary); }
+  .stat-icon.liability{ background:var(--red-soft); color:var(--red); }
+  .stat-icon.equity{ background:var(--purple-soft); color:var(--purple); }
+  .stat-icon.revenue{ background:var(--blue-soft); color:var(--blue); }
+  .stat-icon.expense{ background:var(--orange-soft); color:var(--orange); }
+
+  .stat-label{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:850;
+    margin-bottom:5px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-value{
+    font-size:27px;
+    font-weight:950;
+    color:var(--text);
+    direction:ltr;
+    text-align:right;
+    position:relative;
+    z-index:1;
+  }
+
+  .chart-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1.7fr) minmax(340px,.9fr);
+    gap:18px;
+    align-items:start;
+  }
+
+  .card-head{
+    padding:18px 20px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+
+  .card-head h2{
+    margin:0;
+    font-size:16px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .card-chip{
+    padding:7px 11px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:#fbfdfc;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:850;
+    white-space:nowrap;
+  }
+
+  .card-body{
+    padding:16px 20px 20px;
+  }
+
+  .account-section{
+    border:1px solid var(--border);
+    border-radius:20px;
+    background:#fbfdfc;
+    overflow:hidden;
+    margin-bottom:14px;
+  }
+
+  .account-section:last-child{
+    margin-bottom:0;
+  }
+
+  .account-section-head{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:14px 16px;
+    background:#ffffff;
+    border-bottom:1px solid var(--border);
+  }
+
+  .account-section-title{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    color:var(--text);
+    font-size:14px;
+    font-weight:950;
+  }
+
+  .account-section-title .dot{
+    width:10px;
+    height:10px;
+    border-radius:999px;
+    background:var(--primary);
+  }
+
+  .account-section-total{
+    direction:ltr;
+    font-size:14px;
+    font-weight:950;
+    color:var(--primary-dark);
+  }
+
+  .account-list{
+    padding:10px 14px 14px;
+  }
+
+  .root-name{
+    color:var(--muted);
+    font-size:12px;
+    font-weight:950;
+    margin:8px 0;
+  }
+
+  .account-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:14px;
+    padding:11px 0;
+    border-bottom:1px dashed #dbe5df;
+  }
+
+  .account-row:last-child{
+    border-bottom:0;
+  }
+
+  .account-info{
+    min-width:0;
+  }
+
+  .account-name{
+    color:var(--text);
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .account-code{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    margin-right:6px;
+    padding:3px 8px;
+    border-radius:999px;
+    background:#f1f5f9;
+    color:#64748b;
+    font-size:11px;
+    font-weight:900;
+    direction:ltr;
+  }
+
+  .capital-edit-btn{
+    border:0;
+    background:transparent;
+    color:#11885a;
+    font-size:12px;
+    cursor:pointer;
+    margin-right:6px;
+  }
+
+  .account-actions{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    flex-shrink:0;
+  }
+
+  .account-balance{
+    direction:ltr;
+    color:var(--text);
+    font-size:13px;
+    font-weight:950;
+  }
+
+  .delete-btn{
+    width:32px;
+    height:32px;
+    border-radius:11px;
+    border:1px solid #fde2e5;
+    background:#fff;
+    color:var(--red);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.15s ease;
+    box-shadow:0 6px 14px rgba(15,23,42,.05);
+  }
+
+  .delete-btn:hover{
+    transform:translateY(-1px);
+    background:var(--red-soft);
+  }
+
+  .capital-panel{
+    margin:8px 0 4px;
+    padding:12px;
+    border:1px solid var(--border);
+    border-radius:16px;
+    background:#ffffff;
+  }
+
+  .capital-form{
+    display:grid;
+    grid-template-columns:1fr auto;
+    gap:10px;
+    align-items:center;
+  }
+
+  .side-card{
+    position:sticky;
+    top:18px;
+  }
+
+  .helper-box{
+    padding:13px 14px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:linear-gradient(135deg,var(--primary-soft),#fff);
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.8;
+    margin-bottom:14px;
+  }
+
+  .form-grid{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .field-group label{
+    display:block;
+    margin-bottom:6px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .field-input,
+  .field-select{
+    width:100%;
+    border:1px solid #dde7e1;
+    border-radius:14px;
+    background:#fff;
+    color:var(--text);
+    font-size:13px;
+    font-weight:700;
+    padding:0 13px;
+    height:43px;
+  }
+
+  .field-input:focus,
+  .field-select:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(26,86,219,.1);
+  }
+
+  .save-btn{
+    min-height:43px;
+    border:0;
+    border-radius:15px;
+    background:linear-gradient(135deg,var(--lime),#b8c96a);
+    color:#172033;
+    font-size:13px;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:10px 16px;
+    cursor:pointer;
+    box-shadow:0 8px 16px rgba(103, 197, 80,.24);
+    transition:.16s ease;
+    white-space:nowrap;
+  }
+
+  .save-btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(.98);
+  }
+
+  .save-btn.full{
+    width:100%;
+  }
+
+  .note-box{
+    margin-top:14px;
+    padding:13px 14px;
+    border-radius:16px;
+    background:#fbfdfc;
+    border:1px solid var(--border);
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.8;
+  }
+
+  .empty-state{
+    padding:34px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  @media (max-width:1250px){
+    .chart-stats{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .chart-layout{
+      grid-template-columns:1fr;
+    }
+
+    .side-card{
+      position:static;
+    }
+  }
+
+  @media (max-width:700px){
+    .chart-header,
+    .card-head,
+    .account-section-head,
+    .account-row{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .chart-stats{
+      grid-template-columns:1fr;
+    }
+
+    .capital-form{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+
+<div class="chart-page">
+
+  <div class="chart-header">
+    <div>
+      <h1>{{ L("شجرة الحسابات", "Chart of Accounts") }}</h1>
+      <p>{{ L("عرض الحسابات والأرصدة الحية حسب نوع الحساب، مع إمكانية إضافة حسابات فرعية جديدة.", "View accounts and live balances by account type, with the ability to add new sub-accounts.") }}</p>
+    </div>
+
+    <div class="balance-links-group">
+      <a href="/accounting/balance-sheet" class="balance-link">
+        <i class="bi bi-bar-chart-steps"></i>
+        {{ L("عرض الميزانية", "View Balance Sheet") }}
+      </a>
+      <span class="balance-links-divider"></span>
+      <a href="/accounting/reconcile" class="balance-link">
+        <i class="bi bi-check-circle"></i>
+        {{ L("مطابقة الأرصدة", "Reconcile") }}
+      </a>
+    </div>
+  </div>
+
+  <div class="chart-stats">
+    {% for type_key, type_label in ACCOUNT_TYPE_LABELS.items() %}
+    <div class="stat-card">
+      <div class="stat-icon {{ type_key }}">
+        {% if type_key == 'asset' %}
+          <i class="bi bi-wallet2"></i>
+        {% elif type_key == 'liability' %}
+          <i class="bi bi-exclamation-circle"></i>
+        {% elif type_key == 'equity' %}
+          <i class="bi bi-bank"></i>
+        {% elif type_key == 'revenue' %}
+          <i class="bi bi-graph-up-arrow"></i>
+        {% else %}
+          <i class="bi bi-receipt"></i>
+        {% endif %}
+      </div>
+
+      <div class="stat-label">{{ type_label }}</div>
+      <div class="stat-value">{{ "%.0f"|format(type_totals.get(type_key, 0) or 0) }}</div>
+    </div>
+    {% endfor %}
+  </div>
+
+  <div class="chart-layout">
+
+    <div class="main-card">
+      <div class="card-head">
+        <h2>{{ L("شجرة الحسابات بالأرصدة الحية", "Chart of Accounts with Live Balances") }}</h2>
+        <span class="card-chip">{{ all_accounts|length }} {{ L("حساب", "Account") }}</span>
+      </div>
+
+      <div class="card-body">
+        {% for type_key, type_label in ACCOUNT_TYPE_LABELS.items() %}
+        <div class="account-section">
+          <div class="account-section-head">
+            <div class="account-section-title">
+              <span class="dot"></span>
+              {{ type_label }}
+            </div>
+
+            <div class="account-section-total">
+              {{ "%.2f"|format(type_totals.get(type_key, 0) or 0) }}
+            </div>
+          </div>
+
+          <div class="account-list">
+            {% set has_accounts = namespace(value=false) %}
+
+            {% for a in roots if a.account_type == type_key %}
+              {% set has_accounts.value = true %}
+
+              <div class="root-name">
+                {{ translate_account_name(a.name) }}
+                {% if a.code %}
+                  <span class="account-code">{{ a.code }}</span>
+                {% endif %}
+              </div>
+
+              {% if a.children %}
+                {% for child in a.children %}
+                <div class="account-row">
+                  <div class="account-info">
+                    <span class="account-name">{{ translate_account_name(child.name) }}</span>
+
+                    {% if child.code %}
+                      <span class="account-code">{{ child.code }}</span>
+                    {% endif %}
+
+                    {% if child.key == 'capital' %}
+                    <button
+                      type="button"
+                      onclick="document.getElementById('cap-{{ child.id }}').classList.toggle('hidden')"
+                      class="capital-edit-btn"
+                      title="تعديل رأس المال"
+                    >
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+                    {% endif %}
+                  </div>
+
+                  <div class="account-actions">
+                    <span class="account-balance">{{ "%.2f"|format(balances.get(child.id, 0) or 0) }}</span>
+
+                    {% if not child.is_system %}
+                    <form method="post" action="/accounting/chart/{{ child.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="delete-btn" type="submit" title="حذف">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </div>
+
+                {% if child.key == 'capital' %}
+                <div id="cap-{{ child.id }}" class="hidden capital-panel">
+                  <form method="post" action="/accounting/chart/{{ child.id }}/opening-balance" class="capital-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input
+                      name="opening_balance"
+                      type="number"
+                      step="0.01"
+                      value="{{ child.opening_balance or 0 }}"
+                      class="field-input"
+                    >
+
+                    <button class="save-btn" type="submit">
+                      {{ L("حفظ رأس المال", "Save Capital") }}
+                    </button>
+                  </form>
+                </div>
+                {% endif %}
+                {% endfor %}
+              {% else %}
+                <div class="account-row">
+                  <div class="account-info">
+                    <span class="account-name">{{ translate_account_name(a.name) }}</span>
+
+                    {% if a.code %}
+                      <span class="account-code">{{ a.code }}</span>
+                    {% endif %}
+                  </div>
+
+                  <div class="account-actions">
+                    <span class="account-balance">{{ "%.2f"|format(balances.get(a.id, 0) or 0) }}</span>
+
+                    {% if not a.is_system %}
+                    <form method="post" action="/accounting/chart/{{ a.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="delete-btn" type="submit" title="حذف">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </div>
+              {% endif %}
+            {% endfor %}
+
+            {% if not has_accounts.value %}
+              <div class="empty-state">{{ L("لا توجد حسابات في هذا النوع", "No accounts in this type") }}</div>
+            {% endif %}
+          </div>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div class="main-card side-card">
+      <div class="card-head">
+        <h2>{{ L("إضافة حساب فرعي جديد", "Add New Sub-Account") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="helper-box">
+          {{ L("أضف حساب جديد داخل شجرة الحسابات، وحدد نوع الحساب والحساب الأب إن وجد.", "Add a new account in the chart of accounts, specify account type and parent account if applicable.") }}
+        </div>
+
+        <form method="post" action="/accounting/chart/add" class="form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field-group">
+            <label>{{ L("اسم الحساب", "Account Name") }}</label>
+            <input name="name" placeholder="{{ L("اسم الحساب", "Account Name") }}" required class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("كود الحساب", "Account Code") }}</label>
+            <input name="code" placeholder="{{ L("كود الحساب (اختياري)", "Account Code (Optional)") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("نوع الحساب", "Account Type") }}</label>
+            <select name="account_type" class="field-select">
+              {% for key, label in ACCOUNT_TYPE_LABELS.items() %}
+              <option value="{{ key }}">{{ label }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("الحساب الأب", "Parent Account") }}</label>
+            <select name="parent_id" class="field-select">
+              <option value="">{{ L("بدون حساب أب (حساب رئيسي)", "No Parent (Main Account)") }}</option>
+              {% for a in all_accounts %}
+              <option value="{{ a.id }}">
+                {{ ACCOUNT_TYPE_LABELS.get(a.account_type) }} - {{ translate_account_name(a.name) }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button class="save-btn full" type="submit">
+            {{ L("حفظ", "Save") }}
+          </button>
+        </form>
+
+        <div class="note-box">
+          <i class="bi bi-info-circle"></i>
+          {{ L("الحسابات النظامية مثل الخزنة وذمم العملاء أرصدتها تُحسب تلقائياً من بيانات النظام الفعلية لحظياً.
+          الحسابات المخصصة التي تضيفها يمكن تحديد رصيد افتتاحي لها بعد الإنشاء.", "System accounts like treasury and customer receivables are calculated automatically from actual system data in real-time.
+          Custom accounts you add can have an opening balance set after creation.") }}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

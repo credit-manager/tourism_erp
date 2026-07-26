@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .pr-page{--text:#172033;--muted:#7b8798;--card:#fff;--border:#e8eee9}
+  .pr-page .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px}
+  .pr-page .page-head h1{margin:0;font-size:28px;font-weight:950;color:var(--text)}
+  .pr-page .page-head p{margin-top:7px;font-size:13px;color:var(--muted)}
+  .pr-page .card{border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);overflow:hidden}
+  .pr-page .card-head{padding:19px 22px 0;display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .pr-page .card-head h2{margin:0;font-size:16px;font-weight:950;color:var(--text)}
+  .pr-page .card-body{padding:18px 22px 22px}
+  .pr-page table{width:100%;border-collapse:collapse;font-size:13px}
+  .pr-page th{background:#fbfdfc;color:var(--muted);padding:13px 8px;font-size:12px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+  .pr-page td{padding:14px 8px;border-bottom:1px solid #edf2ef;color:var(--text);text-align:center;vertical-align:middle}
+  .pr-page tr:hover td{background:#fbfdfc}
+  .pr-page .badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap}
+  .pr-page .badge-gray{background:#f1f5f9;color:#64748b}
+  .pr-page .badge-blue{background:#eef3ff;color:#1a56db}
+  .pr-page .badge-green{background:#eafff4;color:#11885a}
+  .pr-page .badge-yellow{background:#fff7df;color:#986a00}
+  .pr-page .badge-red{background:#fff0f2;color:#c7384c}
+  .pr-page .actions{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:nowrap}
+  .pr-page .btn-primary{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-size:14px;font-weight:900;border-radius:14px;border:none;cursor:pointer;text-decoration:none;background:linear-gradient(135deg,#11885a,#0d6e49);color:#fff;box-shadow:0 8px 20px rgba(17,136,90,0.25);transition:all .2s;min-height:42px}
+  .pr-page .btn-primary:hover{transform:translateY(-2px)}
+  .pr-page .empty-state{padding:32px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+<div class="pr-page">
+  <div class="page-head">
+    <div>
+      <h1>{{ L("شهرية الرواتب", "Payroll Runs") }}</h1>
+      <p>{{ L("إدارة شهرية رواتب الموظفين — محفوظة بقيم الفترة", "Manage monthly payroll runs — saved with period snapshots") }}</p>
+    </div>
+    <a href="/payroll-runs/add" class="btn-primary"><i class="bi bi-plus-lg"></i>{{ L("إنشاء شهرية", "New Run") }}</a>
+  </div>
+  {% if request.query_params.get('error') == 'duplicate' %}
+  <div style="background:#fff0f2;border:1px solid #ffd7dd;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#c7384c;font-size:14px;font-weight:700">{{ L("يوجد شهرية لنفس الفترة بالفعل", "A run for this period already exists") }}</div>
+  {% endif %}
+  <div class="card">
+    <div class="card-head">
+      <h2>{{ L("الشهريات", "Payroll Runs") }}</h2>
+      <span>{{ runs|length }} {{ L("شهرية", "Run") }}</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ L("الاسم", "Name") }}</th>
+            <th>{{ L("من", "From") }}</th>
+            <th>{{ L("إلى", "To") }}</th>
+            <th>{{ L("إجمالي", "Gross") }}</th>
+            <th>{{ L("خصم", "Ded.") }}</th>
+            <th>{{ L("صافي", "Net") }}</th>
+            <th>{{ L("الحالة", "Status") }}</th>
+            <th>{{ L("تاريخ", "Date") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in runs %}
+          {% set sc = {'draft':'badge-gray','reviewed':'badge-blue','approved':'badge-green','paid':'badge-purple'} %}
+          <tr>
+            <td>{{ r.id }}</td>
+            <td style="font-weight:700;color:#11885a">{{ r.name }}</td>
+            <td>{{ r.period_start }}</td>
+            <td>{{ r.period_end }}</td>
+            <td style="font-weight:900">{{ "%.0f"|format(r.total_gross) }}</td>
+            <td style="color:#c7384c">{{ "%.0f"|format(r.total_deductions) }}</td>
+            <td style="font-weight:900;color:#11885a">{{ "%.0f"|format(r.total_net) }}</td>
+            <td><span class="badge {{ sc.get(r.status,'badge-gray') }}">{{ r.status }}</span></td>
+            <td style="font-size:11px;color:var(--muted)">{{ r.created_at.strftime('%Y-%m-%d') if r.created_at else '' }}</td>
+            <td><a href="/payroll-runs/{{ r.id }}" class="badge badge-blue" style="text-decoration:none">{{ L("عرض", "View") }}</a></td>
+          </tr>
+          {% endfor %}
+          {% if not runs %}
+          <tr><td colspan="10"><div class="empty-state">{{ L("لا توجد شهرية بعد", "No payroll runs yet") }}</div></td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

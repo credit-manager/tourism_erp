@@ -1,0 +1,431 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if request.query_params.get('error') %}
+<div id="top-error" style="background:#fff0f2;border:1px solid #ffd7dd;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#d14454;font-size:14px;font-weight:700;">
+  {{ request.query_params.get('error') }}
+</div>
+{% endif %}
+
+<style>
+  .closing-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --card:#ffffff;
+  }
+  .page-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:20px;
+    flex-wrap:wrap;
+  }
+  .page-header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+  }
+  .page-header p{
+    margin:7px 0 0;
+    color:var(--muted);
+    font-size:13px;
+    font-weight:800;
+  }
+  .main-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);
+    margin-bottom:18px;
+  }
+  .card-head{
+    padding:18px 20px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .card-head h2{
+    margin:0;
+    font-size:16px;
+    font-weight:950;
+    color:var(--text);
+  }
+  .card-chip{
+    padding:7px 11px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:#fbfdfc;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:850;
+    white-space:nowrap;
+  }
+  .card-body{
+    padding:16px 20px 20px;
+  }
+  .closing-form{
+    display:grid;
+    grid-template-columns:1fr 1fr 1fr;
+    gap:10px;
+    align-items:end;
+  }
+  .closing-form .full-width{
+    grid-column:1 / -1;
+  }
+  .field-label{
+    font-size:12px;
+    font-weight:850;
+    color:var(--muted);
+    margin-bottom:4px;
+  }
+  .field-input{
+    width:100%;
+    border:1px solid #dde7e1;
+    border-radius:14px;
+    background:#fff;
+    color:var(--text);
+    font-size:13px;
+    font-weight:700;
+    padding:0 13px;
+    height:43px;
+  }
+  .field-input[type="file"]{
+    padding-top:8px;
+    height:auto;
+  }
+  .save-btn{
+    width:100%;
+    min-height:43px;
+    border:0;
+    border-radius:15px;
+    background:linear-gradient(135deg,var(--lime),#b8c96a);
+    color:#172033;
+    font-size:13px;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    cursor:pointer;
+    box-shadow:0 8px 16px rgba(103,197,80,.24);
+    transition:.16s ease;
+    white-space:nowrap;
+  }
+  .save-btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(.98);
+  }
+  .table-wrap{
+    overflow-x:auto;
+    padding-bottom:6px;
+  }
+  .closing-table{
+    width:100%;
+    min-width:900px;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13px;
+  }
+  .closing-table th{
+    background:#f8fcfa;
+    color:var(--muted);
+    padding:14px 10px;
+    font-size:12px;
+    font-weight:950;
+    border-bottom:1px solid var(--border);
+    text-align:center;
+    white-space:nowrap;
+  }
+  .closing-table td{
+    padding:14px 10px;
+    border-bottom:1px solid #edf2ef;
+    text-align:center;
+    white-space:nowrap;
+    color:var(--text);
+    vertical-align:middle;
+  }
+  .closing-table tr:hover td{
+    background:#fbfefc;
+  }
+  .status-badge{
+    display:inline-flex;
+    padding:4px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:950;
+  }
+  .status-draft{ background:#f0f2f5; color:#708093; }
+  .status-reviewed{ background:#fff8de; color:#b89a2a; }
+  .status-approved{ background:#edf9f3; color:#11885a; }
+  .status-posted{ background:#e3f2fd; color:#1565c0; }
+  .status-cancelled{ background:#fff1f3; color:#d14454; }
+  .money{direction:ltr;font-weight:900;}
+  .money-red{ color:#d14454; }
+  .money-green{ color:#11885a; }
+  .empty-state{
+    padding:34px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+  }
+  .action-bar{
+    display:flex;
+    gap:6px;
+    justify-content:center;
+    flex-wrap:wrap;
+  }
+  .v-btn{
+    min-height:34px;
+    border:1px solid var(--border);
+    border-radius:12px;
+    background:#fff;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:900;
+    padding:6px 12px;
+    cursor:pointer;
+    transition:.12s ease;
+    white-space:nowrap;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    gap:5px;
+  }
+  .v-btn:hover{ transform:translateY(-1px); }
+  .v-btn-primary{ background:var(--primary); color:#fff; border-color:var(--primary); }
+  .v-btn-primary:hover{ background:var(--primary-dark); }
+  .v-btn-danger{ background:#eb5d6c; color:#fff; border-color:#eb5d6c; }
+  .v-btn-outline{ background:transparent; }
+  .diff-positive{ color:#11885a; font-weight:950; }
+  .diff-negative{ color:#d14454; font-weight:950; }
+  .diff-zero{ color:var(--muted); }
+  .report-link{
+    display:inline-flex;
+    align-items:center;
+    gap:6px;
+    padding:8px 16px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:#fff;
+    color:var(--text);
+    font-size:12px;
+    font-weight:900;
+    text-decoration:none;
+    transition:.12s ease;
+  }
+  .report-link:hover{ background:var(--primary-soft); border-color:var(--primary); }
+
+  @media (max-width:900px){
+    .closing-form{ grid-template-columns:1fr; }
+  }
+</style>
+
+<div class="closing-page">
+
+  <div class="page-header">
+    <div>
+      <h1>{{ L("الجرد اليومي", "Daily Cash Closing") }}</h1>
+      <p>{{ L("تسجيل الرصيد الفعلي ومقارنته برصيد النظام", "Record actual cash count and compare with system balance") }}</p>
+    </div>
+    <a href="/treasury/closing/report" class="report-link" target="_blank">
+      <i class="bi bi-printer"></i> {{ L("تقرير الجرد", "Closing Report") }}
+    </a>
+  </div>
+
+  {% if has_permission(request.state.user, 'treasury.manage') %}
+  <div class="main-card">
+    <div class="card-head">
+      <h2>{{ L("جرد جديد", "New Closing") }}</h2>
+      <span class="card-chip">{{ L("تسجيل الجرد اليومي", "Record daily closing") }}</span>
+    </div>
+    <div class="card-body">
+      <form method="post" action="/treasury/closing/add" enctype="multipart/form-data" class="closing-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+          <div class="field-label">{{ L("الخزنة", "Account") }}</div>
+          <select name="account_id" required class="field-input" id="closing_account" onchange="loadSysBalance()">
+            <option value="">{{ L("اختر الخزنة...", "Select account...") }}</option>
+            {% for a in accounts %}
+            <option value="{{ a.id }}">{{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <div class="field-label">{{ L("التاريخ", "Date") }}</div>
+          <input name="closing_date" type="date" required class="field-input" value="{{ today() }}">
+        </div>
+        <div>
+          <div class="field-label">{{ L("رصيد النظام", "System Balance") }}</div>
+          <div class="field-input" style="display:flex;align-items:center;background:#f8fcfa;font-weight:950;" id="sys_balance_display">0.00</div>
+        </div>
+        <div>
+          <div class="field-label">{{ L("الرصيد الفعلي", "Actual Balance") }}</div>
+          <input name="actual_balance" type="number" step="0.01" required class="field-input" placeholder="0.00" id="actual_balance" oninput="calcDiff()">
+        </div>
+        <div class="full-width">
+          <div class="field-label">{{ L("الفرق (يحتاج سبب وموافقة مدير)", "Difference (requires reason & manager approval)") }}</div>
+          <div class="field-label" id="diff_display" style="font-size:18px;font-weight:950;">{{ L("الفرق: 0.00", "Diff: 0.00") }}</div>
+        </div>
+        <div class="full-width">
+          <div class="field-label">{{ L("سبب الفرق", "Reason (required if diff != 0)") }}</div>
+          <textarea name="reason" class="field-input" style="height:60px;padding-top:8px;resize:vertical;" placeholder="{{ L('اختياري إلا في حالة وجود عجز/زيادة', 'Optional unless shortage/surplus') }}"></textarea>
+        </div>
+        <div class="full-width">
+          <div class="field-label">{{ L("مرفق (اختياري)", "Attachment (optional)") }}</div>
+          <input name="attachment" type="file" class="field-input">
+        </div>
+        <div class="full-width">
+          <button class="save-btn" type="submit">
+            <i class="bi bi-check2-circle"></i>
+            {{ L("تسجيل الجرد", "Record Closing") }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="main-card">
+    <div class="card-head">
+      <h2>{{ L("سجل الجرد", "Closing Log") }}</h2>
+      <span class="card-chip">{{ closings|length }} {{ L("جرد", "Closing") }}</span>
+    </div>
+    <div class="card-body">
+      <div class="table-wrap">
+        <table class="closing-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>{{ L("التاريخ", "Date") }}</th>
+              <th>{{ L("الخزنة", "Account") }}</th>
+              <th>{{ L("رصيد النظام", "System") }}</th>
+              <th>{{ L("الرصيد الفعلي", "Actual") }}</th>
+              <th>{{ L("الفرق", "Diff") }}</th>
+              <th>{{ L("السبب", "Reason") }}</th>
+              <th>{{ L("المرفق", "Attach.") }}</th>
+              <th>{{ L("الحالة", "Status") }}</th>
+              <th>{{ L("إجراءات", "Actions") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for c in closings %}
+            <tr>
+              <td>{{ c.id }}</td>
+              <td>{{ c.closing_date }}</td>
+              <td class="acct-name">{{ c.account.name if c.account else '-' }}</td>
+              <td class="money">{{ "%.2f"|format(c.system_balance) }}</td>
+              <td class="money">{{ "%.2f"|format(c.actual_balance) }}</td>
+              <td class="money {{ 'diff-positive' if c.difference > 0 else 'diff-negative' if c.difference < 0 else 'diff-zero' }}">
+                {{ "%.2f"|format(c.difference) }}
+              </td>
+              <td style="max-width:150px;overflow:hidden;text-overflow:ellipsis;">{{ c.reason or '-' }}</td>
+              <td>
+                {% if c.attachment_path %}
+                <a href="/{{ c.attachment_path }}" target="_blank" class="v-btn" style="padding:3px 8px;font-size:11px;">
+                  <i class="bi bi-paperclip"></i>
+                </a>
+                {% else %}
+                -
+                {% endif %}
+              </td>
+              <td>
+                <span class="status-badge status-{{ c.status }}">
+                  {{ {'draft':'مسودة','reviewed':'قيد المراجعة','approved':'معتمد','posted':'مرحّل','cancelled':'ملغي'}.get(c.status, c.status) }}
+                </span>
+              </td>
+              <td>
+                <div class="action-bar">
+                  {% if has_permission(request.state.user, 'treasury.manage') %}
+                  {% if c.status == "draft" %}
+                  <form method="post" action="/treasury/closing/{{ c.id }}/submit">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="v-btn v-btn-primary" type="submit"><i class="bi bi-send"></i> {{ L("تقديم", "Submit") }}</button>
+                  </form>
+                  <form method="post" action="/treasury/closing/{{ c.id }}/cancel" onsubmit="return confirm('{{ L("تأكيد إلغاء الجرد؟", "Confirm cancel closing?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="v-btn v-btn-danger" type="submit"><i class="bi bi-x-circle"></i> {{ L("إلغاء", "Cancel") }}</button>
+                  </form>
+                  {% elif c.status == "reviewed" %}
+                  <form method="post" action="/treasury/closing/{{ c.id }}/approve">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="v-btn v-btn-primary" type="submit"><i class="bi bi-check-lg"></i> {{ L("اعتماد", "Approve") }}</button>
+                  </form>
+                  <form method="post" action="/treasury/closing/{{ c.id }}/cancel" onsubmit="return confirm('{{ L("تأكيد إلغاء الجرد؟", "Confirm cancel closing?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="v-btn v-btn-danger" type="submit"><i class="bi bi-x-circle"></i> {{ L("إلغاء", "Cancel") }}</button>
+                  </form>
+                  {% elif c.status == "approved" %}
+                  <form method="post" action="/treasury/closing/{{ c.id }}/post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="v-btn v-btn-primary" type="submit"><i class="bi bi-lightning"></i> {{ L("ترحيل", "Post") }}</button>
+                  </form>
+                  <form method="post" action="/treasury/closing/{{ c.id }}/cancel" onsubmit="return confirm('{{ L("تأكيد إلغاء الجرد؟", "Confirm cancel closing?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="v-btn v-btn-danger" type="submit"><i class="bi bi-x-circle"></i> {{ L("إلغاء", "Cancel") }}</button>
+                  </form>
+                  {% elif c.status == "posted" %}
+                  <span class="status-badge status-posted">{{ L("تم الترحيل", "Posted") }}</span>
+                  <form method="post" action="/treasury/closing/{{ c.id }}/cancel" onsubmit="return confirm('{{ L("تأكيد إلغاء الجرد؟", "Confirm cancel closing?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="v-btn v-btn-danger" type="submit"><i class="bi bi-x-circle"></i> {{ L("إلغاء", "Cancel") }}</button>
+                  </form>
+                  {% endif %}
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+            {% if not closings %}
+            <tr>
+              <td colspan="10">
+                <div class="empty-state">{{ L("لا توجد جرديات بعد", "No closings yet") }}</div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+  var accountBalances = {
+    {% for a in accounts %}
+    {{ a.id }}: {{ a.balance }},
+    {% endfor %}
+  };
+  function loadSysBalance() {
+    var sel = document.getElementById('closing_account');
+    var sysEl = document.getElementById('sys_balance_display');
+    var val = parseInt(sel.value);
+    if (val && accountBalances[val] !== undefined) {
+      sysEl.textContent = parseFloat(accountBalances[val]).toFixed(2);
+    } else {
+      sysEl.textContent = '0.00';
+    }
+    calcDiff();
+  }
+  function calcDiff() {
+    var sysEl = document.getElementById('sys_balance_display');
+    var actualEl = document.getElementById('actual_balance');
+    var diffEl = document.getElementById('diff_display');
+    var sys = parseFloat(sysEl.textContent) || 0;
+    var actual = parseFloat(actualEl.value) || 0;
+    var diff = actual - sys;
+    diffEl.textContent = '{{ L("الفرق:", "Diff:") }} ' + diff.toFixed(2);
+    diffEl.style.color = diff > 0 ? '#11885a' : (diff < 0 ? '#d14454' : 'var(--muted)');
+  }
+</script>
+
+{% endblock %}

@@ -1,0 +1,528 @@
+{% set lang = request.session.get("lang", "en") %}
+{% macro L(ar, en) %}{{ ar if lang == "ar" else en }}{% endmacro %}
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>{{ L("تسجيل الدخول - Tourism ERP", "Login - Tourism ERP") }}</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css">
+
+<style>
+  * {
+    box-sizing: border-box;
+  }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    font-family: 'Tajawal', sans-serif;
+    background:
+      radial-gradient(circle at 20% 18%, rgba(223, 245, 122, 0.32), transparent 26%),
+      radial-gradient(circle at 82% 78%, rgba(31, 184, 116, 0.16), transparent 28%),
+      linear-gradient(135deg, #f7faf8 0%, #edf4f0 100%);
+    color: #172033;
+    overflow-x: hidden;
+  }
+
+  .login-page {
+    min-height: 100vh;
+    padding: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .login-shell {
+    width: min(1080px, 100%);
+    min-height: 610px;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 410px;
+    gap: 20px;
+  }
+
+  .intro-panel,
+  .login-panel {
+    background: rgba(255, 255, 255, 0.86);
+    border: 1px solid #e4ebe6;
+    border-radius: 34px;
+    box-shadow: 0 24px 70px rgba(15, 23, 42, 0.07);
+    backdrop-filter: blur(14px);
+  }
+
+  .intro-panel {
+    position: relative;
+    overflow: hidden;
+    padding: 38px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+  }
+
+  .intro-panel::before {
+    content: "";
+    position: absolute;
+    width: 260px;
+    height: 260px;
+    border-radius: 999px;
+    background: rgba(31, 184, 116, 0.10);
+    top: -90px;
+    left: -90px;
+  }
+
+  .intro-panel::after {
+    content: "";
+    position: absolute;
+    width: 190px;
+    height: 190px;
+    border-radius: 999px;
+    background: rgba(223, 245, 122, 0.32);
+    bottom: -75px;
+    right: -65px;
+  }
+
+  .brand-row,
+  .intro-content,
+  .intro-footer {
+    position: relative;
+    z-index: 2;
+  }
+
+  .brand-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .brand-logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 11px;
+    font-size: 23px;
+    font-weight: 950;
+    color: #172033;
+  }
+
+  .brand-icon {
+    width: 50px;
+    height: 50px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, #1fb874, #14895a);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    box-shadow: 0 14px 28px rgba(31, 184, 116, 0.22);
+  }
+
+  .brand-chip {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    padding: 8px 12px;
+    border-radius: 999px;
+    background: #ebfaf2;
+    color: #14895a;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .intro-content {
+    max-width: 520px;
+    margin-top: 45px;
+  }
+
+  .intro-content h1 {
+    margin: 0;
+    font-size: 42px;
+    line-height: 1.28;
+    font-weight: 950;
+    color: #172033;
+    letter-spacing: -0.5px;
+  }
+
+  .intro-content h1 span {
+    color: #14895a;
+  }
+
+  .intro-content p {
+    margin: 16px 0 0;
+    max-width: 470px;
+    color: #708093;
+    font-size: 15px;
+    line-height: 1.95;
+    font-weight: 650;
+  }
+
+  .feature-grid {
+    margin-top: 28px;
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .feature-card {
+    min-height: 76px;
+    padding: 14px;
+    border-radius: 20px;
+    background: #ffffff;
+    border: 1px solid #e4ebe6;
+    box-shadow: 0 10px 26px rgba(15, 23, 42, 0.035);
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .feature-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 15px;
+    background: #ebfaf2;
+    color: #1fb874;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+    flex-shrink: 0;
+  }
+
+  .feature-title {
+    color: #172033;
+    font-size: 13px;
+    font-weight: 950;
+  }
+
+  .feature-sub {
+    margin-top: 3px;
+    color: #708093;
+    font-size: 11px;
+    font-weight: 700;
+  }
+
+  .intro-footer {
+    color: #708093;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .login-panel {
+    padding: 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .login-card {
+    width: 100%;
+    max-width: 340px;
+  }
+
+  .login-logo {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 18px;
+  }
+
+  .login-logo-inner {
+    width: 62px;
+    height: 62px;
+    border-radius: 23px;
+    background: linear-gradient(135deg, #1fb874, #14895a);
+    color: #ffffff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    box-shadow: 0 15px 34px rgba(31, 184, 116, 0.24);
+  }
+
+  .login-title {
+    text-align: center;
+    margin-bottom: 24px;
+  }
+
+  .login-title h2 {
+    margin: 0;
+    color: #172033;
+    font-size: 25px;
+    font-weight: 950;
+  }
+
+  .login-title p {
+    margin: 8px 0 0;
+    color: #708093;
+    font-size: 13px;
+    font-weight: 750;
+  }
+
+  .error-box {
+    display: flex;
+    align-items: flex-start;
+    gap: 9px;
+    padding: 13px 14px;
+    border-radius: 16px;
+    border: 1px solid #ffd7dd;
+    background: #fff1f3;
+    color: #b42336;
+    font-size: 13px;
+    font-weight: 850;
+    line-height: 1.7;
+    margin-bottom: 16px;
+  }
+
+  .form-group {
+    margin-bottom: 15px;
+  }
+
+  .form-group label {
+    display: block;
+    margin-bottom: 7px;
+    color: #708093;
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .input-wrap {
+    position: relative;
+  }
+
+  .input-wrap i {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #9aa7b6;
+    font-size: 16px;
+  }
+
+  .input-wrap input {
+    width: 100%;
+    height: 48px;
+    border: 1px solid #dde7e1;
+    border-radius: 16px;
+    background: #fbfdfc;
+    color: #172033;
+    font-size: 14px;
+    font-weight: 750;
+    padding: 0 42px 0 14px;
+    outline: none;
+    transition: 0.16s ease;
+  }
+
+  .input-wrap input:focus {
+    background: #ffffff;
+    border-color: #1fb874;
+    box-shadow: 0 0 0 4px rgba(31, 184, 116, 0.10);
+  }
+
+  .login-btn {
+    width: 100%;
+    min-height: 48px;
+    margin-top: 4px;
+    border: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, #c4d86b, #b8c96a);
+    color: #172033;
+    font-size: 14px;
+    font-weight: 950;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(216, 240, 106, 0.28);
+    transition: 0.16s ease;
+  }
+
+  .login-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.98);
+  }
+
+  .default-user {
+    margin: 18px 0 0;
+    padding: 12px 14px;
+    border-radius: 16px;
+    background: #fbfdfc;
+    border: 1px solid #e4ebe6;
+    color: #708093;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .default-user span {
+    color: #14895a;
+    font-weight: 950;
+    direction: ltr;
+    display: inline-block;
+  }
+
+  @media (max-width: 1000px) {
+    .login-page {
+      padding: 20px;
+    }
+
+    .login-shell {
+      max-width: 430px;
+      min-height: auto;
+      grid-template-columns: 1fr;
+    }
+
+    .intro-panel {
+      display: none;
+    }
+
+    .login-panel {
+      padding: 34px 26px;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .login-page {
+      padding: 14px;
+    }
+
+    .login-panel {
+      padding: 28px 20px;
+      border-radius: 28px;
+    }
+
+    .login-title h2 {
+      font-size: 22px;
+    }
+  }
+</style>
+</head>
+
+<body>
+  <div class="login-page">
+    <div class="login-shell">
+
+      <section class="intro-panel">
+        <div class="brand-row">
+          <div class="brand-logo">
+            <div class="brand-icon">
+              <i class="bi bi-airplane-fill"></i>
+            </div>
+            <div>
+              Tourism<span style="color:#1fb874;">ERP</span>
+            </div>
+          </div>
+
+          <span class="brand-chip">
+            <i class="bi bi-shield-check"></i>
+            Secure Access
+          </span>
+        </div>
+
+        <div class="intro-content">
+          <h1>
+            {{ L("نظام إدارة سياحة", "Tourism Management System") }} <span>{{ L("احترافي", "Professional") }}</span>
+          </h1>
+          <p>
+            {{ L("منصة موحدة لإدارة الحجوزات، العملاء، الفنادق، الخزنة، التقارير والصلاحيات بطريقة منظمة وسريعة.", "Unified platform for managing bookings, customers, hotels, treasury, reports and permissions in an organized and fast way.") }}
+          </p>
+
+          <div class="feature-grid">
+            <div class="feature-card">
+              <div class="feature-icon"><i class="bi bi-calendar-check"></i></div>
+              <div>
+                <div class="feature-title">{{ L("إدارة الحجوزات", "Manage Reservations") }}</div>
+                <div class="feature-sub">{{ L("متابعة الحجوزات والتحصيلات", "Follow-up Reservations & Collections") }}</div>
+              </div>
+            </div>
+
+            <div class="feature-card">
+              <div class="feature-icon"><i class="bi bi-wallet2"></i></div>
+              <div>
+                <div class="feature-title">{{ L("الخزنة والحسابات", "Treasury & Accounts") }}</div>
+                <div class="feature-sub">{{ L("حركات مالية وتقارير واضحة", "Clear Financial Transactions & Reports") }}</div>
+              </div>
+            </div>
+
+            <div class="feature-card">
+              <div class="feature-icon"><i class="bi bi-people"></i></div>
+              <div>
+                <div class="feature-title">{{ L("العملاء والموردين", "Customers & Suppliers") }}</div>
+                <div class="feature-sub">{{ L("بيانات وأرصدة ومتابعة", "Data, Balances & Follow-up") }}</div>
+              </div>
+            </div>
+
+            <div class="feature-card">
+              <div class="feature-icon"><i class="bi bi-shield-lock"></i></div>
+              <div>
+                <div class="feature-title">{{ L("الصلاحيات", "Permissions") }}</div>
+                <div class="feature-sub">{{ L("تحكم كامل في المستخدمين", "Full User Control") }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="intro-footer">
+          Tourism ERP System — Professional Dashboard
+        </div>
+      </section>
+
+      <section class="login-panel">
+        <main class="login-card">
+
+          <div class="login-logo">
+            <div class="login-logo-inner">
+              <i class="bi bi-airplane-fill"></i>
+            </div>
+          </div>
+
+          <div class="login-title">
+            <h2>{{ L("تسجيل الدخول", "Login") }}</h2>
+            <p>{{ L("ادخل بيانات حسابك للوصول إلى لوحة التحكم", "Enter your account credentials to access the dashboard") }}</p>
+          </div>
+
+          {% if error %}
+          <div class="error-box">
+            <i class="bi bi-exclamation-triangle-fill"></i>
+            <div>{{ error }}</div>
+          </div>
+          {% endif %}
+
+          <form method="post" action="/login">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="form-group">
+              <label>{{ L("اسم المستخدم", "Username") }}</label>
+              <div class="input-wrap">
+                <i class="bi bi-person"></i>
+                <input name="username" required autofocus>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label>{{ L("كلمة المرور", "Password") }}</label>
+              <div class="input-wrap">
+                <i class="bi bi-lock"></i>
+                <input name="password" type="password" required>
+              </div>
+            </div>
+
+            {# تم تعطيل حقل MFA من شاشة الدخول بناءً على طلب المستخدم #}
+
+            <button class="login-btn" type="submit">
+              <i class="bi bi-box-arrow-in-left"></i>
+              {{ L("دخول", "Entry") }}
+            </button>
+          </form>
+
+        </main>
+      </section>
+
+    </div>
+  </div>
+</body>
+</html>

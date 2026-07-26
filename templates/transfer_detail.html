@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .detail-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --card:#ffffff;
+    --radius:24px;
+  }
+  .hero-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:var(--radius);
+    box-shadow:0 18px 45px rgba(15,23,42,.045);
+    padding:24px 28px;
+    margin-bottom:20px;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:18px;
+    flex-wrap:wrap;
+  }
+  .hero-main{display:flex;align-items:center;gap:18px;min-width:0;}
+  .hero-icon{
+    width:64px;height:64px;
+    border-radius:18px;
+    background:linear-gradient(135deg,var(--primary-soft),var(--lime));
+    color:var(--primary-dark);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:26px;
+    flex-shrink:0;
+  }
+  .hero-title{margin:0;font-size:26px;font-weight:950;color:var(--text);}
+  .hero-meta{margin-top:6px;display:flex;flex-wrap:wrap;gap:10px;font-size:12px;color:var(--muted);font-weight:800;}
+  .back-link{
+    min-height:42px;display:inline-flex;align-items:center;gap:8px;
+    padding:10px 18px;border-radius:14px;background:#fbfdfc;
+    border:1px solid var(--border);color:var(--text);font-size:13px;
+    font-weight:950;white-space:nowrap;text-decoration:none;transition:.15s ease;
+  }
+  .back-link:hover{background:var(--primary-soft);color:var(--primary-dark);}
+  .status-badge{
+    display:inline-flex;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:950;
+  }
+  .status-draft{background:#f0f2f5;color:#708093;}
+  .status-reviewed{background:#fff8de;color:#b89a2a;}
+  .status-approved{background:#edf9f3;color:#11885a;}
+  .status-posted{background:#e3f2fd;color:#1565c0;}
+  .status-cancelled{background:#fff1f3;color:#d14454;}
+  .main-card{
+    background:var(--card);border:1px solid var(--border);
+    border-radius:var(--radius);box-shadow:0 14px 32px rgba(15,23,42,.04);
+    margin-bottom:20px;overflow:hidden;
+  }
+  .card-head{
+    padding:20px 24px 0;display:flex;justify-content:space-between;
+    align-items:center;gap:10px;flex-wrap:wrap;
+  }
+  .card-head h2{margin:0;font-size:16px;font-weight:950;color:var(--text);}
+  .card-chip{
+    padding:6px 12px;border:1px solid var(--border);border-radius:999px;
+    background:#fbfdfc;color:var(--muted);font-size:11px;font-weight:850;
+  }
+  .card-body{padding:20px 24px 24px;}
+  .info-grid{display:grid;grid-template-columns:1fr 1fr;gap:20px;}
+  .info-item{padding:14px 16px;background:#fafcfa;border-radius:14px;border:1px solid var(--border);}
+  .info-label{font-size:11px;font-weight:850;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px;}
+  .info-value{font-size:15px;font-weight:900;color:var(--text);}
+  .info-value.money{direction:ltr;font-family:'Courier New',monospace;}
+  .info-value.money-red{color:#d14454;}
+  .info-value.money-green{color:#11885a;}
+  .amount-highlight{
+    display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px;
+  }
+  .amount-box{
+    padding:18px 20px;border-radius:16px;text-align:center;border:1px solid var(--border);
+  }
+  .amount-box.sent{background:#fff5f6;border-color:#ffd7dd;}
+  .amount-box.received{background:#edf9f3;border-color:#b8e6ce;}
+  .amount-label{font-size:11px;font-weight:850;color:var(--muted);margin-bottom:6px;}
+  .amount-value{font-size:22px;font-weight:950;}
+  .amount-value.sent{color:#d14454;}
+  .amount-value.received{color:#11885a;}
+  .divider-bar{height:1px;background:var(--border);margin:20px 0;}
+  .txn-table{
+    width:100%;border-collapse:separate;border-spacing:0;font-size:13px;
+  }
+  .txn-table th{
+    background:#f8fcfa;color:var(--muted);padding:14px 12px;font-size:12px;
+    font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;
+  }
+  .txn-table td{
+    padding:14px 12px;border-bottom:1px solid #edf2ef;text-align:center;
+    white-space:nowrap;color:var(--text);
+  }
+  .txn-table tr:hover td{background:#fbfefc;}
+  .action-bar{display:flex;gap:10px;flex-wrap:wrap;margin-top:20px;padding-top:20px;border-top:1px solid var(--border);}
+  .v-btn{
+    min-height:44px;border:1px solid var(--border);border-radius:14px;background:#fff;
+    color:var(--muted);font-size:13px;font-weight:900;padding:8px 20px;cursor:pointer;
+    transition:.12s ease;white-space:nowrap;text-decoration:none;display:inline-flex;
+    align-items:center;gap:7px;
+  }
+  .v-btn:hover{transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,0,0,.04);}
+  .v-btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .v-btn-primary:hover{background:var(--primary-dark);}
+  .v-btn-danger{background:#eb5d6c;color:#fff;border-color:#eb5d6c;}
+  .v-btn-outline{background:transparent;}
+  .empty-state{padding:40px;text-align:center;color:var(--muted);font-size:13px;}
+  .txn-type-badge{
+    display:inline-flex;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:950;
+  }
+  .txn-type-in{background:#edf9f3;color:#11885a;}
+  .txn-type-out{background:#fff5f6;color:#d14454;}
+  @media(max-width:700px){
+    .hero-card{flex-direction:column;align-items:stretch;}
+    .info-grid{grid-template-columns:1fr;}
+    .amount-highlight{grid-template-columns:1fr;}
+  }
+</style>
+
+<div class="detail-page">
+
+<div class="hero-card">
+  <div class="hero-main">
+    <div class="hero-icon"><i class="bi bi-arrow-left-right"></i></div>
+    <div>
+      <h1 class="hero-title">{{ L("تحويل", "Transfer") }} #{{ transfer.id }}</h1>
+      <div class="hero-meta">
+        <span><i class="bi bi-calendar"></i> {{ transfer.date }}</span>
+        <span><i class="bi bi-person"></i> {{ transfer.created_by or L("النظام","System") }}</span>
+        <span class="status-badge status-{{ transfer.status }}">
+          {{ {'draft':'مسودة','reviewed':'قيد المراجعة','approved':'معتمد','posted':'مرحّل','cancelled':'ملغي'}.get(transfer.status, transfer.status) }}
+        </span>
+        <span><i class="bi bi-clock"></i> {{ transfer.created_at.strftime('%Y-%m-%d %H:%M') if transfer.created_at else '' }}</span>
+      </div>
+    </div>
+  </div>
+  <a href="/transfers" class="back-link"><i class="bi bi-arrow-right"></i> {{ L("رجوع للتحويلات", "Back to Transfers") }}</a>
+</div>
+
+<div class="main-card">
+  <div class="card-head">
+    <h2>{{ L("ملخص التحويل", "Transfer Summary") }}</h2>
+    <span class="card-chip">{{ L("مسودة" if transfer.status=='draft' else 'قيد المراجعة' if transfer.status=='reviewed' else 'معتمد' if transfer.status=='approved' else 'مرحّل' if transfer.status=='posted' else 'ملغي', transfer.status) }}</span>
+  </div>
+  <div class="card-body">
+
+    <div class="amount-highlight">
+      <div class="amount-box sent">
+        <div class="amount-label">{{ L("محول", "Sent") }}</div>
+        <div class="amount-value sent">{{ "%.2f"|format(transfer.amount) }}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+          {{ transfer.from_account.name if transfer.from_account else '-' }}
+        </div>
+      </div>
+      <div class="amount-box received">
+        <div class="amount-label">{{ L("مستلم", "Received") }}</div>
+        <div class="amount-value received">{{ "%.2f"|format(transfer.net_amount) }}</div>
+        <div style="font-size:12px;color:var(--muted);margin-top:4px;">
+          {{ transfer.to_account.name if transfer.to_account else '-' }}
+        </div>
+      </div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="info-label">{{ L("من حساب", "From Account") }}</div>
+        <div class="info-value">{{ transfer.from_account.name if transfer.from_account else '-' }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">{{ L("إلى حساب", "To Account") }}</div>
+        <div class="info-value">{{ transfer.to_account.name if transfer.to_account else '-' }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">{{ L("المبلغ", "Amount") }}</div>
+        <div class="info-value money money-red">{{ "%.2f"|format(transfer.amount) }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">{{ L("سعر الصرف", "Exchange Rate") }}</div>
+        <div class="info-value money">{{ "%.6f"|format(transfer.exchange_rate) }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">{{ L("المبلغ بعد التحويل", "Converted Amount") }}</div>
+        <div class="info-value money money-green">{{ "%.2f"|format(transfer.converted_amount) }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">{{ L("الرسوم", "Fee") }}</div>
+        <div class="info-value money money-red">{{ "%.2f"|format(transfer.fee) }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">{{ L("الصافي المستلم", "Net Received") }}</div>
+        <div class="info-value money money-green">{{ "%.2f"|format(transfer.net_amount) }}</div>
+      </div>
+      <div class="info-item">
+        <div class="info-label">{{ L("الوصف", "Description") }}</div>
+        <div class="info-value">{{ transfer.description or '-' }}</div>
+      </div>
+    </div>
+
+    {% if has_permission(request.state.user, 'treasury.manage') %}
+    <div class="action-bar">
+      {% if transfer.status == "draft" %}
+      <form method="post" action="/transfers/{{ transfer.id }}/submit">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="v-btn v-btn-primary" type="submit"><i class="bi bi-send"></i> {{ L("تقديم", "Submit") }}</button>
+      </form>
+      <form method="post" action="/transfers/{{ transfer.id }}/cancel" onsubmit="return confirm('{{ L("تأكيد إلغاء التحويل؟", "Confirm cancel?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="v-btn v-btn-danger" type="submit"><i class="bi bi-x-circle"></i> {{ L("إلغاء", "Cancel") }}</button>
+      </form>
+      {% elif transfer.status == "reviewed" %}
+      <form method="post" action="/transfers/{{ transfer.id }}/approve">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="v-btn v-btn-primary" type="submit"><i class="bi bi-check-lg"></i> {{ L("اعتماد", "Approve") }}</button>
+      </form>
+      <form method="post" action="/transfers/{{ transfer.id }}/reject">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="v-btn v-btn-danger" type="submit"><i class="bi bi-x-lg"></i> {{ L("رفض", "Reject") }}</button>
+      </form>
+      <form method="post" action="/transfers/{{ transfer.id }}/cancel" onsubmit="return confirm('{{ L("تأكيد إلغاء التحويل؟", "Confirm cancel?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="v-btn v-btn-outline" type="submit"><i class="bi bi-x-circle"></i> {{ L("إلغاء", "Cancel") }}</button>
+      </form>
+      {% elif transfer.status == "approved" %}
+      <form method="post" action="/transfers/{{ transfer.id }}/post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="v-btn v-btn-primary" type="submit"><i class="bi bi-lightning"></i> {{ L("ترحيل", "Post") }}</button>
+      </form>
+      <form method="post" action="/transfers/{{ transfer.id }}/cancel" onsubmit="return confirm('{{ L("تأكيد إلغاء التحويل؟", "Confirm cancel?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="v-btn v-btn-danger" type="submit"><i class="bi bi-x-circle"></i> {{ L("إلغاء", "Cancel") }}</button>
+      </form>
+      {% endif %}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<div class="main-card">
+  <div class="card-head">
+    <h2>{{ L("حركات الخزنة المرتبطة", "Related Transactions") }}</h2>
+    <span class="card-chip">{{ txns|length }}</span>
+  </div>
+  <div class="card-body">
+    {% if txns %}
+    <table class="txn-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>{{ L("الحساب", "Account") }}</th>
+          <th>{{ L("النوع", "Type") }}</th>
+          <th>{{ L("المبلغ", "Amount") }}</th>
+          <th>{{ L("الوصف", "Description") }}</th>
+          <th>{{ L("التاريخ", "Date") }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for txn in txns %}
+        <tr>
+          <td style="font-weight:800;color:var(--muted);">{{ txn.id }}</td>
+          <td style="font-weight:800;">{{ txn.account.name if txn.account else '-' }}</td>
+          <td>
+            <span class="txn-type-badge txn-type-{{ txn.type }}">
+              {{ {'in':'إيداع','out':'سحب'}.get(txn.type, txn.type) }}
+            </span>
+          </td>
+          <td class="money {{ 'money-green' if txn.type == 'in' else 'money-red' }}" style="font-weight:950;">{{ "%.2f"|format(txn.amount) }}</td>
+          <td style="max-width:220px;overflow:hidden;text-overflow:ellipsis;">{{ txn.description }}</td>
+          <td style="color:var(--muted);font-size:12px;">{{ txn.date }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-state">
+      <i class="bi bi-inbox" style="font-size:32px;display:block;margin-bottom:10px;color:#d0d9d4;"></i>
+      {{ L("لا توجد حركات مرتبطة بعد", "No related transactions yet") }}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+</div>
+{% endblock %}

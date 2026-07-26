@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.qlist-page{--primary:#20b874;--primary-dark:#11885a;--text:#182033;--muted:#708093;--border:#e4ebe6}
+.qlist-page h1{font-size:26px;font-weight:950;color:var(--text);margin:0}
+.qlist-page .sub{color:var(--muted);font-size:13px;margin:3px 0 0}
+.stats-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.stat-card{flex:1;min-width:120px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px 18px;text-align:center}
+.stat-card .num{font-size:22px;font-weight:950;color:var(--text)}
+.stat-card .lbl{font-size:11px;font-weight:900;color:var(--muted);margin-top:2px}
+.header-bar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px;flex-wrap:wrap;gap:12px}
+.save-btn{height:40px;padding:0 24px;border:0;border-radius:12px;background:linear-gradient(135deg,#bfd175,#b4c667);color:#172033;font-size:13px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;gap:7px;text-decoration:none;box-shadow:0 6px 16px rgba(191,209,117,.25)}
+.save-btn:hover{transform:translateY(-1px);filter:brightness(.97)}
+.table-wrap{border:1px solid var(--border);border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.02)}
+.data-table{width:100%;min-width:800px;border-collapse:separate;border-spacing:0;font-size:13px}
+.data-table th{background:#f8fcfa;color:var(--muted);padding:13px 12px;font-size:11px;font-weight:950;text-align:center;border-bottom:1px solid var(--border)}
+.data-table td{padding:12px;text-align:center;border-bottom:1px solid #edf2ef;color:var(--text);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:0}
+.data-table tr:hover td{background:#f6fdf9}
+.status-badge{display:inline-flex;padding:4px 12px;border-radius:999px;font-size:11px;font-weight:950}
+.status-draft{background:#f1f5f9;color:#475569}
+.status-sent{background:#dbeafe;color:#1e40af}
+.status-accepted{background:#d1fae5;color:#065f46}
+.status-rejected{background:#fee2e2;color:#991b1b}
+.status-expired{background:#fef3c7;color:#92400e}
+</style>
+<div class="qlist-page">
+<div class="header-bar">
+  <div>
+    <h1>{{ L("عروض الأسعار", "Quotations") }}</h1>
+    <p class="sub">{{ L("إدارة عروض الأسعار وتحويلها إلى حجوزات", "Manage quotations and convert to reservations") }}</p>
+  </div>
+  <a href="/quotations/add" class="save-btn"><i class="bi bi-plus-lg"></i> {{ L("عرض سعر جديد", "New Quotation") }}</a>
+</div>
+<div class="stats-row">
+  {% set total = quotations|length %}
+  {% set accepted = quotations|selectattr('status','equalto','accepted')|list|length %}
+  {% set sent = quotations|selectattr('status','equalto','sent')|list|length %}
+  {% set total_val = quotations|sum(attribute='grand_total') or 0 %}
+  <div class="stat-card"><div class="num">{{ total }}</div><div class="lbl">{{ L("الإجمالي", "Total") }}</div></div>
+  <div class="stat-card"><div class="num">{{ sent }}</div><div class="lbl">{{ L("مرسل", "Sent") }}</div></div>
+  <div class="stat-card"><div class="num">{{ accepted }}</div><div class="lbl">{{ L("مقبول", "Accepted") }}</div></div>
+  <div class="stat-card"><div class="num" dir="ltr">{{ "%.0f"|format(total_val) }}</div><div class="lbl">{{ L("القيمة", "Value") }}</div></div>
+</div>
+<div class="table-wrap">
+<table class="data-table">
+<thead><tr>
+  <th>#</th><th>{{ L("رقم العرض", "Quote #") }}</th><th>{{ L("العميل", "Customer") }}</th><th>{{ L("التاريخ", "Date") }}</th>
+  <th>{{ L("الصلاحية", "Valid Until") }}</th><th>{{ L("الإجمالي", "Total") }}</th><th>{{ L("الحالة", "Status") }}</th><th>{{ L("الإصدار", "Ver.") }}</th><th>{{ L("إجراءات", "Actions") }}</th>
+</tr></thead>
+<tbody>
+{% for q in quotations %}
+<tr>
+  <td>{{ loop.index }}</td>
+  <td style="font-weight:950;color:var(--primary-dark)">{{ q.quote_number }}</td>
+  <td>{{ q.customer.name if q.customer else '—' }}</td>
+  <td>{{ q.created_at.strftime('%Y-%m-%d') if q.created_at else '—' }}</td>
+  <td>{{ q.validity_date.strftime('%Y-%m-%d') if q.validity_date else '—' }}</td>
+  <td dir="ltr" style="font-weight:950">{{ "%.2f"|format(q.grand_total or 0) }}</td>
+  <td><span class="status-badge status-{{ q.status }}">{{ {'draft': L('مسودة','Draft'), 'sent': L('مرسل','Sent'), 'accepted': L('مقبول','Accepted'), 'rejected': L('مرفوض','Rejected'), 'expired': L('منتهي','Expired')}.get(q.status, q.status) }}</span></td>
+  <td>v{{ q.version }}</td>
+  <td>
+    <div style="display:flex;gap:6px;justify-content:center">
+      <a href="/quotations/{{ q.id }}" class="action-btn" style="width:34px;height:34px;border:0;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;background:#eef6ff;color:#2563eb" title="{{ L('عرض','View') }}"><i class="bi bi-eye-fill"></i></a>
+      {% if q.reservation_id %}
+      <a href="/reservations/{{ q.reservation_id }}/edit" class="action-btn" style="width:34px;height:34px;border:0;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;background:#d1fae5;color:#065f46" title="{{ L('الحجز','Reservation') }}"><i class="bi bi-calendar-check"></i></a>
+      {% endif %}
+    </div>
+  </td>
+</tr>
+{% else %}
+<tr><td colspan="9"><div style="padding:48px;text-align:center;color:var(--muted);font-weight:700">{{ L("لا توجد عروض أسعار بعد", "No quotations yet") }}</div></td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+</div>
+{% endblock %}

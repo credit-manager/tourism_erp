@@ -1,0 +1,131 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .ae-page{
+    --primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --red:#eb5d6c;--red-soft:#fff1f3;
+    --yellow:#f4c44d;--yellow-soft:#fff8de;
+    --purple:#8a7cf7;--purple-soft:#f4f1ff;
+    --text:#182033;--muted:#708093;--border:#e4ebe6;--card:#ffffff;
+    direction:inherit;
+  }
+  .ae-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:16px;flex-wrap:wrap;}
+  .ae-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);}
+  .ae-header p{margin:6px 0 0;color:var(--muted);font-size:13px;font-weight:700;}
+  .back-link{min-height:42px;border-radius:14px;border:1px solid var(--border);background:#fff;color:var(--muted);display:inline-flex;align-items:center;gap:8px;padding:0 18px;font-size:13px;font-weight:950;text-decoration:none;transition:.12s;}
+  .back-link:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary);}
+
+  .main-card{background:var(--card);border:1px solid var(--border);border-radius:24px;box-shadow:0 14px 32px rgba(15,23,42,.04);overflow:hidden;}
+  .card-head{padding:18px 24px;display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;border-bottom:1px solid var(--border);}
+  .card-head .title-wrap{display:flex;align-items:center;gap:12px;}
+  .card-head .section-icon{width:42px;height:42px;border-radius:14px;background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .card-head h2{margin:0;font-size:17px;font-weight:950;color:var(--text);}
+  .card-head .sub{font-size:12px;color:var(--muted);font-weight:800;margin-top:2px;}
+  .rec-chip{padding:6px 13px;border:1px solid var(--border);border-radius:999px;background:#fbfdfc;color:var(--primary-dark);font-size:12px;font-weight:900;white-space:nowrap;}
+  .form-shell{padding:22px 24px 24px;}
+
+  .form-grid-3{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;}
+  .field-group{display:flex;flex-direction:column;gap:6px;}
+  .field-group.full{grid-column:1/-1;}
+  .field-group label{color:var(--muted);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.4px;}
+  .fi,.fs,.ft{width:100%;border:1.5px solid #d4e8d8;border-radius:13px;background:#fafefc;color:var(--text);font-size:13px;font-weight:700;padding:0 13px;height:44px;transition:.15s;box-sizing:border-box;}
+  .ft{min-height:84px;height:auto;resize:vertical;padding-top:10px;}
+  .fi:focus,.fs:focus,.ft:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.12);}
+
+  .footer-bar{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap;margin-inline-start:auto;justify-content:flex-end;}
+  .save-btn{min-height:46px;border:0;border-radius:14px;background:linear-gradient(135deg,var(--lime),#b8c96a);color:#172033;font-size:14px;font-weight:950;display:inline-flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;box-shadow:0 8px 18px rgba(103,197,80,.28);transition:.16s ease;padding:0 26px;}
+  .save-btn:hover{transform:translateY(-1px);filter:brightness(.98);}
+  .cancel-btn{min-height:46px;border-radius:14px;border:1.5px solid var(--border);background:#fff;color:var(--muted);font-size:13px;font-weight:950;display:inline-flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;transition:.16s ease;padding:0 22px;text-decoration:none;}
+  .cancel-btn:hover{transform:translateY(-1px);background:#fbfefc;color:var(--primary-dark);}
+
+  @media(max-width:1000px){.form-grid-3{grid-template-columns:repeat(2,1fr);}}
+  @media(max-width:700px){.form-grid-3{grid-template-columns:1fr;}.ae-header,.footer-bar{flex-direction:column;align-items:stretch;}}
+</style>
+
+<div class="ae-page">
+<div class="ae-header">
+  <div>
+    <h1>{{ L("تعديل سجل حضور", "Edit Attendance Record") }}</h1>
+    <p>{{ L("تعديل بيانات تسجيل الحضور والانصراف للموظف", "Edit employee attendance check-in/out record") }}</p>
+  </div>
+  <a href="/attendance/log" class="back-link"><i class="bi bi-arrow-right"></i> {{ L("رجوع", "Back") }}</a>
+</div>
+
+<form method="post" action="/attendance/{{ record.id }}/edit">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="main-card">
+  <div class="card-head">
+    <div class="title-wrap">
+      <div class="section-icon"><i class="bi bi-pencil-square"></i></div>
+      <div>
+        <h2>{{ L("بيانات الحضور", "Attendance Details") }}</h2>
+        <div class="sub">{{ record.employee.name if record.employee else '' }} · {{ record.date }}</div>
+      </div>
+    </div>
+    <span class="rec-chip"><i class="bi bi-hash"></i> #{{ record.id }}</span>
+  </div>
+
+  <div class="form-shell">
+  <div class="form-grid-3">
+
+    <div class="field-group">
+      <label>{{ L("الموظف", "Employee") }}</label>
+      <select name="employee_id" class="fs" required>
+        {% for emp in employees %}
+        <option value="{{ emp.id }}" {{ 'selected' if record.employee_id == emp.id }}>{{ emp.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>{{ L("التاريخ", "Date") }}</label>
+      <input type="date" name="date" class="fi" value="{{ record.date }}" required>
+    </div>
+
+    <div class="field-group">
+      <label>{{ L("الحالة", "Status") }}</label>
+      <select name="status" class="fs">
+        <option value="present" {{ 'selected' if record.status == 'present' }}>{{ L("حاضر", "Present") }}</option>
+        <option value="absent" {{ 'selected' if record.status == 'absent' }}>{{ L("غائب", "Absent") }}</option>
+        <option value="leave" {{ 'selected' if record.status == 'leave' }}>{{ L("إجازة", "Leave") }}</option>
+        <option value="holiday" {{ 'selected' if record.status == 'holiday' }}>{{ L("عطلة", "Holiday") }}</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>{{ L("الوردية", "Shift") }}</label>
+      <select name="shift_id" class="fs">
+        <option value="0">{{ L("بدون", "None") }}</option>
+        {% for s in shifts %}
+        <option value="{{ s.id }}" {{ 'selected' if record.shift_id == s.id }}>{{ s.name }} ({{ s.start_time.strftime('%H:%M') }} - {{ s.end_time.strftime('%H:%M') }})</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>{{ L("وقت الدخول", "Check In") }}</label>
+      <input type="datetime-local" name="check_in" class="fi" value="{{ record.check_in.strftime('%Y-%m-%dT%H:%M') if record.check_in else '' }}">
+    </div>
+
+    <div class="field-group">
+      <label>{{ L("وقت الخروج", "Check Out") }}</label>
+      <input type="datetime-local" name="check_out" class="fi" value="{{ record.check_out.strftime('%Y-%m-%dT%H:%M') if record.check_out else '' }}">
+    </div>
+
+    <div class="field-group full">
+      <label>{{ L("ملاحظات", "Notes") }}</label>
+      <textarea name="notes" class="ft">{{ record.notes or '' }}</textarea>
+    </div>
+
+  </div>
+  </div>
+</div>
+
+<div class="footer-bar">
+  <button type="submit" class="save-btn"><i class="bi bi-check2"></i> {{ L("حفظ التغييرات", "Save Changes") }}</button>
+  <a href="/attendance/log" class="cancel-btn">{{ L("إلغاء", "Cancel") }}</a>
+</div>
+</form>
+</div>
+{% endblock %}

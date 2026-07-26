@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .mc-page{--brass:#b8873b;--teal:#0e6b64;--text:#16202e;--muted:#736a58;--border:#e6ddc8;}
+  .mc-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);font-family:"El Messiri","Cairo",sans-serif;}
+  .mc-header p{margin:7px 0 20px;color:var(--muted);font-size:13px;font-weight:800;}
+  .card-box{background:#fff;border:1px solid var(--border);border-radius:24px;box-shadow:0 12px 28px rgba(16,24,38,.05);padding:20px;margin-bottom:20px;}
+  .card-box h2{font-size:16px;font-weight:900;color:var(--text);margin:0 0 14px;font-family:"El Messiri","Cairo",sans-serif;}
+  .orient-options{display:flex;gap:14px;}
+  .orient-opt{flex:1;border:2px solid var(--border);border-radius:16px;padding:16px;cursor:pointer;text-align:center;transition:.15s;}
+  .orient-opt.selected{border-color:var(--brass);background:#faf5ea;}
+  .orient-opt i{font-size:26px;color:var(--teal);display:block;margin-bottom:8px;}
+  .orient-opt span{font-size:13px;font-weight:900;color:var(--text);}
+  .items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:10px;}
+  .item-toggle{display:flex;align-items:center;gap:10px;border:1px solid var(--border);border-radius:12px;padding:10px 12px;font-size:13px;font-weight:800;color:var(--text);}
+  .item-toggle input{width:17px;height:17px;accent-color:var(--teal);}
+  .btn-submit{background:linear-gradient(135deg,#0e6b64,#0a4f4a);color:#fff;border:0;border-radius:14px;padding:12px 22px;font-weight:900;font-size:14px;cursor:pointer;margin-top:6px;}
+  .saved-note{background:#eaf3f1;color:#0a4f4a;border-radius:12px;padding:10px 16px;font-size:13px;font-weight:800;margin-bottom:16px;}
+</style>
+
+<div class="mc-page">
+  <div class="mc-header">
+    <h1><i class="bi bi-layout-sidebar-inset"></i> {{ L("إعدادات القائمة الجانبية", "Menu Settings") }}</h1>
+    <p>{{ L("تحكّم في اتجاه القائمة وإظهار أو إخفاء أي قسم منها لكل مستخدمي النظام", "Control menu orientation and show/hide any section for all users") }}</p>
+  </div>
+
+  {% if request.query_params.get('saved') %}
+  <div class="saved-note"><i class="bi bi-check-circle-fill"></i> {{ L("تم الحفظ بنجاح", "Saved successfully") }}</div>
+  {% endif %}
+
+  <form method="post" action="/settings/menu-config">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+    <div class="card-box">
+      <h2><i class="bi bi-arrows-move"></i> {{ L("اتجاه القائمة", "Menu Orientation") }}</h2>
+      <div class="orient-options">
+        <label class="orient-opt {{ 'selected' if orientation == 'vertical' else '' }}" onclick="document.getElementById('ov').checked=true;document.querySelectorAll('.orient-opt').forEach(e=>e.classList.remove('selected'));this.classList.add('selected')">
+          <input type="radio" id="ov" name="orientation" value="vertical" {{ 'checked' if orientation == 'vertical' }} style="display:none">
+          <i class="bi bi-layout-sidebar"></i>
+          <span>{{ L("طولية (جانبية)", "Vertical (Sidebar)") }}</span>
+        </label>
+        <label class="orient-opt {{ 'selected' if orientation == 'horizontal' else '' }}" onclick="document.getElementById('oh').checked=true;document.querySelectorAll('.orient-opt').forEach(e=>e.classList.remove('selected'));this.classList.add('selected')">
+          <input type="radio" id="oh" name="orientation" value="horizontal" {{ 'checked' if orientation == 'horizontal' }} style="display:none">
+          <i class="bi bi-layout-text-window-reverse"></i>
+          <span>{{ L("أفقية (شريط علوي)", "Horizontal (Top Bar)") }}</span>
+        </label>
+      </div>
+    </div>
+
+    <div class="card-box">
+      <h2><i class="bi bi-eye"></i> {{ L("إظهار/إخفاء عناصر القائمة", "Show/Hide Menu Items") }}</h2>
+      <div class="items-grid">
+        {% for key, name_ar, name_en in items %}
+        <label class="item-toggle">
+          <input type="checkbox" name="visible_{{ key }}" {{ '' if key in hidden else 'checked' }}>
+          <span>{{ L(name_ar, name_en) }}</span>
+        </label>
+        {% endfor %}
+      </div>
+    </div>
+
+    <button type="submit" class="btn-submit"><i class="bi bi-check2"></i> {{ L("حفظ الإعدادات", "Save Settings") }}</button>
+  </form>
+</div>
+{% endblock %}

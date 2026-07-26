@@ -1,0 +1,941 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .reservation-edit-page{
+    --primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;
+    --lime:#bfd175;--blue:#bfd175;--blue-soft:#f4fce8;
+    --yellow:#f4c44d;--yellow-soft:#fff8de;
+    --purple:#8a7cf7;--purple-soft:#f4f1ff;
+    --red:#eb5d6c;--red-soft:#fff1f3;
+    --text:#182033;--muted:#708093;--border:#e4ebe6;--card:#ffffff;
+    direction:inherit;
+  }
+  .edit-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:20px;}
+  .edit-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);}
+  .edit-header p{margin:7px 0 0;color:var(--muted);font-size:13px;font-weight:800;}
+  .back-link{min-height:43px;border-radius:15px;border:1px solid var(--border);background:#fff;color:var(--muted);display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 16px;font-size:13px;font-weight:950;transition:.16s ease;white-space:nowrap;text-decoration:none;}
+  .back-link:hover{transform:translateY(-1px);background:#fbfefc;color:var(--primary-dark);}
+  .main-card{background:var(--card);border:1px solid var(--border);border-radius:28px;box-shadow:0 14px 32px rgba(15,23,42,.04);overflow:hidden;}
+  .form-shell{padding:20px;}
+  .section-card{border:1px solid var(--border);border-radius:24px;background:#fff;padding:18px;margin-bottom:16px;}
+  .section-head{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:16px;}
+  .section-title{display:flex;align-items:center;gap:9px;color:var(--text);font-size:15px;font-weight:950;}
+  .section-icon{width:38px;height:38px;border-radius:14px;background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-size:17px;}
+  .section-chip{display:inline-flex;align-items:center;padding:5px 10px;border:1px solid var(--border);border-radius:999px;background:#fbfdfc;color:var(--muted);font-size:11px;font-weight:850;}
+  .form-grid-4{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;}
+  .col-span-2{grid-column:span 2;}
+  .col-span-4{grid-column:span 4;}
+  .field-group label{display:block;margin-bottom:5px;color:var(--muted);font-size:11px;font-weight:900;text-transform:uppercase;letter-spacing:.4px;}
+  .fi,.fs,.ft{width:100%;border:1.5px solid #d4e8d8;border-radius:13px;background:#fafefc;color:var(--text);font-size:13px;font-weight:700;padding:0 12px;height:43px;transition:.15s;}
+  .ft{min-height:80px;height:auto;resize:vertical;padding-top:10px;}
+  .fi:focus,.fs:focus,.ft:focus{outline:none;border-color:#a3d96b;box-shadow:0 0 0 3px rgba(163,217,107,.15);}
+  .calc-box{min-height:43px;border:1.5px solid var(--border);border-radius:13px;background:#fbfdfc;padding:8px 12px;display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;font-weight:900;}
+  .calc-box span:first-child{color:var(--muted);font-size:11px;font-weight:850;}
+  .calc-box span:last-child{direction:ltr;color:var(--text);font-weight:950;}
+  .calc-box.green{background:var(--primary-soft)}.calc-box.green span:last-child{color:var(--primary-dark);}
+  .calc-box.red{background:var(--red-soft)}.calc-box.red span:last-child{color:var(--red);}
+  .calc-box.purple{background:var(--purple-soft)}.calc-box.purple span:last-child{color:var(--purple);}
+  /* pencil unlock */
+  .bk-num-wrap{position:relative;}
+  .bk-num-field{padding-inline-end:36px !important;color:#1e40af;font-weight:700;}
+  .bk-num-field[disabled]{background:#f8faff;color:#1e40af;cursor:default;opacity:1;}
+  .bk-num-field:not([disabled]){border-color:#3b82f6 !important;box-shadow:0 0 0 3px rgba(59,130,246,.15) !important;}
+  .bk-pencil-btn{position:absolute;inset-inline-end:8px;top:50%;transform:translateY(-50%);width:26px;height:26px;border-radius:7px;border:none;background:transparent;color:#3b82f6;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:12px;transition:.15s;z-index:2;}
+  .bk-pencil-btn:hover{background:#dbeafe;}
+  .bk-pencil-btn.active{color:#16a34a;}
+  /* checkbox */
+  .check-label{display:inline-flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:800;color:var(--text);padding:10px 14px;border:1.5px solid var(--border);border-radius:13px;background:#fff;min-height:43px;white-space:nowrap;}
+  .check-label input{accent-color:#bfd175;width:15px;height:15px;}
+  /* save btn */
+  .save-btn{width:100%;min-height:48px;border:0;border-radius:18px;background:linear-gradient(135deg,var(--lime),#b8c96a);color:#172033;font-size:14px;font-weight:950;display:inline-flex;align-items:center;justify-content:center;gap:9px;cursor:pointer;box-shadow:0 10px 20px rgba(103, 197, 80,.28);transition:.16s ease;}
+  .save-btn:hover{transform:translateY(-1px);filter:brightness(.98);}
+  @media(max-width:1250px){.form-grid-4{grid-template-columns:repeat(2,minmax(0,1fr));}}
+  @media(max-width:700px){.form-grid-4{grid-template-columns:1fr;}.edit-header,.section-head{flex-direction:column;align-items:stretch;}.form-shell{padding:14px;}}
+</style>
+
+{% set _edit_err = request.query_params.get("msg") %}
+{% if _edit_err %}
+<div style="background:#fee2e2;border:1px solid #ef4444;color:#991b1b;border-radius:10px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;gap:8px;">
+  <i class="bi bi-exclamation-circle-fill"></i>{{ _edit_err }}
+</div>
+{% endif %}
+
+<div class="reservation-edit-page">
+  <div class="edit-header">
+    <div>
+      <h1>{{ L("تعديل الحجز رقم", "Edit Booking No.") }} {{ r.booking_number }}</h1>
+      <p>{{ L("تحديث بيانات العميل، الإقامة، الأسعار، التحصيل، العمولات والخدمات.", "Update customer data, accommodation, prices, commissions and linked services.") }}</p>
+    </div>
+    <a href="/reservations" class="back-link">
+      <i class="bi bi-arrow-right"></i>
+      {{ L("رجوع للحجوزات", "Back to Bookings") }}
+    </a>
+  </div>
+
+  <div class="main-card">
+    <div class="form-shell">
+      <form method="post" action="/reservations/{{ r.id }}/edit" id="resForm">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <!-- ══════════ معلومات الحجز ══════════ -->
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="section-icon"><i class="bi bi-journal-bookmark-fill"></i></span>
+              {{ L("معلومات الحجز", "Booking Info") }}
+            </div>
+            <span class="section-chip">Booking Info</span>
+          </div>
+          <div class="form-grid-4">
+
+            <!-- رقم الحجز -->
+            <div class="field-group">
+              <label>{{ L("رقم الحجز", "Booking No.") }}</label>
+              <div class="bk-num-wrap">
+                <input id="bkNumInput" name="new_booking_number" value="{{ r.booking_number }}"
+                       class="fi bk-num-field" disabled>
+                <button type="button" class="bk-pencil-btn"
+                        onclick="var i=document.getElementById('bkNumInput');var l=i.disabled;i.disabled=!l;this.classList.toggle('active',l);if(l){i.focus();i.select();}">
+                  <i class="bi bi-pencil-fill"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- الرقم المرجعي -->
+            <div class="field-group">
+              <label>{{ L("الرقم المرجعي", "Reference No.") }}</label>
+              <div class="bk-num-wrap">
+                <input id="refInput" name="reference_number" value="{{ r.reference_number or '' }}"
+                       placeholder="{{ L('تلقائي', 'Auto') }}" class="fi bk-num-field" disabled>
+                <button type="button" class="bk-pencil-btn"
+                        onclick="var i=document.getElementById('refInput');var l=i.disabled;i.disabled=!l;this.classList.toggle('active',l);if(l){i.focus();i.select();}">
+                  <i class="bi bi-pencil-fill"></i>
+                </button>
+              </div>
+            </div>
+
+            <!-- المصدر -->
+            <div class="field-group">
+              <label>{{ L("المصدر", "Source") }}</label>
+              <select name="source" class="fs">
+                <option value="direct"   {{ 'selected' if r.source=='direct' }}>{{ L("مباشر (Direct)", "Direct") }}</option>
+                <option value="agent"    {{ 'selected' if r.source=='agent' }}>{{ L("وكيل (Agent)", "Via Agent") }}</option>
+                <option value="website"  {{ 'selected' if r.source=='website' }}>{{ L("موقع (Website)", "Website") }}</option>
+              </select>
+            </div>
+
+            <!-- وكيل السفر -->
+            <div class="field-group">
+              <label>{{ L("وكيل السفر", "Travel Agent") }}</label>
+              <select name="travel_agent_id" class="fs">
+                <option value="">—</option>
+                {% for c in customers %}
+                <option value="{{ c.id }}" {{ 'selected' if r.travel_agent_id==c.id }}>{{ c.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- مسؤول الحجز -->
+            <div class="field-group">
+              <label>{{ L("مسؤول الحجز", "Booking Manager") }}</label>
+              <select name="employee_id" class="fs">
+                <option value="">—</option>
+                {% for e in employees %}
+                <option value="{{ e.id }}" {{ 'selected' if r.employee_id==e.id }}>{{ e.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- مسؤول المبيعات -->
+            <div class="field-group">
+              <label>{{ L("مسؤول المبيعات", "Sales Manager") }}</label>
+              <select name="sales_rep_id" class="fs">
+                <option value="">—</option>
+                {% for e in employees %}
+                <option value="{{ e.id }}" {{ 'selected' if r.sales_rep_id==e.id }}>{{ e.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- موظف التسويق -->
+            <div class="field-group">
+              <label>{{ L("موظف التسويق", "Marketing Rep") }}</label>
+              <select name="marketing_rep_id" class="fs">
+                <option value="">—</option>
+                {% for e in employees %}
+                <option value="{{ e.id }}" {{ 'selected' if r.marketing_rep_id==e.id }}>{{ e.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <!-- نوع الحجز -->
+            <div class="field-group">
+              <label>{{ L("نوع الحجز", "Reservation Type") }}</label>
+              <select name="reservation_type" class="fs" id="editResType" onchange="toggleEditPaymentDueDate()">
+                <option value="cash" {{ 'selected' if r.reservation_type=='cash' }}>{{ L("نقدي", "Cash") }}</option>
+                <option value="credit" {{ 'selected' if r.reservation_type=='credit' }}>{{ L("آجل", "Credit") }}</option>
+              </select>
+            </div>
+
+            <!-- تاريخ استحقاق الدفع -->
+            <div class="field-group" id="editPaymentDueDateGroup" style="{{ '' if r.reservation_type=='credit' else 'display:none' }}">
+              <label>{{ L("تاريخ استحقاق الدفع", "Payment Due Date") }}</label>
+              <input name="payment_due_date" type="date" class="fi" value="{{ r.payment_due_date.strftime('%Y-%m-%d') if r.payment_due_date else '' }}">
+            </div>
+
+            <!-- الحالة (State Machine - read only) -->
+            <div class="field-group">
+              <label>{{ L("الحالة", "Status") }}</label>
+              <input type="hidden" name="status" value="{{ r.status }}">
+              {% set state_css = {
+                'draft': 'background:#f1f5f9;color:#475569;border-color:#cbd5e1',
+                'quoted': 'background:#eef2ff;color:#4338ca;border-color:#c7d2fe',
+                'pending_approval': 'background:#fefce8;color:#a16207;border-color:#fde68a',
+                'confirmed': 'background:#f0fdf4;color:#065f46;border-color:#bbf7d0',
+                'in_service': 'background:#f0f9ff;color:#0369a1;border-color:#bae6fd',
+                'completed': 'background:#f5f3ff;color:#6b21a8;border-color:#e9d5ff',
+                'cancelled': 'background:#fef2f2;color:#b91c1c;border-color:#fecaca',
+              } %}
+              <div style="padding:8px 14px;border-radius:10px;font-weight:950;font-size:13px;border:1px solid;text-align:center;{{ state_css.get(r.status, 'background:#f1f5f9;color:#475569;border-color:#cbd5e1') }}">
+                {{ STATUS_LABELS.get(r.status, r.status) if lang == 'ar' else STATUS_LABELS_EN.get(r.status, r.status) }}
+              </div>
+            </div>
+
+            <!-- الشركة المنفذة -->
+            <div class="field-group">
+              <label>{{ L("الشركة المنفذة", "Executing Company") }}</label>
+              <select name="ops_supplier_id" class="fs" style="border-color:#d4e8d8;">
+                <option value="">—</option>
+                {% for s in suppliers %}
+                <option value="{{ s.id }}" {{ 'selected' if r.ops_supplier_id==s.id }}>{{ s.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══════════ بيانات العميل والإقامة ══════════ -->
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="section-icon"><i class="bi bi-person-vcard"></i></span>
+              {{ L("بيانات العميل والإقامة", "Customer & Accommodation Data") }}
+            </div>
+            <span class="section-chip">Guest & Stay</span>
+          </div>
+          <div class="form-grid-4">
+
+            <div class="field-group"><label>{{ L("العميل", "Customer") }}</label>
+              <select name="customer_id" class="fi" onchange="document.querySelector('input[name=guest_name]').value = this.options[this.selectedIndex]?.getAttribute('data-name') || ''">
+                <option value="">{{ L("اختر عميل...", "Select customer...") }}</option>
+                {% for c in customers %}
+                <option value="{{ c.id }}" {{ 'selected' if r.customer_id == c.id }} data-name="{{ c.name }}">{{ c.name }} {% if c.phone %}- {{ c.phone }}{% endif %}</option>
+                {% endfor %}
+              </select></div>
+            <div class="field-group"><label>{{ L("اسم العميل", "Customer Name") }}</label>
+              <input name="guest_name" value="{{ r.guest_name }}" required class="fi"></div>
+
+            <div class="field-group"><label>{{ L("البريد الإلكتروني", "Email") }}</label>
+              <input name="email" type="email" value="{{ r.email or '' }}" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("رقم جواز السفر", "Passport No.") }}</label>
+              <input name="passport_no" value="{{ r.passport_no or '' }}" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("رقم التواصل", "Phone") }}</label>
+              <input name="phone" value="{{ r.phone or '' }}" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("تاريخ الوصول", "Check-in") }}</label>
+              <input name="checkin_date" type="date" value="{{ r.checkin_date }}" class="fi in-date"></div>
+
+            <div class="field-group"><label>{{ L("تاريخ المغادرة", "Check-out") }}</label>
+              <input name="checkout_date" type="date" value="{{ r.checkout_date }}" class="fi out-date"></div>
+
+            <div class="field-group"><label>{{ L("عدد الليالي", "Nights") }}</label>
+              <div class="calc-box"><span>{{ L("الليالي:", "Nights:") }}</span><span class="nights-display">{{ r.nights }}</span></div></div>
+
+            <div class="field-group"><label>{{ L("طلبات خاصة", "Special Requests") }}</label>
+              <input name="special_requests" value="{{ r.special_requests or '' }}" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("عدد البالغين", "Adults") }}</label>
+              <input name="adults" type="number" min="1" value="{{ r.adults }}" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("عدد الأطفال", "Children") }}</label>
+              <input name="children" type="number" min="0" value="{{ r.children }}" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("أعمار الأطفال", "Children Ages") }}</label>
+              <input name="children_ages" value="{{ r.children_ages or '' }}" placeholder="5,8" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("الجنسية", "Nationality") }}</label>
+              <input name="nationality" value="{{ r.nationality or '' }}" class="fi"></div>
+
+            <!-- الفندق -->
+            <div class="field-group">
+              <label>{{ L("الفندق", "Hotel") }}</label>
+              <select name="hotel_id" required class="fs">
+                <option value="">{{ L("اختر فندق...", "Select hotel...") }}</option>
+                {% for h in hotels %}
+                <option value="{{ h.id }}" {{ 'selected' if r.hotel_id==h.id }}>{{ h.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="field-group"><label>{{ L("نوع الغرفة", "Room Type") }}</label>
+              <select name="room_type" class="fs room-type-select">
+                <option value="">{{ L("اختر نوع الغرفة...", "Select room type...") }}</option>
+                {% for rt in room_types %}
+                <option value="{{ rt.name_ar }}" data-room-type-id="{{ rt.id }}" {{ 'selected' if r.room_type==rt.name_ar }}>{{ rt.name_ar }} / {{ rt.name_en }}</option>
+                {% endfor %}
+              </select></div>
+
+            <div class="field-group">
+              <label>{{ L("نوع الإقامة", "Stay Type") }}</label>
+              <select name="stay_type" class="fs">
+                <option value="" {{ 'selected' if not r.stay_type }}>{{ L("نوع الإقامة...", "Stay Type...") }}</option>
+                <option value="room_only"     {{ 'selected' if r.stay_type=='room_only' }}>{{ L("إقامة فقط", "Room Only") }}</option>
+                <option value="bed_breakfast" {{ 'selected' if r.stay_type=='bed_breakfast' }}>{{ L("إقامة وإفطار", "Bed & Breakfast") }}</option>
+                <option value="half_board"    {{ 'selected' if r.stay_type=='half_board' }}>{{ L("نصف إقامة", "Half Board") }}</option>
+                <option value="full_board"    {{ 'selected' if r.stay_type=='full_board' }}>{{ L("إقامة كاملة", "Full Board") }}</option>
+                <option value="all_inclusive" {{ 'selected' if r.stay_type=='all_inclusive' }}>{{ L("شامل كل شيء", "All Inclusive") }}</option>
+              </select>
+            </div>
+
+            <div class="field-group"><label>{{ L("خطة الوجبات", "Meal Plan") }}</label>
+              <select name="meal_plan" class="fs">
+                <option value="">{{ L("اختر خطة الوجبات...", "Select meal plan...") }}</option>
+                {% for mp in meal_plans %}
+                <option value="{{ mp.code }}" {{ 'selected' if r.meal_plan==mp.code }}>{{ mp.name_ar }} / {{ mp.name_en }} ({{ mp.code }})</option>
+                {% endfor %}
+              </select></div>
+
+            <div class="field-group"><label>{{ L("عدد الغرف", "Rooms") }}</label>
+              <input name="room_count" type="number" min="1" value="{{ r.room_count }}" class="fi room-count"></div>
+
+            <div class="field-group"><label>{{ L("وقت الوصول", "Check-in Time") }}</label>
+              <input name="checkin_time" type="time" value="{{ r.checkin_time or '' }}" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("وقت المغادرة", "Check-out Time") }}</label>
+              <input name="checkout_time" type="time" value="{{ r.checkout_time or '' }}" class="fi"></div>
+
+            <div class="field-group" style="display:flex;align-items:flex-end;">
+              <label class="check-label" style="width:100%;">
+                <input type="checkbox" name="extra_bed" {{ 'checked' if r.extra_bed }}>
+                {{ L("سرير إضافي", "Extra Bed") }}
+              </label>
+            </div>
+
+            <div class="field-group"><label>{{ L("غرف × ليالي", "Rooms × Nights") }}</label>
+              <div class="calc-box"><span>{{ L("الإجمالي:", "Total:") }}</span><span class="room-nights-display">{{ r.total_room_nights }}</span></div></div>
+
+          </div>
+        </div>
+
+        <!-- ══════════ الأسعار والتحصيل ══════════ -->
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="section-icon"><i class="bi bi-cash-stack"></i></span>
+              {{ L("الأسعار والتحصيل", "Prices & Collections") }}
+            </div>
+            <span class="section-chip">Pricing</span>
+          </div>
+          <div class="form-grid-4">
+
+            <!-- Row 1 -->
+            <div class="field-group" style="grid-column: span 4;">
+              <button type="button" class="btn btn-primary" id="suggestPriceBtn" style="width:100%;padding:12px;font-weight:900;font-size:14px;border-radius:13px;">
+                <i class="bi bi-calculator"></i> {{ L("احتساب السعر تلقائياً", "Suggest Price") }}
+              </button>
+              <div id="priceSuggestionResult" style="margin-top:8px;display:none;"></div>
+            </div>
+
+            <div class="field-group"><label>{{ L("سعر البيع للعميل", "Company Cost") }}</label>
+              <input name="company_cost" type="number" step="0.01" value="{{ r.company_cost }}" class="fi company-cost"></div>
+
+            <div class="field-group"><label><i class="bi bi-lock-fill" style="font-size:10px;color:var(--muted);"></i> {{ L("المسدد للمكتب", "Paid to Office") }}</label>
+              <input name="paid_to_office" type="number" step="0.01" value="{{ r.paid_to_office }}" class="fi paid-office" readonly style="background:#f3f4f6;cursor:not-allowed;opacity:.7;"></div>
+
+            <div class="field-group col-span-2"><label>{{ L("المتبقي على العميل", "Customer Balance") }}</label>
+              <div class="calc-box red"><span>{{ L("المتبقي:", "Remaining:") }}</span><span class="remaining-office">{{ "%.2f"|format(r.remaining_to_office) }}</span></div></div>
+
+            <!-- Row 2 -->
+            <div class="field-group"><label>{{ L("تكلفة الإقامة", "Stay Cost") }}</label>
+              <input name="stay_cost" type="number" step="0.01" value="{{ r.stay_cost }}" class="fi stay-cost"></div>
+
+            <div class="field-group"><label><i class="bi bi-lock-fill" style="font-size:10px;color:var(--muted);"></i> {{ L("المسدد للفندق", "Paid to Hotel") }}</label>
+              <input name="paid_to_hotel" type="number" step="0.01" value="{{ r.paid_to_hotel }}" class="fi paid-hotel" readonly style="background:#f3f4f6;cursor:not-allowed;opacity:.7;"></div>
+
+            <div class="field-group col-span-2"><label>{{ L("المتبقي للفندق", "Hotel Balance") }}</label>
+              <div class="calc-box red"><span>{{ L("المتبقي:", "Remaining:") }}</span><span class="remaining-hotel">{{ "%.2f"|format(r.remaining_to_hotel) }}</span></div></div>
+
+            <!-- Row 3 -->
+            <div class="field-group"><label>{{ L("تكلفة النقل", "Transport") }}</label>
+              <input name="transportation_cost" type="number" step="0.01" value="{{ r.transportation_cost }}" class="fi transport-cost"></div>
+
+            <div class="field-group"><label>{{ L("تكلفة الرحلات", "Excursions") }}</label>
+              <input name="excursions_cost" type="number" step="0.01" value="{{ r.excursions_cost or 0 }}" class="fi excursions-cost"></div>
+
+            <div class="field-group"><label>{{ L("تكلفة التأشيرة", "Visa") }}</label>
+              <input name="visa_cost" type="number" step="0.01" value="{{ r.visa_cost or 0 }}" class="fi visa-cost"></div>
+
+            <div class="field-group"><label>{{ L("تكلفة التأمين", "Insurance") }}</label>
+              <input name="insurance_cost" type="number" step="0.01" value="{{ r.insurance_cost or 0 }}" class="fi insurance-cost"></div>
+
+            <!-- Row 4 -->
+            <div class="field-group"><label>{{ L("خدمات أخرى", "Other Services") }}</label>
+              <input name="other_services_cost" type="number" step="0.01" value="{{ r.other_services_cost }}" class="fi other-services"></div>
+
+            <div class="field-group"><label>{{ L("الربح المبدئي", "Initial Profit") }}</label>
+              <div class="calc-box purple"><span>{{ L("المبدئي:", "Initial:") }}</span><span class="initial-profit">{{ "%.2f"|format(r.initial_profit) }}</span></div></div>
+
+            <div class="field-group col-span-2"><label>{{ L("الربح الإجمالي", "Total Profit") }}</label>
+              <div class="calc-box green"><span>{{ L("الإجمالي:", "Total:") }}</span><span class="total-profit">{{ "%.2f"|format(r.total_profit) }}</span></div></div>
+
+            <div class="field-group" style="grid-column: span 4;">
+              <a href="/reservations/{{ r.id }}/statement" style="display:inline-flex;align-items:center;gap:8px;padding:12px 24px;border-radius:13px;font-weight:950;font-size:13px;text-decoration:none;background:#8b7cf6;color:#fff;border:0;cursor:pointer;transition:.14s">
+                <i class="bi bi-journal-text"></i> {{ L("عرض كشف حساب الحجز", "View Booking Statement") }}
+              </a>
+            </div>
+
+          </div>
+        </div>
+
+        <!-- ══════════ الخدمات المقدمة ══════════ -->
+        <div class="section-card">
+          <div class="section-header">
+            <i class="bi bi-stars"></i>
+            <span>{{ L("الخدمات المقدمة", "Services") }}</span>
+          </div>
+          <div class="services-grid" style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:8px;padding:8px 0">
+            {% for svc in services %}
+            {% set assigned = svc.id in selected_service_ids %}
+            <div style="display:flex;align-items:center;gap:4px;font-size:13px;font-weight:800;padding:6px 10px;border-radius:10px;background:{{ '#f0fdf4' if assigned else '#f9fafb' }};border:1px solid {{ '#bbf7d0' if assigned else '#e5e7eb' }}">
+              <input type="checkbox" name="service_ids" value="{{ svc.id }}" {{ 'checked' if assigned }}
+                     style="width:16px;height:16px;accent-color:#1fb874;flex-shrink:0">
+              <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ svc.name }}</span>
+              {% if assigned %}
+              {% if has_permission(request.state.user, 'reservations.edit') %}
+              <form method="post" action="/reservations/{{ r.id }}/remove-service/{{ svc.id }}" style="display:inline" onsubmit="return confirm('{{ L('حذف الخدمة من الحجز؟', 'Remove service from booking?') }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" style="padding:4px 8px;border:none;border-radius:6px;background:#fee2e2;color:#dc2626;cursor:pointer;font-size:12px;font-weight:950;display:inline-flex;align-items:center;gap:3px;line-height:1" title="{{ L('إزالة الخدمة', 'Remove service') }}">
+                  <i class="bi bi-x-circle"></i>
+                </button>
+              </form>
+              {% endif %}
+              {% endif %}
+            </div>
+            {% endfor %}
+          </div>
+          <div style="margin-top:8px;padding-top:8px;border-top:1px dashed #e5e7eb">
+            <button type="button" onclick="showQuickService()" style="padding:6px 14px;border-radius:8px;border:1.5px dashed #1fb874;background:#fff;color:#1fb874;font-weight:950;font-size:12px;cursor:pointer">
+              <i class="bi bi-plus-circle"></i> {{ L("إضافة خدمة جديدة", "Add New Service") }}
+            </button>
+            <div id="quick-service-form" style="display:none;margin-top:8px">
+              <div style="display:flex;gap:8px;align-items:center">
+                <input id="qs-name" placeholder="{{ L('اسم الخدمة', 'Service name') }}" style="flex:1;padding:8px 12px;border-radius:8px;border:1px solid #d1d5db;font-size:13px">
+                <input id="qs-price" type="number" step="0.01" placeholder="{{ L('السعر', 'Price') }}" style="width:100px;padding:8px 12px;border-radius:8px;border:1px solid #d1d5db;font-size:13px">
+                <button type="button" onclick="quickAddService('{{ r.id }}')" style="padding:8px 16px;border-radius:8px;border:0;background:#1fb874;color:#fff;font-weight:950;font-size:13px;cursor:pointer">
+                  <i class="bi bi-check-lg"></i>
+                </button>
+                <button type="button" onclick="hideQuickService()" style="padding:8px 12px;border-radius:8px;border:1px solid #d1d5db;background:#fff;color:#6b7280;font-weight:950;font-size:13px;cursor:pointer">
+                  <i class="bi bi-x-lg"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- ══════════ العمليات (نقل واستقبال) ══════════ -->
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="section-icon"><i class="bi bi-bus-front-fill"></i></span>
+              {{ L("العمليات (نقل واستقبال)", "Operations (Transfer & Reception)") }}
+            </div>
+            <span class="section-chip">Operations</span>
+          </div>
+          <div class="form-grid-4">
+
+            <div class="field-group"><label>{{ L("وقت الاستقبال", "Pick-up Time") }}</label>
+              <input name="pickup_time" type="time" value="{{ r.pickup_time or '' }}" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("وقت التوديع", "Drop-off Time") }}</label>
+              <input name="dropoff_time" type="time" value="{{ r.dropoff_time or '' }}" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("رقم الرحلة الجوية", "Flight Number") }}</label>
+              <input name="flight_number" value="{{ r.flight_number or '' }}" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("اسم السائق", "Driver Name") }}</label>
+              <input name="driver_name" value="{{ r.driver_name or '' }}" class="fi"></div>
+
+            <div class="field-group"><label>{{ L("اسم المرشد", "Guide Name") }}</label>
+              <input name="guide_name" value="{{ r.guide_name or '' }}" class="fi"></div>
+
+            <div class="field-group col-span-2"><label>{{ L("بيانات المركبة", "Vehicle Details") }}</label>
+              <input name="vehicle_info" value="{{ r.vehicle_info or '' }}" class="fi"></div>
+
+          </div>
+        </div>
+
+        <!-- ══════════ العمولات ══════════ -->
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="section-icon"><i class="bi bi-percent"></i></span>
+              {{ L("العمولات", "Commissions") }}
+            </div>
+            <span class="section-chip">Commissions</span>
+          </div>
+          <div class="form-grid-4">
+
+            <!-- مسؤول الحجز -->
+            <div class="field-group"><label>{{ L("مسؤول الحجز", "Booking Rep.") }}</label>
+              <select name="employee_id_comm" class="fs comm-emp-mirror" data-target="employee_id">
+                <option value="">—</option>
+                {% for e in employees %}
+                <option value="{{ e.id }}" {{ 'selected' if r.employee_id==e.id }}>{{ e.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field-group"><label>{{ L("نوع العمولة", "Type") }}</label>
+              <select name="reservation_rep_commission_type" class="fs commission-type">
+                <option value="percentage" {{ 'selected' if r.reservation_rep_commission_type=='percentage' }}>{{ L("نسبة %", "Rate %") }}</option>
+                <option value="fixed"      {{ 'selected' if r.reservation_rep_commission_type=='fixed' }}>{{ L("مبلغ ثابت", "Fixed") }}</option>
+              </select>
+            </div>
+            <div class="field-group"><label>{{ L("القيمة", "Value") }}</label>
+              <input name="reservation_rep_commission_value" type="number" step="0.01"
+                     value="{{ r.reservation_rep_commission_value }}" class="fi commission-value"></div>
+            <div class="field-group"><label>{{ L("العمولة", "Commission") }}</label>
+              <div class="calc-box purple"><span>{{ L("المبلغ:", "Amount:") }}</span><span class="commission-result">{{ "%.2f"|format(r.employee_commission or 0) }}</span></div></div>
+
+            <!-- وكيل السفر -->
+            <div class="field-group"><label>{{ L("وكيل السفر", "Travel Agent") }}</label>
+              <select name="travel_agent_id_comm" class="fs comm-emp-mirror" data-target="travel_agent_id">
+                <option value="">—</option>
+                {% for c in customers %}
+                <option value="{{ c.id }}" {{ 'selected' if r.travel_agent_id==c.id }}>{{ c.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field-group"><label>{{ L("نوع العمولة", "Type") }}</label>
+              <select name="travel_agent_commission_type" class="fs commission-type">
+                <option value="percentage" {{ 'selected' if r.travel_agent_commission_type=='percentage' }}>{{ L("نسبة %", "Rate %") }}</option>
+                <option value="fixed"      {{ 'selected' if r.travel_agent_commission_type=='fixed' }}>{{ L("مبلغ ثابت", "Fixed") }}</option>
+              </select>
+            </div>
+            <div class="field-group"><label>{{ L("القيمة", "Value") }}</label>
+              <input name="travel_agent_commission_value" type="number" step="0.01"
+                     value="{{ r.travel_agent_commission_value }}" class="fi commission-value"></div>
+            <div class="field-group"><label>{{ L("العمولة", "Commission") }}</label>
+              <div class="calc-box purple"><span>{{ L("المبلغ:", "Amount:") }}</span><span class="commission-result">{{ "%.2f"|format(r.travel_agent_commission_amount or 0) }}</span></div></div>
+
+            <!-- موظف التسويق -->
+            <div class="field-group"><label>{{ L("موظف التسويق", "Marketing Rep") }}</label>
+              <select name="marketing_rep_id_comm" class="fs comm-emp-mirror" data-target="marketing_rep_id">
+                <option value="">—</option>
+                {% for e in employees %}
+                <option value="{{ e.id }}" {{ 'selected' if r.marketing_rep_id==e.id }}>{{ e.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field-group"><label>{{ L("نوع العمولة", "Type") }}</label>
+              <select name="marketing_rep_commission_type" class="fs commission-type">
+                <option value="percentage" {{ 'selected' if r.marketing_rep_commission_type=='percentage' }}>{{ L("نسبة %", "Rate %") }}</option>
+                <option value="fixed"      {{ 'selected' if r.marketing_rep_commission_type=='fixed' }}>{{ L("مبلغ ثابت", "Fixed") }}</option>
+              </select>
+            </div>
+            <div class="field-group"><label>{{ L("القيمة", "Value") }}</label>
+              <input name="marketing_rep_commission_value" type="number" step="0.01"
+                     value="{{ r.marketing_rep_commission_value }}" class="fi commission-value"></div>
+            <div class="field-group"><label>{{ L("العمولة", "Commission") }}</label>
+              <div class="calc-box purple"><span>{{ L("المبلغ:", "Amount:") }}</span><span class="commission-result">{{ "%.2f"|format(r.marketing_rep_commission_amount or 0) }}</span></div></div>
+
+            <!-- مسؤول المبيعات -->
+            <div class="field-group"><label>{{ L("مسؤول المبيعات", "Sales Rep.") }}</label>
+              <select name="sales_rep_id_comm" class="fs comm-emp-mirror" data-target="sales_rep_id">
+                <option value="">—</option>
+                {% for e in employees %}
+                <option value="{{ e.id }}" {{ 'selected' if r.sales_rep_id==e.id }}>{{ e.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field-group"><label>{{ L("نوع العمولة", "Type") }}</label>
+              <select name="sales_rep_commission_type" class="fs commission-type">
+                <option value="percentage" {{ 'selected' if r.sales_rep_commission_type=='percentage' }}>{{ L("نسبة %", "Rate %") }}</option>
+                <option value="fixed"      {{ 'selected' if r.sales_rep_commission_type=='fixed' }}>{{ L("مبلغ ثابت", "Fixed") }}</option>
+              </select>
+            </div>
+            <div class="field-group"><label>{{ L("القيمة", "Value") }}</label>
+              <input name="sales_rep_commission_value" type="number" step="0.01"
+                     value="{{ r.sales_rep_commission_value }}" class="fi commission-value"></div>
+            <div class="field-group"><label>{{ L("العمولة", "Commission") }}</label>
+              <div class="calc-box purple"><span>{{ L("المبلغ:", "Amount:") }}</span><span class="commission-result">{{ "%.2f"|format(r.sales_rep_commission_amount or 0) }}</span></div></div>
+
+            <!-- الشركة المنفذة -->
+            <div class="field-group"><label>{{ L("الشركة المنفذة", "Executing Company") }}</label>
+              <select name="ops_supplier_id_comm" class="fs" style="border-color:#d4e8d8;">
+                <option value="">—</option>
+                {% for s in suppliers %}
+                <option value="{{ s.id }}" {{ 'selected' if r.ops_supplier_id==s.id }}>{{ s.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+            <div class="field-group"><label>{{ L("نوع عمولة المورد", "Supplier Comm. Type") }}</label>
+              <select name="ops_supplier_commission_type" class="fs commission-type">
+                <option value="percentage" {{ 'selected' if r.ops_supplier_commission_type=='percentage' }}>{{ L("نسبة %", "Rate %") }}</option>
+                <option value="fixed"      {{ 'selected' if r.ops_supplier_commission_type=='fixed' }}>{{ L("مبلغ ثابت", "Fixed") }}</option>
+              </select>
+            </div>
+            <div class="field-group"><label>{{ L("قيمة عمولة المورد", "Supplier Comm. Value") }}</label>
+              <input name="ops_supplier_commission_value" type="number" step="0.01"
+                     value="{{ r.ops_supplier_commission_value }}" class="fi commission-value"></div>
+            <div class="field-group"><label>{{ L("عمولة المورد", "Supplier Comm.") }}</label>
+              <div class="calc-box purple"><span>{{ L("المبلغ:", "Amount:") }}</span><span class="commission-result">{{ "%.2f"|format(r.ops_supplier_commission_amount or 0) }}</span></div></div>
+
+            <div class="field-group col-span-2"><label>{{ L("الربح النهائي للشركة بعد كل العمولات", "Company Final Profit After All Commissions") }}</label>
+              <div class="calc-box green"><span>{{ L("الربح:", "Profit:") }}</span><span class="final-profit">0.00</span></div></div>
+
+          </div>
+        </div>
+
+        <!-- ══════════ الملاحظات ══════════ -->
+        <div class="section-card">
+          <div class="section-head">
+            <div class="section-title">
+              <span class="section-icon"><i class="bi bi-chat-left-text"></i></span>
+              {{ L("ملاحظات", "Notes") }}
+            </div>
+          </div>
+          <textarea name="notes" class="ft" style="width:100%;">{{ r.notes or '' }}</textarea>
+        </div>
+
+        <!-- سبب التعديل -->
+        <div class="field-group" style="margin-bottom:8px;">
+          <label>{{ L("سبب التعديل", "Reason for change") }}</label>
+          <input type="text" name="modification_reason" class="ft" style="width:100%;"
+                 placeholder="{{ L('اذكر سبب التعديل (اختياري)', 'Reason for this modification (optional)') }}">
+        </div>
+
+        <div style="padding:8px 0 4px;display:flex;gap:10px;">
+          <button class="save-btn" type="submit" style="flex:1;">
+            <i class="bi bi-floppy-fill"></i>
+            {{ L("حفظ التعديلات", "Save Changes") }}
+          </button>
+        </div>
+
+      </form>
+    </div>
+  </div>
+</div>
+
+<div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-top:12px">
+  {% set btn_css = {
+    'draft': 'background:#e2e8f0;color:#334155;border-color:#94a3b8',
+    'quoted': 'background:#eef2ff;color:#4338ca;border-color:#a5b4fc',
+    'pending_approval': 'background:#fef9c3;color:#854d0e;border-color:#facc15',
+    'confirmed': 'background:#dcfce7;color:#166534;border-color:#86efac',
+    'in_service': 'background:#e0f2fe;color:#075985;border-color:#7dd3fc',
+    'completed': 'background:#f3e8ff;color:#6b21a8;border-color:#d8b4fe',
+    'cancelled': 'background:#fee2e2;color:#991b1b;border-color:#fca5a5',
+  } %}
+  {% for t in allowed_transitions(r) %}
+  {% if has_permission(request.state.user, 'reservations.edit') %}
+  <form method="post" action="/reservations/{{ r.id }}/transition/{{ t.to_state }}" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    {% if t.require_reason %}
+    <input name="reason" placeholder="{{ L('السبب', 'Reason') }}" required style="display:none" class="reason-input-{{ t.to_state }}">
+    {% endif %}
+    <button type="submit" style="padding:10px 18px;border-radius:12px;font-weight:950;font-size:13px;border:2px solid;cursor:pointer;transition:0.15s;{{ btn_css.get(t.to_state, 'background:#f1f5f9;color:#475569;border-color:#cbd5e1') }}" onmouseover="this.style.filter='brightness(0.92)'" onmouseout="this.style.filter='none'" onclick="return confirmTransition('{{ t.to_state }}', {{ 'true' if t.require_reason else 'false' }})">
+      {{ t.label_ar if lang == 'ar' else t.label_en }}
+    </button>
+  </form>
+  {% endif %}
+  {% endfor %}
+</div>
+
+<div id="timeline-section" style="margin-top:20px;background:#fafafa;border-radius:12px;padding:16px">
+  <h3 style="margin:0 0 12px;font-size:14px;color:#444">
+    {{ L("مهام سير العمل", "Workflow Tasks") }}
+  </h3>
+  <div id="tasks-content" style="margin-bottom:16px">
+    {% if r.workflow_tasks %}
+    <div style="display:flex;flex-direction:column;gap:6px">
+      {% for t in r.workflow_tasks|sort(attribute='priority', reverse=True) %}
+      {% set priority_cls = {'urgent':'#fee2e2;color:#991b1b','high':'#fef3c7;color:#92400e','normal':'#dbeafe;color:#1e40af','low':'#e5e7eb;color:#374151'} %}
+      {% set status_ar = {'pending':'بانتظار','in_progress':'قيد التنفيذ','completed':'مكتمل','cancelled':'ملغي'} %}
+      {% set status_en = {'pending':'Pending','in_progress':'In Progress','completed':'Completed','cancelled':'Cancelled'} %}
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:10px;background:#fff;border:1px solid #e5e7eb">
+        <div style="flex:1">
+          <strong style="font-size:13px">{{ t.title }}</strong>
+          {% if t.description %}<div style="font-size:11px;color:#6b7280">{{ t.description }}</div>{% endif %}
+          <div style="font-size:10px;color:#9ca3af;margin-top:2px">
+            {% if t.assigned_to %}👤 {{ t.assigned_to.name }} · {% endif %}
+            {% if t.due_date %}📅 {{ t.due_date }}{% endif %}
+            <span style="display:inline-block;margin-inline-start:6px;padding:1px 6px;border-radius:999px;font-weight:900;font-size:9px;{{ priority_cls.get(t.priority, '') }}">{{ t.priority }}</span>
+          </div>
+        </div>
+        {% if has_permission(request.state.user, 'reservations.edit') %}
+        <form method="post" action="/workflow/tasks/{{ t.id }}/status" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <select name="status" onchange="this.form.submit()" style="padding:4px 8px;border-radius:8px;border:1px solid #d1d5db;font-size:12px">
+            {% for s in ('pending','in_progress','completed','cancelled') %}
+            <option value="{{ s }}" {{ 'selected' if t.status==s }}>{{ status_ar.get(s,s) if lang=='ar' else status_en.get(s,s) }}</option>
+            {% endfor %}
+          </select>
+        </form>
+        {% endif %}
+      </div>
+      {% endfor %}
+    </div>
+    {% else %}
+    <div style="color:#9ca3af;font-size:13px">{{ L('لا توجد مهام بعد', 'No tasks yet') }}</div>
+    {% endif %}
+  </div>
+
+  <h3 style="margin:0 0 12px;font-size:14px;color:#444">
+    {{ L("سجل الأحداث الشامل", "Full Event Timeline") }}
+  </h3>
+  <div id="timeline-content" style="max-height:400px;overflow-y:auto">
+    {% if timeline_items %}
+    {% set type_icons = {
+      'created': 'bi-plus-circle-fill',
+      'state_change': 'bi-arrow-left-right',
+      'edit': 'bi-pencil-fill',
+      'payment': 'bi-cash-stack',
+      'supplier_payment': 'bi-send',
+      'document': 'bi-file-earmark',
+      'note': 'bi-sticky-fill',
+      'call': 'bi-telephone-fill',
+      'email': 'bi-envelope-fill',
+      'meeting': 'bi-people-fill',
+      'task': 'bi-check2-square',
+      'complaint': 'bi-exclamation-triangle-fill',
+      'system': 'bi-gear-fill',
+      'reservation': 'bi-calendar-check',
+      'collection': 'bi-cash-coin',
+      'quote': 'bi-file-text',
+    } %}
+    {% set type_colors = {
+      'created': '#16a34a',
+      'state_change': '#2563eb',
+      'edit': '#ca8a04',
+      'payment': '#059669',
+      'supplier_payment': '#dc2626',
+      'document': '#7c3aed',
+      'note': '#64748b',
+      'call': '#0891b2',
+      'email': '#4f46e5',
+      'meeting': '#9333ea',
+      'task': '#65a30d',
+      'complaint': '#ea580c',
+      'system': '#78716c',
+      'reservation': '#16a34a',
+      'collection': '#059669',
+      'quote': '#a855f7',
+    } %}
+    {% for item in timeline_items %}
+    <div class="tl-item" style="display:flex;gap:12px;padding:10px 0;border-bottom:1px solid #e5e7eb">
+      <div style="width:32px;height:32px;border-radius:50%;background:{{ type_colors.get(item.type, '#6b7280') }};color:#fff;display:flex;align-items:center;justify-content:center;flex-shrink:0;font-size:14px">
+        <i class="bi {{ type_icons.get(item.type, 'bi-circle-fill') }}"></i>
+      </div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:950;font-size:13px;color:#1f2937">
+          {{ item.desc_ar if lang == 'ar' else item.desc_en }}
+        </div>
+        <div style="display:flex;gap:12px;margin-top:4px;font-size:11px;color:#6b7280;flex-wrap:wrap">
+          <span><i class="bi bi-clock"></i> {{ item.ts.strftime('%Y-%m-%d %H:%M') if item.ts else '' }}</span>
+          {% if item.user %}<span><i class="bi bi-person"></i> {{ item.user }}</span>{% endif %}
+          {% if item.reason %}<span style="color:#9a3412"><i class="bi bi-chat"></i> {{ item.reason }}</span>{% endif %}
+          {% if item.link %}
+          <a href="{{ item.link }}" style="color:#2563eb;text-decoration:underline" target="_blank">
+            <i class="bi bi-box-arrow-up-right"></i> {{ L('عرض', 'View') }}
+          </a>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+    {% endfor %}
+    {% else %}
+    <div style="color:#9ca3af;font-size:13px;padding:12px 0;text-align:center">
+      <i class="bi bi-inbox" style="font-size:24px;display:block;margin-bottom:6px"></i>
+      {{ L('لا توجد أحداث بعد', 'No events yet') }}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+(function(){
+  const form = document.getElementById('resForm');
+
+  function calcAll(){
+    const inDate  = new Date(form.querySelector('.in-date').value);
+    const outDate = new Date(form.querySelector('.out-date').value);
+    const inVal   = form.querySelector('.in-date').value;
+    const outVal  = form.querySelector('.out-date').value;
+
+    let nights = 0;
+    if(inVal && outVal && outDate > inDate)
+      nights = Math.round((outDate - inDate)/86400000);
+    form.querySelector('.nights-display').textContent = nights;
+
+    const rooms = parseFloat(form.querySelector('.room-count').value||0);
+    form.querySelector('.room-nights-display').textContent = (rooms*nights).toFixed(0);
+
+    const co = parseFloat(form.querySelector('.company-cost').value||0);
+    const po = parseFloat(form.querySelector('.paid-office').value||0);
+    form.querySelector('.remaining-office').textContent = (co-po).toFixed(2);
+
+    const sc = parseFloat(form.querySelector('.stay-cost').value||0);
+    const ph = parseFloat(form.querySelector('.paid-hotel').value||0);
+    form.querySelector('.remaining-hotel').textContent = (sc-ph).toFixed(2);
+
+    const init = co - sc;
+    form.querySelector('.initial-profit').textContent = init.toFixed(2);
+
+    const tr = parseFloat(form.querySelector('.transport-cost').value||0);
+    const ex = parseFloat(form.querySelector('.excursions-cost').value||0);
+    const vi = parseFloat(form.querySelector('.visa-cost').value||0);
+    const ins= parseFloat(form.querySelector('.insurance-cost').value||0);
+    const os = parseFloat(form.querySelector('.other-services').value||0);
+    const total = init - tr - ex - vi - ins - os;
+    form.querySelector('.total-profit').textContent = total.toFixed(2);
+
+    // commissions
+    let totalComm = 0;
+    const types   = form.querySelectorAll('.commission-type');
+    const vals    = form.querySelectorAll('.commission-value');
+    const results = form.querySelectorAll('.commission-result');
+    types.forEach((t,i)=>{
+      const v = parseFloat((vals[i]||{}).value||0);
+      const c = t.value==='fixed' ? v : total*(v/100);
+      if(results[i]) results[i].textContent = c.toFixed(2);
+      totalComm += c;
+    });
+
+    const fp = form.querySelector('.final-profit');
+    if(fp) fp.textContent = (total - totalComm).toFixed(2);
+  }
+
+  form.addEventListener('input', calcAll);
+  calcAll();
+})();
+</script>
+
+<script>
+function toggleEditPaymentDueDate(){
+  var sel = document.getElementById('editResType');
+  var grp = document.getElementById('editPaymentDueDateGroup');
+  grp.style.display = sel.value === 'credit' ? 'block' : 'none';
+}
+
+function confirmTransition(toState, requireReason) {
+  var msg = {'cancelled': 'إلغاء الحجز؟', 'completed': 'إكمال الحجز؟', 'confirmed': 'تأكيد الحجز؟', 'in_service': 'بدء الخدمة؟', 'quoted': 'عرض السعر؟', 'pending_approval': 'إرسال للموافقة؟', 'draft': 'حفظ كمسودة؟'};
+  var enMsg = {'cancelled': 'Cancel reservation?', 'completed': 'Complete reservation?', 'confirmed': 'Confirm reservation?', 'in_service': 'Start service?', 'quoted': 'Quote?', 'pending_approval': 'Send for approval?', 'draft': 'Save as draft?'};
+  var lang = document.documentElement.dir === 'rtl' ? 'ar' : 'en';
+  var m = lang === 'ar' ? (msg[toState] || toState) : (enMsg[toState] || toState);
+  if (requireReason) {
+    var r = prompt(lang === 'ar' ? 'الرجاء إدخال سبب الحالة الجديدة:' : 'Please enter reason for this transition:');
+    if (r === null) return false;
+    document.querySelector('.reason-input-' + toState).value = r;
+  }
+  return confirm(m);
+}
+
+function showQuickService() {
+  document.getElementById('quick-service-form').style.display = 'block';
+}
+function hideQuickService() {
+  document.getElementById('quick-service-form').style.display = 'none';
+}
+function quickAddService(rid) {
+  var name = document.getElementById('qs-name').value.trim();
+  var price = document.getElementById('qs-price').value || 0;
+  if (!name) return alert(lang === 'ar' ? 'الرجاء إدخال اسم الخدمة' : 'Please enter service name');
+  var form = document.createElement('form');
+  form.method = 'post';
+  form.action = '/reservations/' + rid + '/quick-add-service';
+  form.style.display = 'none';
+  form.innerHTML = '<input name="name" value="' + name.replace(/"/g,'&quot;') + '"><input name="price" value="' + price + '">';
+  document.body.appendChild(form);
+  form.submit();
+}
+
+// ─── Suggest Price ─────────────────────────────────
+document.getElementById('suggestPriceBtn')?.addEventListener('click', function() {
+  var hotelId = document.querySelector('select[name="hotel_id"]')?.value;
+  var roomTypeSelect = document.querySelector('select[name="room_type"]');
+  var roomTypeId = roomTypeSelect?.options[roomTypeSelect.selectedIndex]?.getAttribute('data-room-type-id') || '';
+  var checkin = document.querySelector('input[name="checkin_date"]')?.value;
+  var checkout = document.querySelector('input[name="checkout_date"]')?.value;
+  var adults = document.querySelector('input[name="adults"]')?.value || 1;
+  var children = document.querySelector('input[name="children"]')?.value || 0;
+  var childrenAges = document.querySelector('input[name="children_ages"]')?.value || '';
+  var extraBed = document.querySelector('input[name="extra_bed"]')?.checked ? 1 : 0;
+  var roomCount = document.querySelector('input[name="room_count"]')?.value || 1;
+  var nationality = document.querySelector('input[name="nationality"]')?.value || '';
+
+  if (!hotelId || !checkin || !checkout) {
+    document.getElementById('priceSuggestionResult').innerHTML = '<div class="alert alert-warning">' +
+      (document.documentElement.dir === 'rtl' ? 'يرجى اختيار الفندق وتاريخ الوصول والمغادرة أولاً' : 'Please select hotel, check-in and check-out dates first') +
+      '</div>';
+    document.getElementById('priceSuggestionResult').style.display = 'block';
+    return;
+  }
+
+  var formData = new FormData();
+  formData.append('hotel_id', hotelId);
+  formData.append('room_type_id', roomTypeId);
+  formData.append('checkin_date', checkin);
+  formData.append('checkout_date', checkout);
+  formData.append('adults', adults);
+  formData.append('children', children);
+  formData.append('children_ages', childrenAges);
+  formData.append('extra_bed', extraBed);
+  formData.append('room_count', roomCount);
+  formData.append('nationality', nationality);
+
+  var btn = this;
+  btn.disabled = true;
+  btn.innerHTML = '<i class="bi bi-hourglass-split"></i> {{ L("جاري الحساب...", "Calculating...") }}';
+
+  csrfFetch('/hotels/suggest-price', { method: 'POST', body: formData })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-calculator"></i> {{ L("احتساب السعر تلقائياً", "Suggest Price") }}';
+      var resultDiv = document.getElementById('priceSuggestionResult');
+      if (data.ok) {
+        document.querySelector('input[name="company_cost"]').value = data.company_cost.toFixed(2);
+        document.querySelector('input[name="stay_cost"]').value = data.stay_cost.toFixed(2);
+        document.querySelector('input[name="taxes"]').value = data.taxes.toFixed(2);
+        var lang = document.documentElement.dir === 'rtl' ? 'ar' : 'en';
+        var seasonName = lang === 'ar' ? data.season_name_ar : data.season_name_en;
+        var breakdownHtml = '<div class="alert alert-success" style="padding:12px;border-radius:13px;font-size:13px;">';
+        breakdownHtml += '<strong>' + (lang === 'ar' ? 'تم احتساب السعر' : 'Price calculated') + '</strong><br>';
+        if (seasonName) breakdownHtml += (lang === 'ar' ? 'الموسم: ' : 'Season: ') + seasonName + '<br>';
+        breakdownHtml += (lang === 'ar' ? 'الليالي: ' : 'Nights: ') + data.nights + '<br>';
+        breakdownHtml += (lang === 'ar' ? 'سعر الغرفة: ' : 'Room rate: ') + data.breakdown.base_per_night.toFixed(2) + ' {{ L("للليلة", "/night") }}<br>';
+        if (data.breakdown.extra_bed > 0) breakdownHtml += (lang === 'ar' ? 'سرير إضافي: ' : 'Extra bed: ') + data.breakdown.extra_bed.toFixed(2) + '<br>';
+        if (data.breakdown.single_supplement > 0) breakdownHtml += (lang === 'ar' ? 'رسوم فردي: ' : 'Single supplement: ') + data.breakdown.single_supplement.toFixed(2) + '<br>';
+        if (data.breakdown.child > 0) breakdownHtml += (lang === 'ar' ? 'أطفال: ' : 'Children: ') + data.breakdown.child.toFixed(2) + '<br>';
+        breakdownHtml += '<strong>' + (lang === 'ar' ? 'التكلفة: ' : 'Cost: ') + data.stay_cost.toFixed(2) + ' | ' +
+          (lang === 'ar' ? 'البيع: ' : 'Sale: ') + data.company_cost.toFixed(2) + '</strong>';
+        breakdownHtml += '</div>';
+        resultDiv.innerHTML = breakdownHtml;
+      } else {
+        resultDiv.innerHTML = '<div class="alert alert-danger" style="padding:12px;border-radius:13px;">' + data.error + '</div>';
+      }
+      resultDiv.style.display = 'block';
+    })
+    .catch(function(err) {
+      btn.disabled = false;
+      btn.innerHTML = '<i class="bi bi-calculator"></i> {{ L("احتساب السعر تلقائياً", "Suggest Price") }}';
+      document.getElementById('priceSuggestionResult').innerHTML = '<div class="alert alert-danger" style="padding:12px;border-radius:13px;">Error: ' + err + '</div>';
+      document.getElementById('priceSuggestionResult').style.display = 'block';
+    });
+});
+</script>
+{% endblock %}

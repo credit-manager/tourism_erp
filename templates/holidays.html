@@ -1,0 +1,227 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .ho-page{
+    --primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --yellow:#f4c44d;--yellow-soft:#fff8de;
+    --red:#eb5d6c;--red-soft:#fff1f3;
+    --text:#182033;--muted:#708093;--border:#e4ebe6;
+    direction:inherit;
+  }
+  .ho-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:6px;flex-wrap:wrap;}
+  .ho-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);}
+  .ho-header p{margin:6px 0 0;color:var(--muted);font-size:13px;font-weight:700;}
+  .ho-header .btn{min-height:42px;border-radius:14px;font-weight:900;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;border:0;cursor:pointer;transition:.18s ease;white-space:nowrap;text-decoration:none;letter-spacing:.2px;}
+  .ho-header .btn-lime{background:linear-gradient(135deg,#c9dd6e,#b3c45f);color:#1a2a16;box-shadow:0 8px 18px rgba(172,197,80,.32);}
+  .ho-header .btn:hover{transform:translateY(-1px);filter:brightness(.97);}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 18px;}
+  .kpi-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;}
+  .kpi-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+  .kpi-icon.g{background:var(--primary-soft);color:var(--primary);}
+  .kpi-icon.y{background:var(--yellow-soft);color:#986a00;}
+  .kpi-icon.p{background:#f3f1ff;color:#7c3aed;}
+  .kpi-info{flex:1;min-width:0;}
+  .kpi-info .lbl{font-size:11px;font-weight:850;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .kpi-info .val{font-size:20px;font-weight:950;color:var(--text);direction:ltr;text-align:right;}
+
+  .filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:18px;padding:12px 14px;margin-bottom:18px;width:fit-content;}
+  .filter-bar select{height:42px;border:1.5px solid #dde7e1;border-radius:12px;padding:0 12px;font-size:13px;background:#fafefc;color:var(--text);}
+  .filter-bar select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.1);}
+  .filter-bar .btn-add{background:linear-gradient(135deg,#c4d86b,#b8c96a);color:#172033;display:inline-flex;align-items:center;gap:8px;padding:0 18px;min-height:42px;border:0;border-radius:14px;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 8px 16px rgba(216,240,106,.22);}
+  .filter-bar .btn-add:hover{filter:brightness(.98);transform:translateY(-1px);}
+
+  .form-card{background:#fff;border:1px solid var(--border);border-radius:22px;overflow:hidden;max-width:75%;margin:0 auto 18px;}
+  .form-head{padding:16px 22px 0;display:flex;align-items:center;gap:10px;}
+  .form-head .ic{width:40px;height:40px;border-radius:13px;background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .form-head h2{margin:0;font-size:15px;font-weight:950;color:var(--text);}
+  .form-head .sub{font-size:11px;color:var(--muted);font-weight:800;margin-top:2px;}
+  .form-body{padding:16px 22px 20px;}
+
+  .fld{margin-bottom:14px;}
+  .fld label{display:block;font-size:12px;font-weight:900;color:var(--muted);margin-bottom:6px;}
+  .fld input[type="text"],.fld input[type="date"]{width:100%;height:44px;border:1.5px solid #dde7e1;border-radius:12px;padding:0 13px;font-size:13px;background:#fafefc;color:var(--text);box-sizing:border-box;transition:.15s;}
+  .fld input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.1);}
+  .row2{display:grid;grid-template-columns:1fr auto;gap:14px;align-items:flex-end;}
+
+  .switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#f6faf8;border:1px solid var(--border);border-radius:14px;padding:13px 15px;margin-bottom:14px;}
+  .switch-row .lbl{font-size:13px;font-weight:850;color:var(--text);}
+  .switch-row .desc{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;}
+  .toggle{position:relative;display:inline-block;width:48px;height:27px;flex-shrink:0;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .toggle .track{position:absolute;cursor:pointer;inset:0;background:#cfd8d3;border-radius:999px;transition:.2s;}
+  .toggle .track:before{content:"";position:absolute;height:21px;width:21px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 2px 5px rgba(0,0,0,.18);}
+  .toggle input:checked + .track{background:linear-gradient(135deg,#2ec182,#11885a);}
+  .toggle input:checked + .track:before{transform:translateX(21px);}
+  html[dir="rtl"] .toggle input:checked + .track:before{transform:translateX(-21px);}
+
+  .btn{min-height:44px;border-radius:14px;font-weight:900;font-size:13.5px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 24px;border:0;cursor:pointer;transition:.18s ease;text-decoration:none;white-space:nowrap;letter-spacing:.2px;}
+  .btn-green{background:linear-gradient(135deg,#2ec182,#11885a);color:#fff;box-shadow:0 8px 18px rgba(32,184,116,.28);}
+  .btn-gray{background:#f1f5f9;color:#364153;border:1px solid var(--border);}
+  .btn:hover{transform:translateY(-1px);filter:brightness(.97);}
+
+  .main-card{background:#fff;border:1px solid var(--border);border-radius:22px;overflow:hidden;}
+  .card-head{padding:16px 20px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .card-head h2{margin:0;font-size:15px;font-weight:950;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .card-head h2 i{color:var(--primary);}
+  .card-body{padding:16px 20px 20px;}
+
+  .tbl-scroll{overflow-x:auto;padding-bottom:4px;}
+  .tbl-scroll::-webkit-scrollbar{height:8px;}
+  .tbl-scroll::-webkit-scrollbar-thumb{background:#d4ddd7;border-radius:999px;}
+  .tbl-scroll::-webkit-scrollbar-track{background:#f3f7f5;border-radius:999px;}
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
+  .tbl th{background:#f8fcfa;color:var(--muted);padding:11px 8px;font-size:11px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;}
+  .tbl td{padding:12px 8px;border-bottom:1px solid #edf2ef;text-align:center;color:var(--text);vertical-align:middle;}
+  .tbl tr:hover td{background:#fbfefc;}
+
+  .hol-name{color:var(--primary-dark);font-weight:950;font-size:13.5px;}
+  .date-cell{direction:ltr;text-align:center;font-weight:800;font-size:12.5px;white-space:nowrap;}
+
+  .soft-badge{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap;}
+  .badge-green{background:#eafff4;color:var(--primary-dark);}
+  .badge-gray{background:#f1f5f9;color:#64748b;}
+
+  .act-form{margin:0;display:inline-flex;}
+  .act-cell{display:flex;gap:7px;justify-content:center;}
+
+  .empty-msg{padding:34px 20px;text-align:center;color:var(--muted);font-size:13px;font-weight:800;}
+
+  .box-ok{background:var(--primary-soft);border:1px solid var(--primary);color:var(--primary-dark);padding:12px 18px;border-radius:16px;margin-bottom:16px;font-weight:800;display:flex;align-items:center;gap:10px;}
+
+  @media(max-width:1100px){.kpi-row{grid-template-columns:1fr;}.filter-bar{width:100%;}}
+  @media(max-width:700px){.ho-header,.card-head{flex-direction:column;align-items:stretch;}.row2{grid-template-columns:1fr;}.form-card{max-width:100%;}.act-cell{flex-direction:column;}}
+</style>
+
+<div class="ho-page">
+
+{% if request.query_params.get('saved') == '1' %}
+<div class="box-ok"><i class="bi bi-check-circle-fill"></i> {{ L("تم حفظ العطلة بنجاح.", "Holiday saved successfully.") }}</div>
+{% endif %}
+{% if request.query_params.get('deleted') == '1' %}
+<div class="box-ok"><i class="bi bi-check-circle-fill"></i> {{ L("تم حذف العطلة بنجاح.", "Holiday deleted successfully.") }}</div>
+{% endif %}
+
+<div class="ho-header">
+  <div>
+    <h1>{{ L("العطلات الرسمية", "Public Holidays") }}</h1>
+    <p>{{ L("إدارة أيام العطلات الرسمية وتحديد تكرارها السنوي", "Manage official holidays and annual recurrence") }}</p>
+  </div>
+  <a href="/holidays?add=1" class="btn btn-lime"><i class="bi bi-plus-lg"></i> {{ L("إضافة عطلة", "Add Holiday") }}</a>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-icon g"><i class="bi bi-calendar-event"></i></div>
+    <div class="kpi-info"><div class="lbl">{{ L("عطلات السنة", "Year Holidays") }}</div><div class="val">{{ holidays|length }}</div></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon y"><i class="bi bi-repeat"></i></div>
+    <div class="kpi-info"><div class="lbl">{{ L("عطلات سنوية", "Recurring") }}</div><div class="val">{{ holidays|selectattr('is_recurring')|list|length }}</div></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon p"><i class="bi bi-calendar3"></i></div>
+    <div class="kpi-info"><div class="lbl">{{ L("السنة المحددة", "Selected Year") }}</div><div class="val" style="direction:ltr">{{ selected_year }}</div></div>
+  </div>
+</div>
+
+{% if request.query_params.get('add') == '1' %}
+<div class="form-card">
+  <div class="form-head">
+    <div class="ic"><i class="bi bi-calendar-plus"></i></div>
+    <div>
+      <h2>{{ L("عطلة جديدة", "New Holiday") }}</h2>
+      <div class="sub">{{ L("بيانات العطلة", "Holiday Details") }}</div>
+    </div>
+  </div>
+  <div class="form-body">
+    <form method="post" action="/holidays/add">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="row2">
+        <div class="fld">
+          <label>{{ L("اسم العطلة", "Holiday Name") }}</label>
+          <input type="text" name="name" required placeholder="{{ L('مثال: عيد الأضحى', 'e.g. Eid Al-Adha') }}">
+        </div>
+        <div class="fld">
+          <label>{{ L("التاريخ", "Date") }}</label>
+          <input type="date" name="date" required>
+        </div>
+      </div>
+      <div class="switch-row">
+        <div>
+          <div class="lbl">{{ L("عطلة سنوية", "Recurring Yearly") }}</div>
+          <div class="desc">{{ L("تتكرر في نفس التاريخ كل عام", "Repeats on the same date each year") }}</div>
+        </div>
+        <label class="toggle">
+          <input type="checkbox" name="is_recurring" value="1">
+          <span class="track"></span>
+        </label>
+      </div>
+      <div class="form-actions" style="display:flex;gap:12px;margin-top:8px;">
+        <button type="submit" class="btn btn-green"><i class="bi bi-check2"></i> {{ L("حفظ", "Save") }}</button>
+        <a href="/holidays" class="btn btn-gray"><i class="bi bi-x-lg"></i> {{ L("إلغاء", "Cancel") }}</a>
+      </div>
+    </form>
+  </div>
+</div>
+{% endif %}
+
+<form method="get" action="/holidays" class="filter-bar">
+  <select name="year">
+    {% for y in range(selected_year-2, selected_year+3) %}
+      <option value="{{ y }}" {{ 'selected' if y == selected_year }}>{{ y }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn-add"><i class="bi bi-funnel"></i> {{ L("عرض", "View") }}</button>
+</form>
+
+<div class="main-card">
+  <div class="card-head">
+    <h2><i class="bi bi-list-ul"></i> {{ L("قائمة العطلات", "Holidays List") }}</h2>
+    <span style="padding:5px 11px;border:1px solid var(--border);border-radius:999px;background:#fbfdfc;color:var(--muted);font-size:11px;font-weight:850;">{{ holidays|length }} {{ L("عطلة", "holiday") }}</span>
+  </div>
+  <div class="card-body">
+    <div class="tbl-scroll">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>{{ L("الاسم", "Name") }}</th>
+            <th>{{ L("التاريخ", "Date") }}</th>
+            <th>{{ L("سنوية", "Recurring") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for h in holidays %}
+          <tr>
+            <td><span class="hol-name">{{ h.name }}</span></td>
+            <td><span class="date-cell">{{ h.date }}</span></td>
+            <td>
+              {% if h.is_recurring %}
+                <span class="soft-badge badge-green"><i class="bi bi-repeat"></i> {{ L("نعم", "Yes") }}</span>
+              {% else %}
+                <span class="soft-badge badge-gray">{{ L("لا", "No") }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="act-cell">
+                <form method="post" action="/holidays/{{ h.id }}/delete" class="act-form" onsubmit="return confirm('{{ L("حذف العطلة؟", "Delete holiday?") }}')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-gray" style="min-height:36px;padding:0 13px;font-size:12px;"><i class="bi bi-trash"></i> {{ L("حذف", "Delete") }}</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="4"><div class="empty-msg"><i class="bi bi-inboxes"></i><br>{{ L("لا توجد عطلات مسجلة لهذه السنة", "No holidays recorded for this year") }}</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

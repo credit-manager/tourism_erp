@@ -1,0 +1,520 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .employees-page {
+    --green: #20b874;
+    --green-dark: #11885a;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f5c84c;
+    --yellow-soft: #fff7df;
+    --red: #ef5b6c;
+    --red-soft: #fff0f2;
+    --purple: #8b7cf6;
+    --purple-soft: #f3f0ff;
+    --text: #172033;
+    --muted: #7b8798;
+    --border: #e8eee9;
+    direction: inherit;
+  }
+
+  .employees-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .employees-head h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .employees-head p {
+    margin-top: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .payroll-link {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    border-radius: 15px;
+    background: var(--lime);
+    color: #172033;
+    font-size: 13px;
+    font-weight: 950;
+    box-shadow: 0 12px 26px rgba(26, 86, 219, 0.14);
+    transition: 0.15s ease;
+    white-space: nowrap;
+  }
+
+  .payroll-link:hover {
+    filter: brightness(0.97);
+    transform: translateY(-1px);
+  }
+
+  .employees-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .employee-kpi,
+  .employee-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.045);
+  }
+
+  .employee-kpi {
+    padding: 18px;
+    min-height: 126px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .employee-kpi::after {
+    content: "";
+    position: absolute;
+    left: -45px;
+    bottom: -50px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+  }
+
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .employees-page .kpi-icon.green {
+    background: var(--green-soft);
+    color: var(--green);
+  }
+
+  .employees-page .kpi-icon.blue {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+
+  .employees-page .kpi-icon.yellow {
+    background: var(--yellow-soft);
+    color: #b17a00;
+  }
+
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    color: var(--text);
+    font-size: 29px;
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .employees-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 18px;
+  }
+
+  .card-head {
+    padding: 19px 22px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .card-head span {
+    font-size: 12px;
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 7px 11px;
+    font-weight: 800;
+  }
+
+  .card-body {
+    padding: 18px 22px 22px;
+  }
+
+  .employees-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .employees-table th {
+    background: #fbfdfc;
+    color: var(--muted);
+    padding: 13px 10px;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .employees-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .employees-table tr:hover td {
+    background: #fbfdfc;
+  }
+
+  .employee-name {
+    color: var(--green-dark);
+    font-weight: 950;
+  }
+
+  .soft-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .badge-green {
+    background: #eafff4;
+    color: var(--green-dark);
+  }
+
+  .badge-blue {
+    background: var(--blue-soft);
+    color: #11885a;
+  }
+
+  .badge-yellow {
+    background: var(--yellow-soft);
+    color: #986a00;
+  }
+
+  .action-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .mini-action {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    border: 0;
+    background: transparent;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+  }
+
+  .mini-action.edit {
+    color: #11885a;
+  }
+
+  .mini-action.delete {
+    color: var(--red);
+  }
+
+  .edit-row td {
+    background: #fbfdfc !important;
+  }
+
+  .edit-form {
+    display: grid;
+    grid-template-columns: 1fr 140px 140px auto;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .side-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .side-form input,
+  .edit-form input {
+    height: 43px;
+    border: 1px solid #dfe7e3;
+    border-radius: 13px;
+    padding: 0 13px;
+    font-size: 13px;
+  }
+
+  .form-hint {
+    padding: 14px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--green-soft), #ffffff);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+
+  .empty-state {
+    padding: 32px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1100px) {
+    .employees-kpis {
+      grid-template-columns: 1fr;
+    }
+
+    .employees-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .edit-form {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .employees-head,
+    .card-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>
+
+<div class="employees-page">
+
+  {% set total_salary = employees|sum(attribute='salary') %}
+  {% set total_commissions = commissions.values()|sum %}
+
+  <div class="employees-head">
+    <div>
+      <h1>{{ L("الموظفين", "Employees") }}</h1>
+      <p>{{ L("إدارة بيانات الموظفين، الرواتب، نسب العمولة، وعدد الحجوزات المرتبطة بكل موظف.", "Manage employee data, salaries, commission rates, and bookings linked to each employee.") }}</p>
+    </div>
+
+    <a href="/payroll" class="payroll-link">
+      <i class="bi bi-cash-stack"></i>
+      {{ L("الرواتب الشهرية", "Monthly Salaries") }}
+    </a>
+  </div>
+
+  <div class="employees-kpis">
+    <div class="employee-kpi">
+      <div class="kpi-icon green">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي الموظفين", "Total Employees") }}</div>
+      <div class="kpi-value">{{ employees|length }}</div>
+    </div>
+
+    <div class="employee-kpi">
+      <div class="kpi-icon blue">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي الرواتب", "Total Salaries") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(total_salary or 0) }}</div>
+    </div>
+
+    <div class="employee-kpi">
+      <div class="kpi-icon yellow">
+        <i class="bi bi-percent"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي العمولات", "Total Commissions") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(total_commissions or 0) }}</div>
+    </div>
+  </div>
+
+  <div class="employees-layout">
+
+    <div class="employee-card">
+      <div class="card-head">
+        <h2>{{ L("قائمة الموظفين", "Employees List") }}</h2>
+        <span>{{ employees|length }} {{ L("موظف", "Employee") }}</span>
+      </div>
+
+      <div class="card-body overflow-x-auto">
+        <table class="employees-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>{{ L("الاسم", "Name") }}</th>
+              <th>{{ L("الراتب", "Salary") }}</th>
+              <th>{{ L("نسبة العمولة %", "Commission Rate %") }}</th>
+              <th>{{ L("عدد الحجوزات", "Booking Count") }}</th>
+              <th>{{ L("إجمالي العمولات", "Total Commissions") }}</th>
+              <th>{{ L("إجراءات", "Actions") }}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for e in employees %}
+            <tr>
+              <td>{{ e.id }}</td>
+
+              <td>
+                <a href="/employees/{{ e.id }}" class="employee-name hover:underline">
+                  {{ e.name }}
+                </a>
+              </td>
+
+              <td class="font-bold">
+                {{ "%.2f"|format(e.salary or 0) }}
+              </td>
+
+              <td>
+                <span class="soft-badge badge-blue">
+                  {{ e.commission_rate or 0 }}%
+                </span>
+              </td>
+
+              <td>
+                <span class="soft-badge badge-yellow">
+                  {{ counts.get(e.id, 0) }}
+                </span>
+              </td>
+
+              <td class="font-bold" style="color: var(--green-dark);">
+                {{ "%.2f"|format(commissions.get(e.id, 0)) }}
+              </td>
+
+              <td>
+                <div class="action-row">
+                  {% if has_permission(current_user, "employees.manage") %}
+                  <button
+                    type="button"
+                    onclick="document.getElementById('edit-{{ e.id }}').classList.toggle('hidden')"
+                    class="mini-action edit"
+                  >
+                    <i class="bi bi-pencil-square"></i>
+                    {{ L("تعديل", "Edit") }}
+                  </button>
+
+                  <form method="post" action="/employees/{{ e.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="mini-action delete">
+                      <i class="bi bi-trash"></i>
+                      {{ L("حذف", "Delete") }}
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+
+            <tr id="edit-{{ e.id }}" class="hidden edit-row">
+              <td colspan="7" class="p-3">
+                <form method="post" action="/employees/{{ e.id }}/edit" class="edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input name="name" value="{{ e.name }}" required>
+                  <input name="salary" type="number" step="0.01" value="{{ e.salary or 0 }}">
+                  <input name="commission_rate" type="number" step="0.01" value="{{ e.commission_rate or 0 }}">
+                  <button class="btn-add justify-center">
+                    {{ L("حفظ", "Save") }}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+
+            {% if not employees %}
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">{{ L("لا يوجد موظفين بعد", "No employees yet") }}</div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+        {% import '_pagination.html' as pgn %}
+        {{ pgn.pagination_bar(p, base_url) }}
+      </div>
+    </div>
+
+    {% if has_permission(current_user, "employees.manage") %}
+    <div class="employee-card">
+      <div class="card-head">
+        <h2>{{ L("إضافة موظف", "Add Employee") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="form-hint">
+          {{ L("عمولة الموظف تُحسب تلقائيًا عن كل حجز حسب نسبة العمولة الموجودة هنا، بدون تغيير في طريقة عمل النظام.", "Employee commission is calculated automatically for each booking based on the commission rate here, without changing system behavior.") }}
+        </div>
+
+        <form method="post" action="/employees/add" class="side-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input name="name" placeholder="{{ L("اسم الموظف", "Employee Name") }}" required>
+
+          <input
+            name="salary"
+            type="number"
+            step="0.01"
+            placeholder="{{ L("الراتب", "Salary") }}"
+          >
+
+          <input
+            name="commission_rate"
+            type="number"
+            step="0.01"
+            placeholder="{{ L("نسبة العمولة %", "Commission Rate %") }}"
+          >
+
+          <button class="btn-add w-full justify-center">
+            {{ L("حفظ", "Save") }}
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

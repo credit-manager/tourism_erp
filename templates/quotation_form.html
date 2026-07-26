@@ -1,0 +1,273 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.qform-page{--primary:#20b874;--primary-dark:#11885a;--text:#182033;--muted:#708093;--border:#e2e8f0;max-width:1140px;margin:0 auto}
+.qform-page .page-header{margin-bottom:24px}
+.qform-page .page-header h1{font-size:28px;font-weight:950;color:var(--text);margin:0;letter-spacing:-.3px}
+.qform-page .page-header .sub{color:var(--muted);font-size:14px;margin:5px 0 0;display:flex;align-items:center;gap:6px}
+.qform-card{background:#fff;border:1px solid var(--border);border-radius:28px;padding:32px;box-shadow:0 20px 48px -12px rgba(15,23,42,.08)}
+.form-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:18px}
+.form-grid .full{grid-column:1/-1}
+.form-group{display:flex;flex-direction:column;gap:6px}
+.form-group label{font-size:12px;font-weight:900;color:var(--muted);display:flex;align-items:center;gap:6px}
+.form-group label i{color:var(--primary);font-size:14px}
+.form-group input,.form-group select,.form-group textarea{width:100%;border:1.5px solid var(--border);border-radius:14px;padding:0 16px;height:44px;font-size:13px;font-weight:700;color:var(--text);background:#fafcff;transition:all .2s;box-sizing:border-box}
+.form-group textarea{padding:12px 16px;height:auto;min-height:80px;resize:vertical;line-height:1.6}
+.form-group input:focus,.form-group select:focus,.form-group textarea:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(32,184,116,.1);background:#fff}
+.form-group select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23708093' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 14px center;padding-left:36px}
+.discount-group{display:flex;gap:8px}
+.discount-group select{width:100px;flex-shrink:0;background-position:left 10px center;padding-left:30px}
+.discount-group input{flex:1}
+.items-section{margin-top:24px;border-top:1.5px solid var(--border);padding-top:20px}
+.items-section .section-title{font-size:17px;font-weight:950;margin:0 0 16px;display:flex;align-items:center;gap:10px}
+.items-section .section-title i{color:var(--primary)}
+.items-empty{padding:32px;text-align:center;color:var(--muted);font-size:14px;font-weight:700;background:#f8fafc;border-radius:16px;border:1.5px dashed var(--border)}
+.item-row{display:grid;grid-template-columns:100px 1fr 100px 100px 60px 110px 36px;gap:10px;align-items:center;margin-bottom:10px;padding:14px 16px;background:#f8fafc;border-radius:16px;border:1px solid #f1f5f9;transition:.15s}
+.item-row:hover{border-color:#d4e6dd;background:#f6fdf9}
+.item-row .item-badge{display:inline-block;padding:3px 14px;border-radius:999px;font-size:10px;font-weight:950;background:#e9edf2;color:#475569;text-align:center}
+.item-row .item-desc{font-weight:700;font-size:13px;color:var(--text)}
+.item-row .item-num{font-weight:900;color:var(--muted);font-size:13px}
+.item-row .rm-btn{width:34px;height:34px;border:0;border-radius:10px;background:#fee2e2;color:#dc2626;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:.14s;font-size:16px}
+.item-row .rm-btn:hover{background:#fecaca;transform:scale(1.05)}
+.add-item-btn{height:42px;border:1.5px dashed var(--border);border-radius:14px;background:0 0;color:var(--primary);font-size:13px;font-weight:900;cursor:pointer;display:inline-flex;align-items:center;gap:8px;padding:0 22px;margin-top:8px;transition:.2s}
+.add-item-btn:hover{background:#f0fdf4;border-color:var(--primary)}
+.form-actions{display:flex;gap:14px;margin-top:24px;padding-top:20px;border-top:1px solid var(--border)}
+.form-actions .save-btn{height:46px;padding:0 36px;border:0;border-radius:16px;background:linear-gradient(135deg,#bfd175,#a8bb5c);color:#172033;font-size:14px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(191,209,117,.3);transition:all .2s}
+.form-actions .save-btn:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(191,209,117,.4)}
+.form-actions .cancel-btn{height:46px;padding:0 28px;border:1.5px solid var(--border);border-radius:16px;background:#fff;color:var(--muted);font-size:13px;font-weight:900;text-decoration:none;display:inline-flex;align-items:center;gap:6px;transition:.14s}
+.form-actions .cancel-btn:hover{color:var(--text);border-color:#cbd5e1}
+
+/* Modal */
+.item-modal{display:none;position:fixed;inset:0;background:rgba(15,23,42,.4);z-index:1000;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.item-modal.open{display:flex}
+.item-modal-content{background:#fff;border-radius:28px;padding:32px;max-width:620px;width:90%;max-height:80vh;overflow-y:auto;box-shadow:0 24px 48px rgba(0,0,0,.15);animation:modalIn .25s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.95) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+.item-modal-content h3{margin:0 0 20px;font-size:20px;font-weight:950;display:flex;align-items:center;gap:8px}
+.item-modal-content h3 i{color:var(--primary)}
+.modal-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.modal-grid .full{grid-column:1/-1}
+.modal-grid .form-group{display:flex;flex-direction:column;gap:5px}
+.modal-grid .form-group label{font-size:12px;font-weight:900;color:var(--muted)}
+.modal-grid .form-group input,.modal-grid .form-group select{width:100%;border:1.5px solid var(--border);border-radius:12px;padding:0 14px;height:42px;font-size:13px;font-weight:700;color:var(--text);background:#fafcff;transition:all .2s;box-sizing:border-box}
+.modal-grid .form-group select{cursor:pointer;appearance:none;background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' fill='%23708093' viewBox='0 0 16 16'%3E%3Cpath d='M7.247 11.14 2.451 5.658C1.885 5.013 2.345 4 3.204 4h9.592a1 1 0 0 1 .753 1.659l-4.796 5.48a1 1 0 0 1-1.506 0z'/%3E%3C/svg%3E");background-repeat:no-repeat;background-position:left 12px center;padding-left:32px}
+.modal-grid .form-group input:focus,.modal-grid .form-group select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 4px rgba(32,184,116,.1)}
+.hotel-fields{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;padding:18px;background:#f8fafc;border-radius:16px;border:1px solid #f1f5f9;margin-top:4px}
+.modal-actions{display:flex;gap:12px;margin-top:22px;padding-top:18px;border-top:1px solid var(--border)}
+.modal-actions .mbtn{height:42px;padding:0 26px;border:0;border-radius:14px;font-size:13px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;gap:7px;transition:all .2s}
+.modal-actions .mbtn-primary{background:linear-gradient(135deg,#bfd175,#a8bb5c);color:#172033;box-shadow:0 6px 16px rgba(191,209,117,.25)}
+.modal-actions .mbtn-primary:hover{transform:translateY(-1px);box-shadow:0 8px 20px rgba(191,209,117,.35)}
+.modal-actions .mbtn-ghost{background:#fff;border:1.5px solid var(--border);color:var(--muted)}
+.modal-actions .mbtn-ghost:hover{color:var(--text);border-color:#cbd5e1}
+@media(max-width:900px){.form-grid{grid-template-columns:1fr 1fr}.item-row{grid-template-columns:1fr;gap:6px}.hotel-fields{grid-template-columns:1fr}}
+</style>
+<div class="qform-page">
+<div class="page-header">
+  <h1>{{ L("إنشاء عرض سعر", "Create Quotation") }}</h1>
+  <p class="sub"><i class="bi bi-file-text"></i> {{ L("أدخل بيانات العميل واختر الخدمات المطلوبة", "Enter customer details and select required services") }}</p>
+</div>
+<form class="qform-card" method="post" action="/quotations/add" onsubmit="return collectItems()">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+<div class="form-grid">
+  <div class="form-group full">
+    <label><i class="bi bi-person-fill"></i> {{ L("العميل", "Customer") }}</label>
+    <select name="customer_id" required>
+      <option value="">{{ L("اختر عميل...", "Select customer...") }}</option>
+      {% for c in customers %}
+      <option value="{{ c.id }}">{{ c.name }} ({{ c.phone or '—' }})</option>
+      {% endfor %}
+    </select>
+  </div>
+  <div class="form-group">
+    <label><i class="bi bi-calendar-check"></i> {{ L("تاريخ الصلاحية", "Validity Date") }}</label>
+    <input name="validity_date" type="date">
+  </div>
+  <div class="form-group">
+    <label><i class="bi bi-tags"></i> {{ L("الخصم", "Discount") }}</label>
+    <div class="discount-group">
+      <select name="discount_type">
+        <option value="fixed">{{ L("قيمة", "Fixed") }}</option>
+        <option value="percentage">{{ L("نسبة%", "%") }}</option>
+      </select>
+      <input name="discount_value" type="number" step="0.01" value="0">
+    </div>
+  </div>
+  <div class="form-group">
+    <label><i class="bi bi-percent"></i> {{ L("الضريبة%", "Tax %") }}</label>
+    <input name="tax_percentage" type="number" step="0.01" value="0">
+  </div>
+  <div class="form-group">
+    <label><i class="bi bi-graph-up"></i> {{ L("هامش الربح%", "Profit Margin %") }}</label>
+    <input name="profit_margin" type="number" step="0.01" value="0">
+  </div>
+  <div class="form-group full">
+    <label><i class="bi bi-file-text"></i> {{ L("الشروط والأحكام", "Terms & Conditions") }}</label>
+    <textarea name="terms_conditions" placeholder="{{ L('شروط العرض...', 'Terms and conditions...') }}"></textarea>
+  </div>
+  <div class="form-group full">
+    <label><i class="bi bi-sticky"></i> {{ L("ملاحظات", "Notes") }}</label>
+    <textarea name="notes"></textarea>
+  </div>
+</div>
+
+<div class="items-section">
+  <h3 class="section-title"><i class="bi bi-list-check"></i> {{ L("بنود العرض", "Quote Items") }}</h3>
+  <div id="itemsContainer"></div>
+  <button type="button" class="add-item-btn" onclick="showItemModal()"><i class="bi bi-plus-lg"></i> {{ L("إضافة بند", "Add Item") }}</button>
+</div>
+
+<div class="form-actions">
+  <button class="save-btn" type="submit"><i class="bi bi-check-lg"></i> {{ L("حفظ وإنشاء", "Save & Create") }}</button>
+  <a href="/quotations" class="cancel-btn"><i class="bi bi-x-lg"></i> {{ L("إلغاء", "Cancel") }}</a>
+</div>
+</form>
+</div>
+
+<!-- Item Modal -->
+<div id="itemModal" class="item-modal">
+<div class="item-modal-content">
+<h3><i class="bi bi-plus-circle"></i> {{ L("إضافة بند جديد", "Add New Item") }}</h3>
+<div class="modal-grid">
+  <div class="form-group full">
+    <label>{{ L("نوع البند", "Item Type") }}</label>
+    <select id="modalItemType" onchange="toggleItemFields()">
+      <option value="hotel">{{ L("فندق", "Hotel") }}</option>
+      <option value="transport">{{ L("نقل", "Transport") }}</option>
+      <option value="visa">{{ L("تأشيرة", "Visa") }}</option>
+      <option value="ticket">{{ L("تذكرة", "Ticket") }}</option>
+      <option value="insurance">{{ L("تأمين", "Insurance") }}</option>
+      <option value="trip">{{ L("رحلة", "Trip/Excursion") }}</option>
+      <option value="service">{{ L("خدمة", "Service") }}</option>
+      <option value="other">{{ L("أخرى", "Other") }}</option>
+    </select>
+  </div>
+  <div class="form-group">
+    <label>{{ L("سعر التكلفة", "Cost Price") }}</label>
+    <input id="modalCostPrice" type="number" step="0.01" value="0">
+  </div>
+  <div class="form-group">
+    <label>{{ L("سعر البيع", "Sale Price") }}</label>
+    <input id="modalSalePrice" type="number" step="0.01" value="0">
+  </div>
+  <div class="form-group">
+    <label>{{ L("الكمية", "Qty") }}</label>
+    <input id="modalQty" type="number" min="1" value="1">
+  </div>
+  <div class="form-group full">
+    <label>{{ L("الوصف", "Description") }}</label>
+    <input id="modalDescription" placeholder="{{ L('وصف البند...', 'Item description...') }}">
+  </div>
+
+  <!-- Hotel-specific fields -->
+  <div id="hotelFields" class="full hotel-fields">
+    <div class="form-group">
+      <label>{{ L("الفندق", "Hotel") }}</label>
+      <select id="modalHotelId">
+        <option value="">{{ L("اختر فندق...", "Select hotel...") }}</option>
+        {% for h in hotels %}
+        <option value="{{ h.id }}">{{ h.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="form-group">
+      <label>{{ L("نوع الغرفة", "Room Type") }}</label>
+      <input id="modalRoomType" placeholder="{{ L('مزدوجة/مفردة...', 'Double/Single...') }}">
+    </div>
+    <div class="form-group">
+      <label>{{ L("نوع الإقامة", "Meal Plan") }}</label>
+      <select id="modalMealPlan">
+        <option value="">{{ L("بدون وجبات", "Room Only") }}</option>
+        <option value="breakfast">{{ L("إفطار", "Breakfast") }}</option>
+        <option value="half_board">{{ L("نصف إقامة", "Half Board") }}</option>
+        <option value="full_board">{{ L("إقامة كاملة", "Full Board") }}</option>
+        <option value="all_inclusive">{{ L("كل شيء شامل", "All Inclusive") }}</option>
+      </select>
+    </div>
+    <div class="form-group">
+      <label>{{ L("عدد الغرف", "Rooms") }}</label>
+      <input id="modalRoomCount" type="number" min="1" value="1">
+    </div>
+    <div class="form-group">
+      <label>{{ L("تاريخ الوصول", "Check-in") }}</label>
+      <input id="modalCheckin" type="date">
+    </div>
+    <div class="form-group">
+      <label>{{ L("تاريخ المغادرة", "Check-out") }}</label>
+      <input id="modalCheckout" type="date">
+    </div>
+  </div>
+</div>
+<div class="modal-actions">
+  <button type="button" class="mbtn mbtn-primary" onclick="addItemFromModal()"><i class="bi bi-plus-lg"></i> {{ L("إضافة", "Add") }}</button>
+  <button type="button" class="mbtn mbtn-ghost" onclick="closeItemModal()"><i class="bi bi-x-lg"></i> {{ L("إلغاء", "Cancel") }}</button>
+</div>
+</div>
+</div>
+
+<script>
+let items = [];
+
+function showItemModal(){ document.getElementById('itemModal').classList.add('open'); toggleItemFields(); }
+function closeItemModal(){ document.getElementById('itemModal').classList.remove('open'); }
+function toggleItemFields(){
+  var t = document.getElementById('modalItemType').value;
+  document.getElementById('hotelFields').style.display = t === 'hotel' ? 'grid' : 'none';
+}
+document.getElementById('itemModal').addEventListener('click', function(e){ if(e.target===this) closeItemModal(); });
+
+function addItemFromModal(){
+  var type = document.getElementById('modalItemType').value;
+  var desc = document.getElementById('modalDescription').value;
+  var cost = parseFloat(document.getElementById('modalCostPrice').value) || 0;
+  var sale = parseFloat(document.getElementById('modalSalePrice').value) || 0;
+  var qty = parseInt(document.getElementById('modalQty').value) || 1;
+  var data = {};
+  if(type === 'hotel'){
+    data.hotel_id = parseInt(document.getElementById('modalHotelId').value) || 0;
+    data.room_type = document.getElementById('modalRoomType').value;
+    data.meal_plan = document.getElementById('modalMealPlan').value;
+    data.room_count = parseInt(document.getElementById('modalRoomCount').value) || 1;
+    data.checkin_date = document.getElementById('modalCheckin').value;
+    data.checkout_date = document.getElementById('modalCheckout').value;
+  }
+  if(!desc) desc = type.charAt(0).toUpperCase()+type.slice(1);
+  items.push({item_type: type, description: desc, cost_price: cost, sale_price: sale, qty: qty, item_data: data});
+  renderItems();
+  closeItemModal();
+  // Reset fields
+  document.getElementById('modalDescription').value = '';
+  document.getElementById('modalCostPrice').value = '0';
+  document.getElementById('modalSalePrice').value = '0';
+  document.getElementById('modalQty').value = '1';
+}
+
+function removeItem(idx){ items.splice(idx,1); renderItems(); }
+
+function renderItems(){
+  var c = document.getElementById('itemsContainer');
+  if(!items.length){ c.innerHTML = '<div class="items-empty"><i class="bi bi-inbox" style="font-size:28px;display:block;margin-bottom:8px"></i>{{ L("لا توجد بنود بعد", "No items yet") }}<br><span style="font-weight:400;font-size:12px">{{ L("اضغط على 'إضافة بند' لإضافة أول بند", "Click 'Add Item' to add your first item") }}</span></div>'; return; }
+  var h = '';
+  for(var i=0;i<items.length;i++){
+    var it = items[i];
+    var typeLabel = {'hotel':'{{ L("فندق","Hotel") }}','transport':'{{ L("نقل","Transport") }}','visa':'{{ L("تأشيرة","Visa") }}','ticket':'{{ L("تذكرة","Ticket") }}','insurance':'{{ L("تأمين","Insurance") }}','trip':'{{ L("رحلة","Trip") }}','service':'{{ L("خدمة","Service") }}','other':'{{ L("أخرى","Other") }}'}[it.item_type] || it.item_type;
+    h += '<div class="item-row">'+
+      '<span class="item-badge">'+typeLabel+'</span>'+
+      '<span class="item-desc">'+it.description+'</span>'+
+      '<span dir="ltr" style="font-weight:700;color:var(--muted)">'+it.cost_price+'</span>'+
+      '<span dir="ltr" style="font-weight:800;color:var(--primary-dark)">'+it.sale_price+'</span>'+
+      '<span style="font-weight:800"><span style="background:#f1f5f9;padding:2px 10px;border-radius:8px;font-size:12px">x'+it.qty+'</span></span>'+
+      '<span dir="ltr" style="font-weight:950;color:var(--primary-dark);font-size:14px">'+(it.sale_price*it.qty).toFixed(2)+'</span>'+
+      '<button type="button" class="rm-btn" onclick="removeItem('+i+')"><i class="bi bi-trash3"></i></button>'+
+      '</div>';
+  }
+  c.innerHTML = h;
+}
+
+function collectItems(){
+  if(!items.length){ alert("{{ L('أضف بند واحد على الأقل', 'Add at least one item') }}"); return false; }
+  var inp = document.createElement('input');
+  inp.type = 'hidden'; inp.name = 'items_json'; inp.value = JSON.stringify(items);
+  document.querySelector('.qform-card').appendChild(inp);
+  return true;
+}
+</script>
+{% endblock %}

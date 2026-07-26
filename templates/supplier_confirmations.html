@@ -1,0 +1,165 @@
+{% extends "base.html" %}
+{% block content %}
+{% if request.query_params.get('error') %}
+<div id="top-error" style="background:#fff0f2;border:1px solid #ffd7dd;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#d14454;font-size:14px;font-weight:700;">
+  {{ request.query_params.get('error') }}
+</div>
+{% endif %}
+{% if request.query_params.get('success') %}
+<div style="background:#edf9f3;border:1px solid #b8e6d0;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#11885a;font-size:14px;font-weight:700;">
+  {% if request.query_params.get('success') == 'added' %}{{ L("تم إضافة التأكيد بنجاح", "Confirmation added") }}
+  {% elif request.query_params.get('success') == 'confirmed' %}{{ L("تم تأكيد التأكيد بنجاح", "Confirmation confirmed") }}
+  {% elif request.query_params.get('success') == 'cancelled' %}{{ L("تم إلغاء التأكيد", "Confirmation cancelled") }}
+  {% else %}{{ L("تمت العملية بنجاح", "Operation completed") }}{% endif %}
+</div>
+{% endif %}
+<style>
+  .c-page{--text:#172033;--muted:#7b8798;--card:#fff;--border:#e8eee9;direction:inherit}
+  .c-page .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px}
+  .c-page .page-head h1{margin:0;font-size:28px;font-weight:950;color:var(--text)}
+  .c-page .page-head p{margin-top:7px;font-size:13px;color:var(--muted)}
+  .c-page .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}
+  .c-page .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);padding:18px;min-height:124px;position:relative;overflow:hidden}
+  .c-page .kpi-card::after{content:"";position:absolute;left:-45px;bottom:-50px;width:120px;height:120px;border-radius:999px;background:rgba(26,86,219,0.06)}
+  .c-page .kpi-icon{width:46px;height:46px;border-radius:17px;display:inline-flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px;position:relative;z-index:1}
+  .c-page .kpi-icon.green{background:#edf9f3;color:#20b874}
+  .c-page .kpi-icon.blue{background:#eef3ff;color:#1a56db}
+  .c-page .kpi-icon.yellow{background:#fff7df;color:#b17a00}
+  .c-page .kpi-icon.purple{background:#f3eeff;color:#7c3aed}
+  .c-page .kpi-label{color:var(--muted);font-size:12px;font-weight:800;margin-bottom:5px;position:relative;z-index:1}
+  .c-page .kpi-value{color:var(--text);font-size:28px;font-weight:950;direction:ltr;text-align:right;position:relative;z-index:1}
+  .c-page .card{border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);margin-bottom:18px;overflow:hidden}
+  .c-page .card-head{padding:19px 22px 0;display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .c-page .card-head h2{margin:0;font-size:16px;font-weight:950;color:var(--text)}
+  .c-page .card-head span{font-size:12px;color:var(--muted);background:#fbfdfc;border:1px solid var(--border);border-radius:13px;padding:7px 11px;font-weight:800}
+  .c-page .card-body{padding:18px 22px 22px}
+  .c-page .ctable{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+  .c-page .ctable th{background:#fbfdfc;color:var(--muted);padding:13px 8px;font-size:12px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+  .c-page .ctable td{padding:14px 8px;border-bottom:1px solid #edf2ef;color:var(--text);text-align:center;vertical-align:middle}
+  .c-page .ctable tr:hover td{background:#fbfdfc}
+  .c-page .col-conf{width:17%}
+  .c-page .col-supp{width:17%}
+  .c-page .col-date{width:10%}
+  .c-page .col-status{width:12%}
+  .c-page .col-lines{width:8%}
+  .c-page .col-by{width:12%}
+  .c-page .col-actions{width:24%}
+  .c-page .soft-badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap}
+  .c-page .badge-green{background:#eafff4;color:#11885a}
+  .c-page .badge-yellow{background:#fff7df;color:#986a00}
+  .c-page .badge-red{background:#fff0f2;color:#c7384c}
+  .c-page .badge-gray{background:#f1f5f9;color:#64748b}
+  .c-page .badge-blue{background:#eef3ff;color:#1a56db}
+  .c-page .empty-state{padding:32px;text-align:center;color:var(--muted);font-size:13px}
+  .c-page .action-group{display:flex;gap:4px;justify-content:center;align-items:center;flex-wrap:nowrap}
+  .c-page .action-btn{display:inline-flex;align-items:center;gap:3px;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:800;border:none;cursor:pointer;text-decoration:none;white-space:nowrap;line-height:1}
+</style>
+{% set ns = namespace(total=0, total_lines=0, draft_count=0, confirmed_count=0) %}
+{% for c in confirmations %}
+  {% set ns.total = ns.total + 1 %}
+  {% set ns.total_lines = ns.total_lines + (c.lines|length) %}
+  {% if c.status == 'draft' %}{% set ns.draft_count = ns.draft_count + 1 %}{% endif %}
+  {% if c.status == 'confirmed' %}{% set ns.confirmed_count = ns.confirmed_count + 1 %}{% endif %}
+{% endfor %}
+<div class="c-page">
+  <div class="page-head">
+    <div>
+      <h1>{{ L("تأكيدات الموردين", "Supplier Confirmations") }}</h1>
+      <p>{{ L("تسجيل تأكيدات الموردين على تكاليف الحجوزات", "Record supplier confirmations on booking costs") }}</p>
+    </div>
+    {% if has_permission(current_user, "supplier_confirmations.manage") %}
+    <a href="/suppliers/confirmations/add" class="btn btn-primary" style="display:inline-flex;align-items:center;gap:6px;padding:10px 20px;font-size:14px;font-weight:800;border-radius:14px">
+      <i class="bi bi-plus-lg"></i>{{ L("إضافة تأكيد", "Add Confirmation") }}
+    </a>
+    {% endif %}
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon green"><i class="bi bi-check2-circle"></i></div>
+      <div class="kpi-label">{{ L("إجمالي التأكيدات", "Total Confirmations") }}</div>
+      <div class="kpi-value">{{ ns.total }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon blue"><i class="bi bi-check2-all"></i></div>
+      <div class="kpi-label">{{ L("تم التأكيد", "Confirmed") }}</div>
+      <div class="kpi-value">{{ ns.confirmed_count }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon yellow"><i class="bi bi-pencil-square"></i></div>
+      <div class="kpi-label">{{ L("مسودة", "Draft") }}</div>
+      <div class="kpi-value">{{ ns.draft_count }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon purple"><i class="bi bi-link-45deg"></i></div>
+      <div class="kpi-label">{{ L("إجمالي البنود", "Total Lines") }}</div>
+      <div class="kpi-value">{{ ns.total_lines }}</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <h2>{{ L("قائمة التأكيدات", "Confirmations List") }}</h2>
+      <span>{{ confirmations|length }} {{ L("تأكيد", "Confirmation") }}</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+      <table class="ctable">
+        <thead>
+          <tr>
+            <th class="col-conf">{{ L("رقم التأكيد", "Conf #") }}</th>
+            <th class="col-supp">{{ L("المورد", "Supplier") }}</th>
+            <th class="col-date">{{ L("التاريخ", "Date") }}</th>
+            <th class="col-curr">{{ L("العملة", "Curr.") }}</th>
+            <th class="col-status">{{ L("الحالة", "Status") }}</th>
+            <th class="col-lines">{{ L("البنود", "Lines") }}</th>
+            <th class="col-by">{{ L("بواسطة", "By") }}</th>
+            <th class="col-actions">{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in confirmations %}
+          <tr>
+            <td style="font-weight:950;color:#11885a">{{ c.confirmation_number }}</td>
+            <td style="font-weight:700">{{ c.supplier.name if c.supplier else '' }}</td>
+            <td>{{ c.confirmation_date }}</td>
+            <td style="font-size:12px;">{{ c.currency.code if c.currency else '-' }}</td>
+            <td>
+              <span class="soft-badge {{ 'badge-green' if c.status == 'confirmed' else 'badge-yellow' if c.status == 'draft' else 'badge-red' }}">
+                {% if c.status == 'confirmed' %}{{ L("مؤكد", "Confirmed") }}
+                {% elif c.status == 'draft' %}{{ L("مسودة", "Draft") }}
+                {% elif c.status == 'cancelled' %}{{ L("ملغي", "Cancelled") }}
+                {% else %}{{ c.status }}{% endif %}
+              </span>
+            </td>
+            <td>{{ c.lines|length }}</td>
+            <td>{{ c.created_by or '—' }}</td>
+            <td>
+              <div class="action-group">
+                <a href="/suppliers/confirmations/{{ c.id }}" class="action-btn badge-blue">
+                  <i class="bi bi-eye"></i> {{ L("عرض", "View") }}
+                </a>
+                {% if has_permission(current_user, "supplier_confirmations.manage") and c.status == 'draft' %}
+                <form method="post" action="/suppliers/confirmations/{{ c.id }}/confirm" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="action-btn badge-green">
+                    <i class="bi bi-check-lg"></i> {{ L("تأكيد", "Confirm") }}
+                  </button>
+                </form>
+                <form method="post" action="/suppliers/confirmations/{{ c.id }}/cancel" style="display:inline" onsubmit="return confirm('{{ L("إلغاء التأكيد؟", "Cancel confirmation?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="action-btn badge-red">
+                    <i class="bi bi-x-lg"></i> {{ L("إلغاء", "Cancel") }}
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not confirmations %}
+          <tr><td colspan="8"><div class="empty-state">{{ L("لا توجد تأكيدات بعد", "No confirmations yet") }}</div></td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

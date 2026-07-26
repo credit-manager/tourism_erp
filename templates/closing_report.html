@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head>
+<meta charset="utf-8">
+<title>{{ L("تقرير الجرد اليومي", "Daily Cash Closing Report") }}</title>
+<style>
+  @page{size:A4;margin:15mm;}
+  body{font-family:'Segoe UI',Tahoma,sans-serif;font-size:13px;color:#172033;margin:0;padding:20px;}
+  .report-header{text-align:center;margin-bottom:24px;padding-bottom:16px;border-bottom:2px solid #20b874;}
+  .report-header h1{margin:0 0 6px;font-size:22px;font-weight:950;color:#11885a;}
+  .report-header p{margin:0;color:#708093;font-size:13px;}
+  .report-meta{display:flex;justify-content:space-between;font-size:12px;color:#708093;margin-bottom:18px;padding:10px 0;border-bottom:1px solid #e4ebe6;}
+  table{width:100%;border-collapse:collapse;font-size:12px;}
+  th{background:#f8fcfa;color:#708093;padding:10px 8px;font-weight:950;font-size:11px;border-bottom:2px solid #e4ebe6;text-align:center;}
+  td{padding:9px 8px;border-bottom:1px solid #edf2ef;text-align:center;color:#172033;}
+  tr:last-child td{border-bottom:2px solid #e4ebe6;}
+  .money{direction:ltr;font-weight:900;}
+  .diff-positive{color:#11885a;}
+  .diff-negative{color:#d14454;}
+  .diff-zero{color:#708093;}
+  .status-badge{display:inline-block;padding:2px 8px;border-radius:99px;font-size:10px;font-weight:950;}
+  .status-draft{background:#f0f2f5;color:#708093;}
+  .status-posted{background:#e3f2fd;color:#1565c0;}
+  .status-reviewed{background:#fff8de;color:#b89a2a;}
+  .status-approved{background:#edf9f3;color:#11885a;}
+  .status-cancelled{background:#fff1f3;color:#d14454;}
+  .summary{display:flex;gap:20px;margin-top:18px;padding:14px;background:#fbfdfc;border-radius:12px;border:1px solid #e4ebe6;}
+  .summary-item{flex:1;}
+  .summary-label{font-size:11px;font-weight:850;color:#708093;}
+  .summary-value{font-size:18px;font-weight:950;}
+  .no-data{padding:40px;text-align:center;color:#708093;font-size:13px;}
+  .print-hide{display:none;}
+  @media print{.print-hide{display:none;}}
+</style>
+</head>
+<body>
+
+<div class="report-header">
+  <h1>{{ L("تقرير الجرد اليومي", "Daily Cash Closing Report") }}</h1>
+  <p>{{ L("قائمة بجرد الخزينة ومقارنة الرصيد الفعلي برصيد النظام", "Cash count vs system balance") }}</p>
+</div>
+
+<div class="report-meta">
+  <span>{{ L("تاريخ التقرير:", "Report Date:") }} {{ today() }}</span>
+  <span>{{ L("عدد الجرديات:", "Closings:") }} {{ closings|length }}</span>
+</div>
+
+{% if closings %}
+<table>
+  <thead>
+    <tr>
+      <th>#</th>
+      <th>{{ L("التاريخ", "Date") }}</th>
+      <th>{{ L("الخزنة", "Account") }}</th>
+      <th>{{ L("رصيد النظام", "System") }}</th>
+      <th>{{ L("الرصيد الفعلي", "Actual") }}</th>
+      <th>{{ L("الفرق", "Diff") }}</th>
+      <th>{{ L("السبب", "Reason") }}</th>
+      <th>{{ L("الحالة", "Status") }}</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% set total_system = namespace(v=0) %}
+    {% set total_actual = namespace(v=0) %}
+    {% set total_diff = namespace(v=0) %}
+    {% for c in closings %}
+    {% set total_system.v = total_system.v + c.system_balance %}
+    {% set total_actual.v = total_actual.v + c.actual_balance %}
+    {% set total_diff.v = total_diff.v + c.difference %}
+    <tr>
+      <td>{{ c.id }}</td>
+      <td>{{ c.closing_date }}</td>
+      <td>{{ c.account.name if c.account else '-' }}</td>
+      <td class="money">{{ "%.2f"|format(c.system_balance) }}</td>
+      <td class="money">{{ "%.2f"|format(c.actual_balance) }}</td>
+      <td class="money {{ 'diff-positive' if c.difference > 0 else 'diff-negative' if c.difference < 0 else 'diff-zero' }}">
+        {{ "%.2f"|format(c.difference) }}
+      </td>
+      <td>{{ c.reason or '-' }}</td>
+      <td>
+        <span class="status-badge status-{{ c.status }}">
+          {{ {'draft':'مسودة','reviewed':'قيد المراجعة','approved':'معتمد','posted':'مرحّل','cancelled':'ملغي'}.get(c.status, c.status) }}
+        </span>
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+<div class="summary">
+  <div class="summary-item">
+    <div class="summary-label">{{ L("إجمالي رصيد النظام", "Total System Balance") }}</div>
+    <div class="summary-value">{{ "%.2f"|format(total_system.v) }}</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-label">{{ L("إجمالي الرصيد الفعلي", "Total Actual Balance") }}</div>
+    <div class="summary-value">{{ "%.2f"|format(total_actual.v) }}</div>
+  </div>
+  <div class="summary-item">
+    <div class="summary-label">{{ L("صافي الفرق", "Net Difference") }}</div>
+    <div class="summary-value {{ 'diff-positive' if total_diff.v > 0 else 'diff-negative' if total_diff.v < 0 else '' }}">
+      {{ "%.2f"|format(total_diff.v) }}
+    </div>
+  </div>
+</div>
+
+{% else %}
+<div class="no-data">{{ L("لا توجد جرديات للعرض", "No closings to display") }}</div>
+{% endif %}
+
+<script>window.print();</script>
+</body>
+</html>

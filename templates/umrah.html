@@ -1,0 +1,699 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .umrah-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --blue:#bfd175;
+    --blue-soft:#f4fce8;
+    --yellow:#f4c44d;
+    --yellow-soft:#fff8de;
+    --purple:#8a7cf7;
+    --purple-soft:#f4f1ff;
+    --red:#eb5d6c;
+    --red-soft:#fff1f3;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --card:#ffffff;
+    direction: inherit;
+  }
+
+  .umrah-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:20px;
+  }
+
+  .umrah-header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .umrah-header p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .umrah-stats{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+
+  .stat-card,
+  .main-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);
+  }
+
+  .stat-card{
+    padding:18px;
+    min-height:118px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    left:-40px;
+    bottom:-45px;
+    width:110px;
+    height:110px;
+    border-radius:999px;
+    background:rgba(26,86,219,.06);
+  }
+
+  .stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    margin-bottom:12px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-icon.green{ background:var(--primary-soft); color:var(--primary); }
+  .stat-icon.blue{ background:var(--blue-soft); color:var(--blue); }
+  .stat-icon.yellow{ background:var(--yellow-soft); color:#ab7700; }
+  .stat-icon.purple{ background:var(--purple-soft); color:var(--purple); }
+
+  .stat-label{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:850;
+    margin-bottom:5px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-value{
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+    direction:ltr;
+    text-align:right;
+    position:relative;
+    z-index:1;
+  }
+
+  .umrah-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1.7fr) minmax(340px,.9fr);
+    gap:18px;
+    align-items:start;
+  }
+
+  .card-head{
+    padding:18px 20px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+
+  .card-head h2{
+    margin:0;
+    font-size:16px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .card-chip{
+    padding:7px 11px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:#fbfdfc;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:850;
+    white-space:nowrap;
+  }
+
+  .card-body{
+    padding:16px 20px 20px;
+  }
+
+  .table-wrap{
+    overflow-x:auto;
+    padding-bottom:6px;
+  }
+
+  .table-wrap::-webkit-scrollbar{
+    height:10px;
+  }
+
+  .table-wrap::-webkit-scrollbar-thumb{
+    background:#d4ddd7;
+    border-radius:999px;
+  }
+
+  .table-wrap::-webkit-scrollbar-track{
+    background:#f3f7f5;
+    border-radius:999px;
+  }
+
+  .umrah-table{
+    width:100%;
+    min-width:1220px;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13px;
+  }
+
+  .umrah-table th{
+    background:#f8fcfa;
+    color:var(--muted);
+    padding:14px 10px;
+    font-size:12px;
+    font-weight:950;
+    border-bottom:1px solid var(--border);
+    text-align:center;
+    white-space:nowrap;
+  }
+
+  .umrah-table td{
+    padding:14px 10px;
+    border-bottom:1px solid #edf2ef;
+    text-align:center;
+    white-space:nowrap;
+    color:var(--text);
+    vertical-align:middle;
+  }
+
+  .umrah-table tr:hover td{
+    background:#fbfefc;
+  }
+
+  .package-number{
+    font-weight:950;
+    color:var(--primary-dark);
+  }
+
+  .pilgrim-name{
+    font-weight:900;
+    color:var(--text);
+  }
+
+  .hotel-cell{
+    max-width:180px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .money{
+    direction:ltr;
+    font-weight:900;
+  }
+
+  .money-green{
+    color:var(--primary-dark);
+    font-weight:950;
+  }
+
+  .money-red{
+    color:var(--red);
+    font-weight:950;
+  }
+
+  .actions{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+
+  .action-btn{
+    width:34px;
+    height:34px;
+    border-radius:11px;
+    border:1px solid #dde7e1;
+    background:#fff;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.15s ease;
+    box-shadow:0 6px 14px rgba(15,23,42,.05);
+  }
+
+  .action-btn:hover{
+    transform:translateY(-1px);
+    background:#fbfefc;
+  }
+
+  .action-btn.edit{ color:#11885a; }
+  .action-btn.delete{ color:var(--red); }
+
+  .edit-row td{
+    background:#fbfdfc !important;
+    padding:0 10px 16px !important;
+  }
+
+  .edit-box{
+    margin-top:4px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:#fff;
+    padding:14px;
+  }
+
+  .edit-form{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:10px;
+    align-items:start;
+  }
+
+  .side-card{
+    position:sticky;
+    top:18px;
+  }
+
+  .helper-box{
+    padding:13px 14px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:linear-gradient(135deg,var(--primary-soft),#fff);
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.8;
+    margin-bottom:14px;
+  }
+
+  .form-grid{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .field-group label{
+    display:block;
+    margin-bottom:6px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .date-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .field-input,
+  .field-select,
+  .field-textarea{
+    width:100%;
+    border:1px solid #dde7e1;
+    border-radius:14px;
+    background:#fff;
+    color:var(--text);
+    font-size:13px;
+    font-weight:700;
+    padding:0 13px;
+    height:43px;
+  }
+
+  .field-textarea{
+    min-height:82px;
+    height:auto;
+    resize:vertical;
+    padding-top:10px;
+  }
+
+  .field-input:focus,
+  .field-select:focus,
+  .field-textarea:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(26,86,219,.1);
+  }
+
+  .save-btn{
+    width:100%;
+    min-height:43px;
+    border:0;
+    border-radius:15px;
+    background:linear-gradient(135deg,var(--lime),#b8c96a);
+    color:#172033;
+    font-size:13px;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    cursor:pointer;
+    box-shadow:0 8px 16px rgba(103, 197, 80,.24);
+    transition:.16s ease;
+  }
+
+  .save-btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(.98);
+  }
+
+  .empty-state{
+    padding:34px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  @media (max-width: 1250px){
+    .umrah-stats{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .umrah-layout{
+      grid-template-columns:1fr;
+    }
+
+    .side-card{
+      position:static;
+    }
+
+    .edit-form{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .edit-form .full-row,
+    .edit-form button{
+      grid-column:1 / -1;
+    }
+  }
+
+  @media (max-width: 700px){
+    .umrah-header,
+    .card-head{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .umrah-stats,
+    .edit-form,
+    .date-grid{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+
+{% set ns = namespace(total_cost=0, total_sale=0, total_paid=0, total_remaining=0) %}
+{% for p in packages %}
+  {% set ns.total_cost = ns.total_cost + (p.cost_price or 0) %}
+  {% set ns.total_sale = ns.total_sale + (p.sale_price or 0) %}
+  {% set ns.total_paid = ns.total_paid + (p.paid_amount or 0) %}
+  {% set ns.total_remaining = ns.total_remaining + (p.remaining or 0) %}
+{% endfor %}
+
+<div class="umrah-page">
+
+  <div class="umrah-header">
+    <div>
+      <h1>{{ L("العمرة", "Umrah") }}</h1>
+      <p>{{ L("إدارة برامج العمرة، بيانات المعتمر، الفنادق، التكلفة، البيع، والتحصيلات.", "Manage Umrah programs, pilgrim data, hotels, cost, sale, and collections.") }}</p>
+    </div>
+  </div>
+
+  <div class="umrah-stats">
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="bi bi-globe2"></i></div>
+      <div class="stat-label">{{ L("إجمالي البرامج", "Total Programs") }}</div>
+      <div class="stat-value">{{ packages|length }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="bi bi-cash-stack"></i></div>
+      <div class="stat-label">{{ L("إجمالي البيع", "Total Sales") }}</div>
+      <div class="stat-value">{{ "%.0f"|format(ns.total_sale or 0) }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon yellow"><i class="bi bi-wallet2"></i></div>
+      <div class="stat-label">{{ L("إجمالي المسدد", "Total Paid") }}</div>
+      <div class="stat-value">{{ "%.0f"|format(ns.total_paid or 0) }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="bi bi-hourglass-split"></i></div>
+      <div class="stat-label">{{ L("إجمالي المتبقي", "Total Remaining") }}</div>
+      <div class="stat-value">{{ "%.0f"|format(ns.total_remaining or 0) }}</div>
+    </div>
+  </div>
+
+  <div class="umrah-layout">
+
+    <div class="main-card">
+      <div class="card-head">
+        <h2>{{ L("برامج العمرة", "Umrah Programs") }}</h2>
+        <span class="card-chip">{{ packages|length }} {{ L("برنامج", "Program") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="umrah-table">
+            <thead>
+              <tr>
+                <th>{{ L("رقم البرنامج", "Program No.") }}</th>
+                <th>{{ L("المعتمر", "Pilgrim") }}</th>
+                <th>{{ L("السفر", "Travel") }}</th>
+                <th>{{ L("فندق مكة", "Mecca Hotel") }}</th>
+                <th>{{ L("فندق المدينة", "Medina Hotel") }}</th>
+                <th>{{ L("التكلفة", "Cost") }}</th>
+                <th>{{ L("البيع", "Sale") }}</th>
+                <th>{{ L("المسدد", "Paid") }}</th>
+                <th>{{ L("العملة", "Curr.") }}</th>
+                <th>{{ L("المتبقي", "Remaining") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for p in packages %}
+              <tr>
+                <td>
+                  <span class="package-number">{{ p.package_number }}</span>
+                </td>
+
+                <td>
+                  <span class="pilgrim-name">{{ p.pilgrim_name }}</span>
+                </td>
+
+                <td>{{ p.departure_date or '-' }}</td>
+
+                <td class="hotel-cell">{{ p.hotel_makkah or '-' }}</td>
+                <td class="hotel-cell">{{ p.hotel_madinah or '-' }}</td>
+
+                <td class="money">{{ "%.2f"|format(p.cost_price or 0) }}</td>
+                <td class="money">{{ "%.2f"|format(p.sale_price or 0) }}</td>
+                <td class="money-green">{{ "%.2f"|format(p.paid_amount or 0) }}</td>
+
+                <td style="font-size:12px;">{{ p.currency.code if p.currency else '-' }}<br><span style="font-size:10px;color:var(--muted);">{{ "%.2f"|format(p.amount_currency or 0) }}</span></td>
+
+                <td class="{{ 'money-red' if (p.remaining or 0) > 0 else 'money-green' }}">
+                  {{ "%.2f"|format(p.remaining or 0) }}
+                </td>
+
+                <td>
+                  {% if has_permission(current_user, "umrah.manage") %}
+<div class="actions">
+                    <button
+                      type="button"
+                      onclick="document.getElementById('edit-{{ p.id }}').classList.toggle('hidden')"
+                      class="action-btn edit"
+                      title="تعديل"
+                    >
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+
+                    <form method="post" action="/umrah/{{ p.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="action-btn delete" type="submit" title="حذف">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </div>
+{% endif %}
+                </td>
+              </tr>
+
+              <tr id="edit-{{ p.id }}" class="hidden edit-row">
+                <td colspan="11">
+                  <div class="edit-box">
+                    <form method="post" action="/umrah/{{ p.id }}/edit" class="edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input name="pilgrim_name" value="{{ p.pilgrim_name }}" required class="field-input">
+                      <input name="passport_no" value="{{ p.passport_no or '' }}" class="field-input">
+                      <input name="phone" value="{{ p.phone or '' }}" class="field-input">
+                      <input name="departure_date" type="date" value="{{ p.departure_date or '' }}" class="field-input">
+                      <input name="return_date" type="date" value="{{ p.return_date or '' }}" class="field-input">
+
+                      <input name="hotel_makkah" value="{{ p.hotel_makkah or '' }}" placeholder="{{ L("فندق مكة", "Mecca Hotel") }}" class="field-input">
+                      <input name="hotel_madinah" value="{{ p.hotel_madinah or '' }}" placeholder="{{ L("فندق المدينة", "Medina Hotel") }}" class="field-input">
+                      <input name="cost_price" type="number" step="0.01" value="{{ p.cost_price or 0 }}" class="field-input">
+                      <input name="sale_price" type="number" step="0.01" value="{{ p.sale_price or 0 }}" class="field-input">
+                      <input name="paid_amount" type="number" step="0.01" value="{{ p.paid_amount or 0 }}" class="field-input">
+                      <select name="currency_id" class="field-select" onchange="autoFillExchangeRate('currency_id','edit_exchange_rate')">
+                        <option value="">{{ L("الأساسية", "Base") }}</option>
+                        {% for c in currencies %}
+                        <option value="{{ c.id }}" data-rate="{{ c.exchange_rate }}" {{ 'selected' if p.currency_id == c.id }}>{{ c.code }}</option>
+                        {% endfor %}
+                      </select>
+                      <input name="exchange_rate" id="edit_exchange_rate" type="number" step="0.000001" value="{{ p.exchange_rate|string if p.exchange_rate else '1.0' }}" class="field-input">
+
+                      <select name="employee_id" class="field-select">
+                        <option value="">{{ L("موظف الحجز", "Booking Staff") }}</option>
+                        {% for e in employees %}
+                        <option value="{{ e.id }}" {{ 'selected' if p.employee_id==e.id }}>
+                          {{ e.name }}
+                        </option>
+                        {% endfor %}
+                      </select>
+
+                      <textarea name="notes" class="field-textarea full-row">{{ p.notes or '' }}</textarea>
+
+                      <button class="save-btn" type="submit">
+                        {{ L("حفظ", "Save") }}
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if not packages %}
+              <tr>
+                <td colspan="11">
+                  <div class="empty-state">{{ L("لا توجد برامج عمرة مسجّلة بعد", "No Umrah programs registered yet") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-card side-card">
+      <div class="card-head">
+        <h2>{{ L("إضافة برنامج عمرة", "Add Umrah Program") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="helper-box">
+          {{ L("أضف بيانات المعتمر والرحلة والفنادق، ثم أدخل التكلفة وسعر البيع والمبلغ المسدد.", "Add pilgrim, trip and hotel data, then enter cost, sale price and paid amount.") }}
+        </div>
+
+        {% if has_permission(current_user, "umrah.manage") %}
+<form method="post" action="/umrah/add" class="form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field-group">
+            <label>{{ L("اسم المعتمر", "Pilgrim Name") }}</label>
+            <input name="pilgrim_name" placeholder="{{ L("اسم المعتمر", "Pilgrim Name") }}" required class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("رقم الجواز", "Passport No.") }}</label>
+            <input name="passport_no" placeholder="{{ L("رقم الجواز", "Passport No.") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("رقم التواصل", "Contact No.") }}</label>
+            <input name="phone" placeholder="{{ L("رقم التواصل", "Contact No.") }}" class="field-input">
+          </div>
+
+          <div class="date-grid">
+            <div class="field-group">
+              <label>{{ L("تاريخ السفر", "Travel Date") }}</label>
+              <input name="departure_date" type="date" class="field-input">
+            </div>
+
+            <div class="field-group">
+              <label>{{ L("تاريخ العودة", "Return Date") }}</label>
+              <input name="return_date" type="date" class="field-input">
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("فندق مكة", "Mecca Hotel") }}</label>
+            <input name="hotel_makkah" placeholder="{{ L("فندق مكة", "Mecca Hotel") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("فندق المدينة", "Medina Hotel") }}</label>
+            <input name="hotel_madinah" placeholder="{{ L("فندق المدينة", "Medina Hotel") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("التكلفة", "Cost") }}</label>
+            <input name="cost_price" type="number" step="0.01" placeholder="{{ L("التكلفة", "Cost") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("سعر البيع", "Sale Price") }}</label>
+            <input name="sale_price" type="number" step="0.01" placeholder="{{ L("سعر البيع", "Sale Price") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("المسدد حتى الآن", "Paid So Far") }}</label>
+            <input name="paid_amount" type="number" step="0.01" placeholder="{{ L("المسدد حتى الآن", "Paid So Far") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("العملة", "Currency") }}</label>
+            <select name="currency_id" class="field-select" onchange="autoFillExchangeRate('currency_id','exchange_rate')">
+              <option value="">{{ L("الأساسية", "Base") }}</option>
+              {% for c in currencies %}
+              <option value="{{ c.id }}" data-rate="{{ c.exchange_rate }}">{{ c.code }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("سعر الصرف", "Exchange Rate") }}</label>
+            <input name="exchange_rate" id="exchange_rate" type="number" step="0.000001" value="1.0" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("موظف الحجز", "Booking Staff") }}</label>
+            <select name="employee_id" class="field-select">
+              <option value="">{{ L("موظف الحجز (اختياري)", "Booking Staff (Optional)") }}</option>
+              {% for e in employees %}
+              <option value="{{ e.id }}">{{ e.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("ملاحظات", "Notes") }}</label>
+            <textarea name="notes" placeholder="{{ L("ملاحظات", "Notes") }}" class="field-textarea" rows="2"></textarea>
+          </div>
+
+          <button class="save-btn" type="submit">
+            {{ L("حفظ", "Save") }}
+          </button>
+        </form>
+{% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

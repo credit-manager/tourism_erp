@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if synced %}
+<div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4">
+  <i class="bi bi-check-circle"></i> {{ L("تمت المطابقة وإعادة احتساب جميع الأرصدة بنجاح", "All balances have been recalculated and synced successfully") }}
+</div>
+{% endif %}
+
+<div class="flex justify-between items-center mb-4">
+  <h2 class="text-xl font-bold">{{ L("مطابقة الأرصدة (Reconcile)", "Balance Reconciliation") }}</h2>
+  <form action="/accounting/reconcile/sync" method="post" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <button type="submit" class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700">
+      <i class="bi bi-arrow-repeat"></i> {{ L("إعادة احتساب الأرصدة ومطابقتها", "Recalculate & Sync All Balances") }}
+    </button>
+  </form>
+</div>
+
+<div class="bg-white rounded-xl shadow p-5">
+  {% if discrepancies %}
+  <table class="w-full text-sm">
+    <thead>
+      <tr class="border-b text-gray-500">
+        <th class="py-2 text-right">{{ L("النوع", "Type") }}</th>
+        <th class="py-2 text-right">{{ L("الاسم", "Name") }}</th>
+        <th class="py-2 text-right">#ID</th>
+        <th class="py-2 text-right">{{ L("الرصيد المخزن", "Stored Balance") }}</th>
+        <th class="py-2 text-right">{{ L("الرصيد من القيود", "Journal Balance") }}</th>
+        <th class="py-2 text-right">{{ L("الفرق", "Difference") }}</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for d in discrepancies %}
+      <tr class="border-b hover:bg-red-50">
+        <td class="py-2">{{ d.entity }}</td>
+        <td class="py-2">{{ d.get('name', '-') }}</td>
+        <td class="py-2">{{ d.id }}</td>
+        <td class="py-2 text-red-600 font-bold">{{ "%.2f"|format(d.stored) }}</td>
+        <td class="py-2 text-green-600 font-bold">{{ "%.2f"|format(d.journal) }}</td>
+        <td class="py-2 font-bold">{{ "%.2f"|format(d.diff) }}</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  {% else %}
+  <div class="text-center py-8 text-green-600">
+    <i class="bi bi-check-circle-fill text-3xl"></i>
+    <p class="mt-2 font-bold">{{ L("جميع الأرصدة متطابقة مع القيود اليومية - لا توجد فروق", "All balances match journal entries - no discrepancies found") }}</p>
+  </div>
+  {% endif %}
+</div>
+
+<div class="bg-white rounded-xl shadow p-5 mt-6">
+  <p class="text-sm text-gray-500">
+    <i class="bi bi-info-circle"></i>
+    {{ L("هذه الصفحة تقارن الرصيد المخزن (TreasuryAccount.balance, Supplier.balance, Customer.balance) بالرصيد المشتق من القيود اليومية (دفتر الأستاذ). في النظام الجديد، الرصيد لا يُعدّل مباشرة بل هو نتيجة تراكم القيود. إذا ظهرت فروق، اضغط على زر إعادة الاحتساب لمطابقتها.", 
+       "This page compares stored balances (TreasuryAccount.balance, Supplier.balance, Customer.balance) against journal-derived balances (general ledger). In the new system, balances are not modified directly - they are the result of accumulated journal entries. If discrepancies appear, click Recalculate to sync them.") }}
+  </p>
+</div>
+{% endblock %}

@@ -1,0 +1,2489 @@
+{% set lang = LANG(request) if LANG is defined else "en" %}
+<!DOCTYPE html>
+<html lang="{{ lang }}" dir="{{ 'rtl' if lang == 'ar' else 'ltr' }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() if csrf_token is defined else '' }}">
+
+  <title>{{ page_title or "Tourism ERP" }}</title>
+
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=El+Messiri:wght@500;600;700;800&family=Cairo:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      /* === هوية "بوردينج باس" — سفر فاخر: كحلي / نحاسي-ذهبي / أخضر مزرق عميق === */
+      --pro-bg: #f7f3ea;
+      --pro-card: #ffffff;
+      --pro-border: #e6ddc8;
+      --pro-text: #16202e;
+      --pro-muted: #736a58;
+      --pro-green: #0e6b64;
+      --pro-green-dark: #0a4f4a;
+      --pro-green-soft: #eaf3f1;
+      --pro-lime: #b8873b;
+      --pro-yellow: #c99a3d;
+      --pro-red: #b0463f;
+      --pro-purple: #6a5a8c;
+      --pro-ink: #101826;
+      --pro-brass: #b8873b;
+      --pro-brass-dark: #8f6a2c;
+      --pro-shadow: 0 10px 30px rgba(16, 24, 38, 0.06);
+      --pro-shadow-hover: 0 16px 38px rgba(16, 24, 38, 0.10);
+      --sidebar-open-width: 225px;
+      --sidebar-close-width: 82px;
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body { overflow-x: hidden; }
+
+    body {
+      margin: 0;
+      background:
+        radial-gradient(circle at top right, rgba(184, 135, 59, 0.09), transparent 28%),
+        radial-gradient(circle at bottom left, rgba(14, 107, 100, 0.07), transparent 32%),
+        var(--pro-bg);
+      color: var(--pro-text);
+      font-family: "Cairo", "Inter", "Segoe UI", Tahoma, Arial, sans-serif;
+      min-height: 100vh;
+      direction: inherit;
+    }
+
+    h1, h2, h3, .brand-title, .kpi-value, .page-title-row h1 {
+      font-family: "El Messiri", "Cairo", "Segoe UI", Tahoma, Arial, sans-serif;
+    }
+
+    a { text-decoration: none; }
+
+    .app-shell {
+      display: grid;
+      grid-template-columns: var(--sidebar-open-width) 1fr;
+      min-height: 100vh;
+      direction: ltr;
+      transition: grid-template-columns 0.22s ease;
+    }
+
+    html[dir="rtl"] .app-shell {
+      grid-template-columns: 1fr var(--sidebar-open-width);
+    }
+
+    html[dir="ltr"] .app-shell.sidebar-collapsed {
+      grid-template-columns: var(--sidebar-close-width) 1fr;
+    }
+
+    html[dir="rtl"] .app-shell.sidebar-collapsed {
+      grid-template-columns: 1fr var(--sidebar-close-width);
+    }
+
+    /* ─── وضع القائمة الأفقية (شريط علوي بدل السايدبار الجانبي) ─── */
+    .app-shell.menu-horizontal {
+      grid-template-columns: 1fr !important;
+      grid-template-rows: auto 1fr;
+      display: grid;
+    }
+    .app-shell.menu-horizontal .pro-sidebar {
+      grid-column: 1;
+      grid-row: 1;
+      width: 100%;
+      height: auto;
+      max-height: 64px;
+      position: sticky;
+      top: 0;
+      z-index: 90;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      padding: 8px 16px;
+      overflow-x: auto;
+      overflow-y: hidden;
+      border-inline-end: 0;
+      border-bottom: 1.5px solid rgba(230,221,200,.9);
+    }
+    .app-shell.menu-horizontal .pro-sidebar::-webkit-scrollbar { height: 4px; }
+    .app-shell.menu-horizontal .brand-box {
+      border-bottom: 0;
+      padding: 0 10px 0 0;
+      margin: 0;
+      flex: 0 0 auto;
+    }
+    .app-shell.menu-horizontal .brand-title { display: none; }
+    .app-shell.menu-horizontal nav {
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      gap: 4px;
+      flex: 1 1 auto;
+      overflow-x: auto;
+    }
+    .app-shell.menu-horizontal .nav-section-label { display: none; }
+    .app-shell.menu-horizontal .nav-item,
+    .app-shell.menu-horizontal .nav-item-sub {
+      white-space: nowrap;
+      flex: 0 0 auto;
+      padding: 8px 12px;
+      margin: 0;
+    }
+    .app-shell.menu-horizontal .nav-item span,
+    .app-shell.menu-horizontal .nav-item-sub span { font-size: 12.5px; }
+    .app-shell.menu-horizontal .sidebar-footer,
+    .app-shell.menu-horizontal .sidebar-toggle-wrap { display: none; }
+    .app-shell.menu-horizontal .pro-main {
+      grid-column: 1;
+      grid-row: 2;
+    }
+    html[dir="rtl"] .app-shell.menu-horizontal .pro-sidebar,
+    html[dir="rtl"] .app-shell.menu-horizontal .pro-main {
+      grid-column: 1;
+    }
+
+    .pro-sidebar {
+      background:
+        radial-gradient(circle at top left, rgba(184,135,59,.10), transparent 45%),
+        radial-gradient(circle at bottom right, rgba(14,107,100,.07), transparent 40%),
+        rgba(255,255,255,.97);
+      backdrop-filter: blur(20px);
+      border-inline-end: 1.5px solid rgba(230,221,200,.9);
+      padding: 18px 14px 22px;
+      position: sticky;
+      top: 0;
+      height: 100vh;
+      overflow-y: auto;
+      overflow-x: hidden;
+      direction: inherit;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+      box-shadow: 4px 0 24px rgba(16,24,38,.05), 0 0 0 1px rgba(230,221,200,.6);
+      transition: padding 0.22s ease;
+    }
+
+    .pro-sidebar::-webkit-scrollbar { display: none; }
+
+    html[dir="rtl"] .pro-sidebar {
+      grid-column: 2;
+      border-inline-end: 0;
+      border-inline-start: 1px solid var(--pro-border);
+    }
+
+    .pro-main {
+      min-width: 0;
+      direction: inherit;
+    }
+
+    html[dir="rtl"] .pro-main {
+      grid-column: 1;
+      grid-row: 1;
+      direction: rtl;
+    }
+
+    html[dir="rtl"] .pro-sidebar {
+      direction: rtl;
+    }
+
+    html[dir="ltr"] .pro-main {
+      direction: ltr;
+    }
+
+    .sidebar-toggle-wrap {
+      position: sticky;
+      top: 0;
+      z-index: 80;
+      display: flex;
+      justify-content: flex-start;
+      align-items: center;
+      padding: 0 0 12px;
+      margin-bottom: 2px;
+      background: linear-gradient(
+        to bottom,
+        rgba(255, 255, 255, 0.96) 0%,
+        rgba(255, 255, 255, 0.92) 70%,
+        rgba(255, 255, 255, 0) 100%
+      );
+    }
+
+    html[dir="ltr"] .sidebar-toggle-wrap {
+      justify-content: flex-end;
+    }
+
+    .sidebar-float-toggle {
+      width: 38px;
+      height: 38px;
+      border: 1px solid var(--pro-border);
+      border-radius: 999px;
+      background: #ffffff;
+      color: var(--pro-green-dark);
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      box-shadow: 0 10px 22px rgba(15, 23, 42, 0.10);
+      cursor: pointer;
+      transition: 0.18s ease;
+      flex: 0 0 auto;
+    }
+
+    .sidebar-float-toggle:hover {
+      background: var(--pro-green-soft);
+      transform: scale(1.04);
+    }
+
+    .app-shell.sidebar-collapsed .pro-sidebar {
+      padding-inline: 12px;
+    }
+
+    .app-shell.sidebar-collapsed .sidebar-toggle-wrap {
+      justify-content: center;
+    }
+
+    .app-shell.sidebar-collapsed .brand-box {
+      justify-content: center;
+      padding-inline: 0;
+    }
+
+    .app-shell.sidebar-collapsed .brand-box > div:last-child,
+    .app-shell.sidebar-collapsed .nav-item span,
+    .app-shell.sidebar-collapsed     .sidebar-footer {
+      display: none;
+    }
+
+    .app-shell.sidebar-collapsed .nav-item {
+      justify-content: center;
+      padding: 11px;
+    }
+
+    .app-shell.sidebar-collapsed .nav-item i {
+      width: auto;
+      font-size: 18px;
+    }
+
+    .app-shell.sidebar-collapsed .nav-section-label {
+      display: none;
+    }
+
+    .nav-section-label {
+      font-size: 10px;
+      font-weight: 950;
+      color: #9ca3af;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 16px 6px 6px;
+      margin-top: 8px;
+      border-top: 1px solid rgba(203, 213, 225, 0.3);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .nav-section-label:first-of-type {
+      border-top: 0;
+      padding-top: 0;
+      margin-top: 0;
+    }
+
+    .brand-box {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      padding: 0 6px 16px;
+      margin-bottom: 12px;
+      border-bottom: 1.5px solid #ecdfc0;
+    }
+
+    .brand-icon {
+      width: 44px;
+      height: 44px;
+      border-radius: 16px;
+      background: linear-gradient(135deg, #1a2740, #0f6b64);
+      color: #f0c979;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 22px;
+      box-shadow: 0 10px 22px rgba(16,24,38,.28), 0 2px 6px rgba(184,135,59,.24);
+      flex: 0 0 auto;
+    }
+
+    .brand-title {
+      font-family: "El Messiri", "Cairo", sans-serif;
+      font-size: 21px;
+      font-weight: 800;
+      background: linear-gradient(135deg, #16202e, #8f6a2c);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      white-space: nowrap;
+    }
+
+    .brand-sub {
+      margin-top: 4px;
+      font-size: 10.5px;
+      color: var(--pro-muted);
+      font-weight: 700;
+      white-space: nowrap;
+    }
+
+    .nav-section {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .nav-item {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 44px;
+      padding: 10px 13px;
+      border-radius: 14px;
+      color: #4b5563;
+      font-size: 13px;
+      font-weight: 800;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+      position: relative;
+      border: 1.5px solid transparent;
+    }
+
+    .nav-item i {
+      width: 22px;
+      text-align: center;
+      font-size: 16px;
+      color: #9ca3af;
+      transition: 0.16s ease;
+      flex: 0 0 auto;
+    }
+
+    .nav-item:hover {
+      background: linear-gradient(135deg, #f2ece0, #f7f3ea);
+      color: var(--pro-green-dark);
+      border-color: #e6d6ae;
+      transform: translateX(-2px);
+      box-shadow: 0 4px 14px rgba(184,135,59,.12);
+    }
+
+    html[dir="ltr"] .nav-item:hover {
+      transform: translateX(2px);
+    }
+
+    .nav-item:hover i { color: var(--pro-green); }
+
+    .nav-item.active {
+      background: linear-gradient(135deg, #b8873b1f, #0e6b641c);
+      color: #0a4f4a;
+      border-color: #e0cd9c;
+      box-shadow: 0 6px 18px rgba(184,135,59,.16), inset 0 1px 0 rgba(255,255,255,.8);
+    }
+
+    .nav-item.active i {
+      color: var(--pro-brass-dark);
+    }
+
+    /* شريط ذهبي/نحاسي على العنصر النشط */
+    .nav-item.active::before {
+      content: "";
+      position: absolute;
+      inset-inline-end: 0;
+      top: 20%;
+      height: 60%;
+      width: 3.5px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, var(--pro-brass), var(--pro-green));
+    }
+
+    html[dir="ltr"] .nav-item.active::before {
+      inset-inline-end: auto;
+      inset-inline-start: 0;
+    }
+
+    .nav-item-sub {
+      display: flex;
+      align-items: center;
+      gap: 11px;
+      min-height: 36px;
+      padding: 6px 13px 6px 44px;
+      border-radius: 12px;
+      color: #6b7280;
+      font-size: 12.5px;
+      font-weight: 600;
+      transition: all 0.18s ease;
+      white-space: nowrap;
+      position: relative;
+    }
+    .nav-item-sub i {
+      width: 20px;
+      text-align: center;
+      font-size: 14px;
+      color: #9ca3af;
+      flex: 0 0 auto;
+    }
+    .nav-item-sub:hover {
+      color: var(--pro-green-dark);
+      background: #f7f3ea;
+    }
+    .nav-item-sub.active {
+      color: #0a4f4a;
+      background: #eef2ea;
+    }
+    .app-shell.sidebar-collapsed .nav-item-sub { display: none; }
+
+    .sidebar-footer {
+      margin-top: 18px;
+      padding: 14px 16px;
+      border-radius: 18px;
+      background: linear-gradient(135deg, #16202e, #0e3a37);
+      border: 1.5px solid #0a4f4a;
+      color: #f3ead4;
+      box-shadow: 0 4px 16px rgba(16,24,38,.18);
+    }
+
+    .sidebar-footer span { color: #c9bfa4 !important; }
+
+    .sidebar-footer strong {
+      display: block;
+      font-size: 13px;
+      font-weight: 900;
+    }
+
+    .sidebar-footer span {
+      display: block;
+      margin-top: 5px;
+      font-size: 11px;
+      color: var(--pro-muted);
+      line-height: 1.6;
+    }
+
+    .topbar {
+      height: 80px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 18px;
+      padding: 18px 30px;
+      position: sticky;
+      top: 0;
+      z-index: 40;
+      background: rgba(244, 248, 245, 0.88);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid #e8eee9;
+    }
+
+    .top-left,
+    .top-right {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      min-width: 0;
+    }
+
+    .top-left { order: 1; }
+    .top-right { order: 2; margin-inline-start: auto; }
+
+    /* RTL header: swap so date goes RIGHT, icons go LEFT */
+    html[dir="rtl"] .top-left { order: 2; margin-inline-start: auto; margin-inline-end: 0; }
+    html[dir="rtl"] .top-right { order: 1; margin-inline-start: 0; }
+
+    .page-date {
+      min-height: 38px;
+      padding: 9px 13px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.82);
+      border: 1px solid var(--pro-border);
+      color: var(--pro-muted);
+      font-size: 12px;
+      font-weight: 800;
+      white-space: nowrap;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.035);
+    }
+
+    .lang-switch {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      padding: 5px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--pro-border);
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.035);
+    }
+
+    .notif-bell-wrap { position: relative; }
+    .notif-bell-btn {
+      width: 40px; height: 40px; border-radius: 12px;
+      background: rgba(255,255,255,.88); border: 1px solid var(--pro-border);
+      color: var(--pro-text); font-size: 16px; cursor: pointer;
+      display: inline-flex; align-items: center; justify-content: center;
+      position: relative; transition: .15s;
+      box-shadow: 0 6px 18px rgba(15,23,42,.035);
+    }
+    .notif-bell-btn:hover { background: #faf5ea; color: var(--pro-brass); }
+    .notif-badge {
+      position: absolute; top: -4px; inset-inline-end: -4px;
+      min-width: 17px; height: 17px; padding: 0 4px; border-radius: 999px;
+      background: linear-gradient(135deg, #b0463f, #8a332d); color: #fff;
+      font-size: 10px; font-weight: 900; display: flex; align-items: center; justify-content: center;
+      border: 2px solid #fff;
+    }
+    .notif-dropdown {
+      display: none; position: absolute; top: 48px; inset-inline-start: 0;
+      width: 340px; max-height: 420px; overflow-y: auto;
+      background: #fff; border: 1px solid var(--pro-border); border-radius: 18px;
+      box-shadow: 0 20px 48px rgba(16,24,38,.14); z-index: 200;
+    }
+    .notif-dropdown.open { display: block; }
+    .notif-dd-head {
+      padding: 12px 16px; border-bottom: 1px solid var(--pro-border);
+      display: flex; align-items: center; justify-content: space-between;
+      font-size: 13px; font-weight: 900; color: var(--pro-text);
+    }
+    .notif-dd-head a { font-size: 11px; font-weight: 800; color: #0e6b64; text-decoration: none; }
+    .notif-item {
+      display: block; padding: 11px 16px; border-bottom: 1px solid #f2ede1;
+      text-decoration: none; color: var(--pro-text); transition: .12s;
+    }
+    .notif-item:hover { background: #faf5ea; }
+    .notif-item.unread { background: #f7f3ea; }
+    .notif-item .t { font-size: 12.5px; font-weight: 900; margin-bottom: 2px; }
+    .notif-item .b { font-size: 11.5px; color: var(--pro-muted); font-weight: 700; }
+    .notif-item .ts { font-size: 10px; color: #a89e88; font-weight: 700; margin-top: 4px; }
+    .notif-empty { padding: 30px 16px; text-align: center; color: var(--pro-muted); font-size: 12.5px; font-weight: 800; }
+
+    .lang-switch a {
+      padding: 7px 12px;
+      border-radius: 999px;
+      font-size: 11px;
+      font-weight: 900;
+      color: var(--pro-muted);
+    }
+
+    .lang-switch a.active {
+      background: var(--pro-brass);
+      color: #ffffff;
+    }
+
+    .user-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.88);
+      border: 1px solid var(--pro-border);
+      min-width: 0;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.035);
+    }
+
+    .user-avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, var(--pro-ink), var(--pro-green));
+      color: #f0c979;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 900;
+      flex: 0 0 auto;
+    }
+
+    .user-info { min-width: 0; }
+
+    .user-name {
+      font-size: 12px;
+      font-weight: 900;
+      color: var(--pro-text);
+      max-width: 130px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+
+    .user-role {
+      font-size: 10px;
+      color: var(--pro-muted);
+      margin-top: 2px;
+    }
+
+    .logout-btn {
+      width: 38px;
+      height: 38px;
+      border-radius: 14px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      background: #ffffff;
+      border: 1px solid var(--pro-border);
+      color: var(--pro-muted);
+      transition: 0.16s ease;
+      box-shadow: 0 6px 18px rgba(15, 23, 42, 0.035);
+      cursor: pointer;
+      padding: 0;
+      font: inherit;
+    }
+
+    .logout-btn:hover {
+      color: var(--pro-red);
+      background: #fff5f6;
+    }
+
+    .content-wrap {
+      padding: 28px 30px 38px;
+    }
+
+    .page-title-row {
+      display: flex;
+      align-items: flex-end;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .page-title-row h1,
+    .content-wrap > h1:first-child {
+      font-size: 28px;
+      font-weight: 950;
+      color: var(--pro-text);
+      margin: 0 0 4px;
+      letter-spacing: -0.4px;
+    }
+
+    .card,
+    .bg-white,
+    .stats-card,
+    .dashboard-card {
+      border-radius: 24px !important;
+      border: 1px solid var(--pro-border) !important;
+      box-shadow: var(--pro-shadow) !important;
+      transition: 0.18s ease;
+    }
+
+    .card:hover,
+    .bg-white:hover,
+    .stats-card:hover,
+    .dashboard-card:hover {
+      box-shadow: var(--pro-shadow-hover) !important;
+    }
+
+    .card h2,
+    .card h3,
+    .bg-white h2,
+    .bg-white h3 {
+      color: var(--pro-text);
+      font-weight: 900;
+    }
+
+    table {
+      border-collapse: separate !important;
+      border-spacing: 0 !important;
+      background: transparent;
+    }
+
+    thead th {
+      background: #f8fcfa !important;
+      color: #708092 !important;
+      font-size: 12px !important;
+      font-weight: 900 !important;
+      border-bottom: 1px solid var(--pro-border) !important;
+      padding-top: 14px !important;
+      padding-bottom: 14px !important;
+    }
+
+    tbody td {
+      border-bottom: 1px solid #eef2f4 !important;
+      padding-top: 14px !important;
+      padding-bottom: 14px !important;
+      font-size: 13px;
+    }
+
+    tbody tr:hover td {
+      background: #fbfefc !important;
+    }
+
+    input,
+    select,
+    textarea {
+      min-height: 42px;
+      background: #fff !important;
+      border: 1px solid #dde7e1 !important;
+      border-radius: 12px !important;
+      font-size: 13px !important;
+      transition: 0.15s ease;
+    }
+
+    input:focus,
+    select:focus,
+    textarea:focus {
+      outline: none !important;
+      border-color: var(--pro-green) !important;
+      box-shadow: 0 0 0 4px rgba(32, 184, 116, 0.10) !important;
+    }
+
+    button,
+    .btn-add,
+    .btn-primary {
+      min-height: 42px;
+      border-radius: 14px !important;
+      font-weight: 900 !important;
+    }
+
+    .btn-add {
+      background: linear-gradient(135deg, #c99a3d, #b8873b) !important;
+      color: #ffffff !important;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 16px;
+      border: 0;
+      transition: 0.16s ease;
+      box-shadow: 0 8px 16px rgba(184, 135, 59, 0.28);
+    }
+
+    .btn-add:hover {
+      filter: brightness(0.98);
+      transform: translateY(-1px);
+    }
+
+    .icon-btn { border-radius: 12px !important; }
+
+    section,
+    .dashboard-section,
+    .widget,
+    .chart-box {
+      border-radius: 22px;
+    }
+
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+
+    ::-webkit-scrollbar-thumb {
+      background: #d7e2dc;
+      border-radius: 999px;
+    }
+
+    ::-webkit-scrollbar-track {
+      background: transparent;
+    }
+
+    @media (max-width: 1200px) {
+      .app-shell,
+      html[dir="rtl"] .app-shell,
+      html[dir="ltr"] .app-shell,
+      html[dir="rtl"] .app-shell.sidebar-collapsed,
+      html[dir="ltr"] .app-shell.sidebar-collapsed {
+        grid-template-columns: 1fr;
+      }
+
+      .pro-sidebar {
+        position: static;
+        height: auto;
+        border: 0;
+        border-bottom: 1px solid var(--pro-border);
+      }
+
+      html[dir="rtl"] .pro-sidebar {
+        grid-column: 1;
+        grid-row: 1;
+        border-inline-start: 0;
+        border-bottom: 1px solid var(--pro-border);
+      }
+
+      .pro-main,
+      html[dir="rtl"] .pro-main {
+        grid-column: 1;
+        grid-row: 2;
+      }
+
+      .nav-section {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+
+      .sidebar-footer { display: none; }
+
+      .topbar {
+        flex-wrap: wrap;
+        height: auto;
+      }
+
+      .sidebar-toggle-wrap { display: none; }
+    }
+
+    @media (max-width: 700px) {
+      .content-wrap {
+        padding: 16px 12px 24px;
+      }
+
+      .topbar {
+        padding: 12px;
+      }
+
+      .top-left,
+      .top-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+
+      .nav-section {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .brand-box {
+        justify-content: center;
+      }
+
+      .user-info { display: none; }
+
+      .page-title-row h1,
+      .content-wrap > h1:first-child {
+        font-size: 22px;
+      }
+    }
+
+    /* ===== تأثيرات الدخول والانتقالات العامة لكل الصفحات ===== */
+    @keyframes erpFadeUp {
+      from { opacity: 0; transform: translateY(14px); }
+      to   { opacity: 1; transform: translateY(0); }
+    }
+
+    @keyframes erpFadeIn {
+      from { opacity: 0; }
+      to   { opacity: 1; }
+    }
+
+    @keyframes erpPop {
+      0%   { opacity: 0; transform: scale(0.96); }
+      100% { opacity: 1; transform: scale(1); }
+    }
+
+    .erp-animate {
+      opacity: 0;
+      animation: erpFadeUp 0.5s ease forwards;
+    }
+
+    .erp-animate-fade {
+      opacity: 0;
+      animation: erpFadeIn 0.45s ease forwards;
+    }
+
+    .erp-animate-pop {
+      opacity: 0;
+      animation: erpPop 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+    }
+
+    /* تأخير تدريجي للعناصر داخل الصفحة */
+    .erp-stagger > * {
+      opacity: 0;
+      animation: erpFadeUp 0.5s ease forwards;
+    }
+    .erp-stagger > *:nth-child(1)  { animation-delay: 0.04s; }
+    .erp-stagger > *:nth-child(2)  { animation-delay: 0.09s; }
+    .erp-stagger > *:nth-child(3)  { animation-delay: 0.14s; }
+    .erp-stagger > *:nth-child(4)  { animation-delay: 0.19s; }
+    .erp-stagger > *:nth-child(5)  { animation-delay: 0.24s; }
+    .erp-stagger > *:nth-child(6)  { animation-delay: 0.29s; }
+    .erp-stagger > *:nth-child(7)  { animation-delay: 0.34s; }
+    .erp-stagger > *:nth-child(8)  { animation-delay: 0.39s; }
+    .erp-stagger > *:nth-child(n+9){ animation-delay: 0.44s; }
+
+    /* بطاقات عامة: انتقال عند المرور */
+    .erp-card,
+    .kpi-card,
+    table.card,
+    .stat-card,
+    .panel,
+    .info-card {
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+    .erp-card:hover,
+    .kpi-card:hover,
+    .stat-card:hover,
+    .info-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 10px 25px rgba(15, 23, 42, 0.10);
+    }
+
+    /* ازرار: ضغطة ناعمة */
+    .btn, button.btn, .erp-btn, a.btn {
+      transition: transform 0.12s ease, box-shadow 0.18s ease, filter 0.18s ease;
+    }
+    .btn:active, button.btn:active, .erp-btn:active, a.btn:active {
+      transform: scale(0.96);
+    }
+
+    /* صفوف الجداول: تمييز تدريجي */
+    table tbody tr {
+      transition: background 0.15s ease;
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .erp-animate, .erp-animate-fade, .erp-animate-pop, .erp-stagger > * {
+        animation: none !important;
+        opacity: 1 !important;
+      }
+    }
+
+    /* =========================================================
+       طبقة التجميل العامة (UI Polish) — تعتمد على نفس ألوان الثيم
+       ========================================================= */
+    :root {
+      --pro-radius: 16px;
+      --pro-radius-sm: 11px;
+      --pro-grad: linear-gradient(135deg, #0e6b64 0%, #0a4f4a 100%);
+      --pro-grad-soft: linear-gradient(135deg, #eaf3f1 0%, #f7f3ea 100%);
+      --pro-ring: 0 0 0 4px rgba(184, 135, 59, 0.16);
+    }
+
+    /* بطاقات أنيقة بحواف ناعمة وظل خفيف */
+    .content-wrap .main-card,
+    .content-wrap .side-card,
+    .content-wrap .panel,
+    .content-wrap .card,
+    .content-wrap .report-card,
+    .content-wrap .supplier-card,
+    .content-wrap .expense-card,
+    .content-wrap .treasury-card,
+    .content-wrap .hotel-card,
+    .content-wrap .collection-card,
+    .content-wrap .account-card,
+    .content-wrap .alert-card,
+    .content-wrap .allocation-card,
+    .content-wrap .stat-card,
+    .content-wrap .info-card,
+    .content-wrap .kpi-card,
+    .content-wrap .filter-card {
+      border-radius: var(--pro-radius);
+      border: 1px solid var(--pro-border);
+      background: var(--pro-card);
+      box-shadow: var(--pro-shadow);
+      overflow: hidden;
+    }
+
+    /* رأس البطاقة بلون مميز */
+    .content-wrap .card-head,
+    .content-wrap .hotel-card-head,
+    .content-wrap .detail-form-panel > .card-head,
+    .card-head {
+      background: var(--pro-grad-soft);
+      border-bottom: 1px solid var(--pro-border);
+      padding: 14px 18px;
+      font-weight: 800;
+      color: var(--pro-green-dark);
+    }
+
+    /* أزرار بتدرج لوني وظل */
+    .btn, button.btn, .erp-btn, a.btn,
+    .content-wrap .btn {
+      border-radius: var(--pro-radius-sm);
+      font-weight: 700;
+      box-shadow: 0 4px 12px rgba(10, 79, 74, 0.10);
+    }
+    .btn-primary, .erp-btn-primary,
+    button.btn-primary,
+    .content-wrap .btn-primary {
+      background: var(--pro-grad) !important;
+      border: none !important;
+      color: #fff !important;
+    }
+    .btn-primary:hover, .erp-btn-primary:hover,
+    .content-wrap .btn-primary:hover {
+      filter: brightness(1.05);
+      box-shadow: 0 8px 20px rgba(10, 79, 74, 0.24);
+    }
+
+    /* حقول الإدخال */
+    input, select, textarea,
+    .content-wrap input, .content-wrap select, .content-wrap textarea {
+      border-radius: 10px !important;
+      border: 1.5px solid var(--pro-border) !important;
+      transition: border-color 0.18s ease, box-shadow 0.18s ease;
+    }
+    input:focus, select:focus, textarea:focus,
+    .content-wrap input:focus, .content-wrap select:focus, .content-wrap textarea:focus {
+      border-color: var(--pro-green) !important;
+      box-shadow: var(--pro-ring) !important;
+      outline: none !important;
+    }
+
+    /* جداول أنيقة */
+    .content-wrap table {
+      border-collapse: separate;
+      border-spacing: 0;
+      width: 100%;
+      overflow: hidden;
+      border-radius: var(--pro-radius-sm);
+    }
+    .content-wrap thead th {
+      background: var(--pro-grad-soft);
+      color: var(--pro-green-dark);
+      font-weight: 800;
+      border-bottom: 1.5px solid var(--pro-border);
+      padding: 12px 14px;
+      font-size: 13px;
+    }
+    .content-wrap tbody td {
+      padding: 11px 14px;
+      border-bottom: 1px solid #eef2ef;
+      font-size: 13.5px;
+    }
+    .content-wrap tbody tr:hover {
+      background: rgba(32, 184, 116, 0.045);
+    }
+    .content-wrap tbody tr:last-child td { border-bottom: none; }
+
+    /* شارات الحالة */
+    .badge, .status-badge, .wf_badge,
+    .content-wrap .badge {
+      border-radius: 999px;
+      padding: 3px 11px;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    /* شريط تمرير أنيق */
+    ::-webkit-scrollbar { width: 10px; height: 10px; }
+    ::-webkit-scrollbar-track { background: transparent; }
+    ::-webkit-scrollbar-thumb {
+      background: rgba(32, 184, 116, 0.28);
+      border-radius: 999px;
+      border: 2px solid transparent;
+      background-clip: content-box;
+    }
+    ::-webkit-scrollbar-thumb:hover { background: rgba(32, 184, 116, 0.5); background-clip: content-box; }
+
+    /* عنوان الصفحة */
+    .page-title-row h1,
+    .content-wrap > h1:first-child {
+      background: var(--pro-grad);
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 900;
+      letter-spacing: -0.3px;
+    }
+
+    /* تبويبات */
+    .nav-tabs .nav-link.active {
+      color: var(--pro-green-dark) !important;
+      border-color: var(--pro-green) var(--pro-green) #fff !important;
+      font-weight: 800;
+    }
+
+    /* ===== تحسينات UX إضافية ===== */
+
+    /* رأس الجدول ثابت عند التمرير */
+    .content-wrap .table-wrap,
+    .content-wrap table.card {
+      position: relative;
+    }
+    .content-wrap thead th {
+      position: sticky;
+      top: 0;
+      z-index: 2;
+      backdrop-filter: blur(6px);
+    }
+
+    /* تنسيق أزرار الترقيم (pagination) */
+    .content-wrap .pagination,
+    .content-wrap .pager,
+    nav[aria-label="pagination"] {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      align-items: center;
+      margin-top: 18px;
+    }
+    .content-wrap .pagination a,
+    .content-wrap .pagination span,
+    .content-wrap .pager a,
+    .content-wrap .pager span,
+    .content-wrap .page-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 10px;
+      border-radius: 10px;
+      border: 1px solid var(--pro-border);
+      background: #fff;
+      color: var(--pro-text);
+      font-weight: 700;
+      font-size: 13px;
+      transition: all 0.15s ease;
+    }
+    .content-wrap .pagination a:hover,
+    .content-wrap .pager a:hover,
+    .content-wrap .page-link:hover {
+      border-color: var(--pro-green);
+      color: var(--pro-green-dark);
+      transform: translateY(-1px);
+    }
+    .content-wrap .pagination .current,
+    .content-wrap .pagination .active a,
+    .content-wrap .pagination a.active,
+    .content-wrap .page-item.active .page-link {
+      background: var(--pro-grad) !important;
+      border-color: transparent !important;
+      color: #fff !important;
+      box-shadow: 0 6px 16px rgba(17, 136, 90, 0.25);
+    }
+    .content-wrap .pagination .disabled,
+    .content-wrap .pager .disabled,
+    .content-wrap .page-item.disabled .page-link {
+      opacity: 0.45;
+      pointer-events: none;
+    }
+
+    /* حالة فارغة لطيفة */
+    .content-wrap .empty-state {
+      text-align: center;
+      padding: 48px 20px;
+      color: var(--pro-muted);
+    }
+    .content-wrap .empty-state i {
+      font-size: 42px;
+      color: rgba(32, 184, 116, 0.35);
+      display: block;
+      margin-bottom: 12px;
+    }
+
+    /* تحسين التركيز للوحة المفاتيح */
+    a:focus-visible, button:focus-visible, .btn:focus-visible,
+    input:focus-visible, select:focus-visible, textarea:focus-visible,
+    .nav-item:focus-visible {
+      outline: 3px solid rgba(32, 184, 116, 0.4);
+      outline-offset: 2px;
+    }
+
+    /* مؤشر تحميل على الأزرار أثناء الإرسال */
+    .btn.is-loading, button.is-loading {
+      position: relative;
+      color: transparent !important;
+      pointer-events: none;
+    }
+    .btn.is-loading::after, button.is-loading::after {
+      content: "";
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 16px; height: 16px;
+      margin: -8px 0 0 -8px;
+      border: 2px solid rgba(255,255,255,0.55);
+      border-top-color: #fff;
+      border-radius: 50%;
+      animation: erpSpin 0.7s linear infinite;
+    }
+
+    /* توست (إشعار خفيف) */
+    #erpToastWrap {
+      position: fixed;
+      bottom: 22px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 99999;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      pointer-events: none;
+    }
+    .erp-toast {
+      background: #1f2a44;
+      color: #fff;
+      padding: 11px 18px;
+      border-radius: 12px;
+      font-size: 13.5px;
+      font-weight: 600;
+      box-shadow: 0 12px 30px rgba(15, 23, 42, 0.25);
+      display: flex;
+      align-items: center;
+      gap: 9px;
+      opacity: 0;
+      transform: translateY(12px);
+      animation: erpToastIn 0.28s ease forwards;
+      max-width: 90vw;
+    }
+    .erp-toast.ok    { background: linear-gradient(135deg,#0e6b64,#0a4f4a); }
+    .erp-toast.err   { background: linear-gradient(135deg,#b0463f,#8a332d); }
+    .erp-toast.info  { background: linear-gradient(135deg,#16202e,#0a4f4a); }
+    @keyframes erpToastIn { to { opacity: 1; transform: translateY(0); } }
+    @keyframes erpSpin { to { transform: rotate(360deg); } }
+  </style>
+
+  {% block head %}{% endblock %}
+</head>
+
+<body>
+  {% set current_user = request.state.user if request.state.user is defined else None %}
+  {% macro L(ar, en) %}{{ ar if lang == 'ar' else en }}{% endmacro %}
+
+  <div id="appShell" class="app-shell {{ 'menu-horizontal' if MENU_ORIENTATION() == 'horizontal' else '' }}">
+
+    <aside class="pro-sidebar">
+
+      <div class="sidebar-toggle-wrap">
+        <button type="button" id="sidebarToggleBtn" class="sidebar-float-toggle" title="{{ L('فتح / قفل القائمة', 'Open / close menu') }}">
+          <i id="sidebarToggleIcon" class="bi bi-chevron-right"></i>
+        </button>
+      </div>
+
+      <div class="brand-box">
+        <div class="brand-icon">
+          <i class="bi bi-airplane-engines"></i>
+        </div>
+        <div>
+          <div class="brand-title">TourismERP</div>
+          <div class="brand-sub">{{ L("نظام إدارة سياحة متكامل", "Integrated Tourism Management System") }}</div>
+        </div>
+      </div>
+
+      <nav class="nav-section">
+
+        <div class="nav-section-label">{{ L("الرئيسية", "Main") }}</div>
+        {% if is_menu_visible('dashboard') %}
+        <a href="/" class="nav-item {{ 'active' if active == 'home' else '' }}">
+          <i class="bi bi-grid-1x2-fill"></i>
+          <span>{{ L("لوحة التحكم", "Dashboard") }}</span>
+        </a>
+        {% endif %}
+
+        {% if has_permission(current_user, "reservations.view") %}
+        <div class="nav-section-label">{{ L("العمليات", "Operations") }}</div>
+        {% if is_menu_visible('reservations') %}
+        <a href="/reservations" class="nav-item {{ 'active' if active == 'reservations' else '' }}">
+          <i class="bi bi-calendar2-check-fill"></i>
+          <span>{{ L("الحجوزات", "Reservations") }}</span>
+        </a>
+        {% endif %}
+        <a href="/workflow" class="nav-item {{ 'active' if active == 'workflow' else '' }}">
+          <i class="bi bi-list-check"></i>
+          <span>{{ L("سير العمل", "Workflow") }}</span>
+        </a>
+        <a href="/reservations/board" class="nav-item {{ 'active' if active == 'board' else '' }}">
+          <i class="bi bi-columns-gap"></i>
+          <span>{{ L("لوحة الحجز", "Booking Board") }}</span>
+        </a>
+        <a href="/bookings" class="nav-item {{ 'active' if active == 'bookings' else '' }}">
+          <i class="bi bi-bookmark-check-fill"></i>
+          <span>{{ L("كل الحجوزات", "All Reservations") }}</span>
+        </a>
+        <a href="/services" class="nav-item {{ 'active' if active == 'services' else '' }}">
+          <i class="bi bi-stars"></i>
+          <span>{{ L("الخدمات", "Services") }}</span>
+        </a>
+        {% if is_menu_visible('hotels') %}
+        <a href="/hotels" class="nav-item {{ 'active' if active == 'hotels' else '' }}">
+          <i class="bi bi-buildings-fill"></i>
+          <span>{{ L("الفنادق", "Hotels") }}</span>
+        </a>
+        {% endif %}
+        {% endif %}
+
+        {% if has_permission(current_user, "customers.manage") or has_permission(current_user, "customers.view") %}
+        <div class="nav-section-label">{{ L("العملاء والمبيعات", "Customers & Sales") }}</div>
+        <a href="/customers" class="nav-item {{ 'active' if active == 'customers' else '' }}">
+          <i class="bi bi-person-fill"></i>
+          <span>{{ L("العملاء", "Customers") }}</span>
+        </a>
+        <a href="/sales-pipeline" class="nav-item {{ 'active' if active == 'sales_pipeline' else '' }}">
+          <i class="bi bi-graph-up-arrow"></i>
+          <span>{{ L("فرص البيع", "Sales Opportunities") }}</span>
+        </a>
+        <a href="/quotations" class="nav-item {{ 'active' if active == 'quotations' else '' }}">
+          <i class="bi bi-file-text-fill"></i>
+          <span>{{ L("عروض الأسعار", "Quotations") }}</span>
+        </a>
+        {% endif %}
+
+        {% if has_permission(current_user, "collections.manage") or has_permission(current_user, "treasury.view") or has_permission(current_user, "accounting.manage") %}
+        <div class="nav-section-label">{{ L("المالية", "Financials") }}</div>
+        {% endif %}
+        {% if has_permission(current_user, "collections.manage") and is_menu_visible('collections') %}
+        <a href="/collections" class="nav-item {{ 'active' if active == 'collections' else '' }}">
+          <i class="bi bi-cash-coin"></i>
+          <span>{{ L("التحصيلات", "Receipts") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "treasury.view") and is_menu_visible('treasury') %}
+        <a href="/treasury" class="nav-item {{ 'active' if active == 'treasury' else '' }}">
+          <i class="bi bi-wallet2"></i>
+          <span>{{ L("الخزنة", "Cash Management") }}</span>
+        </a>
+        <a href="/transfers" class="nav-item {{ 'active' if active == 'transfers' else '' }}">
+          <i class="bi bi-arrow-left-right"></i>
+          <span>{{ L("تحويلات", "Transfers") }}</span>
+        </a>
+        <a href="/treasury/closing" class="nav-item {{ 'active' if active == 'closing' else '' }}">
+          <i class="bi bi-clipboard-check"></i>
+          <span>{{ L("الجرد اليومي", "Daily Closing") }}</span>
+        </a>
+        <a href="/treasury/bank" class="nav-item {{ 'active' if active == 'bank' else '' }}">
+          <i class="bi bi-bank"></i>
+          <span>{{ L("تسوية البنك", "Bank Reconciliation") }}</span>
+        </a>
+        {% if is_menu_visible('expenses') %}
+        <a href="/expenses" class="nav-item {{ 'active' if active == 'expenses' else '' }}">
+          <i class="bi bi-receipt"></i>
+          <span>{{ L("المصروفات", "Expenses") }}</span>
+        </a>
+        {% endif %}
+        {% endif %}
+        {% if has_permission(current_user, "collections.manage") %}
+        <a href="/suppliers/payments" class="nav-item {{ 'active' if active == 'supplier_payments' else '' }}">
+          <i class="bi bi-bank"></i>
+          <span>{{ L("سداد الموردين", "Supplier Payments") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "accounting.manage") and is_menu_visible('accounting') %}
+        <a href="/accounting/chart" class="nav-item {{ 'active' if active == 'accounting' else '' }}">
+          <i class="bi bi-diagram-3"></i>
+          <span>{{ L("الحسابات", "General Ledger") }}</span>
+        </a>
+        <a href="/accounting/reconcile" class="nav-item-sub {{ 'active' if active == 'reconcile' else '' }}">
+          <i class="bi bi-check-circle"></i>
+          <span>{{ L("مطابقة الأرصدة", "Reconciliation") }}</span>
+        </a>
+        {% endif %}
+
+        {% if has_permission(current_user, "suppliers.manage") or has_permission(current_user, "supplier_confirmations.view") or has_permission(current_user, "supplier_invoices.view") %}
+        <div class="nav-section-label">{{ L("الموردين", "Suppliers") }}</div>
+        {% endif %}
+        {% if has_permission(current_user, "suppliers.manage") and is_menu_visible('suppliers') %}
+        <a href="/suppliers" class="nav-item {{ 'active' if active == 'suppliers' else '' }}">
+          <i class="bi bi-person-plus-fill"></i>
+          <span>{{ L("الموردين", "Suppliers") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "supplier_confirmations.view") %}
+        <a href="/suppliers/confirmations" class="nav-item {{ 'active' if active == 'supplier_confirmations' else '' }}">
+          <i class="bi bi-check-circle"></i>
+          <span>{{ L("تأكيدات الموردين", "Supplier Confirm.") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "supplier_invoices.view") %}
+        <a href="/suppliers/invoices" class="nav-item {{ 'active' if active == 'supplier_invoices' else '' }}">
+          <i class="bi bi-receipt"></i>
+          <span>{{ L("فواتير الموردين", "Supplier Invoices") }}</span>
+        </a>
+        <a href="/suppliers/ledger" class="nav-item {{ 'active' if active == 'supplier_ledger' else '' }}">
+          <i class="bi bi-journal-text"></i>
+          <span>{{ L("كشف حساب الموردين", "Supplier Ledger") }}</span>
+        </a>
+        <a href="/suppliers/rating" class="nav-item {{ 'active' if active == 'supplier_rating' else '' }}">
+          <i class="bi bi-bar-chart"></i>
+          <span>{{ L("تقييم الموردين", "Supplier Rating") }}</span>
+        </a>
+        {% endif %}
+
+        {% if has_permission(current_user, "employees.view") or has_permission(current_user, "payroll.view") %}
+        <div class="nav-section-label">{{ L("الموارد البشرية", "HR") }}</div>
+        {% endif %}
+        {% if has_permission(current_user, "employees.view") and is_menu_visible('employees') %}
+        <a href="/employees" class="nav-item {{ 'active' if active == 'employees' else '' }}">
+          <i class="bi bi-people-fill"></i>
+          <span>{{ L("الموظفين", "Employees") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "attendance.view") or has_permission(current_user, "employees.manage") %}
+        <a href="/attendance" class="nav-item {{ 'active' if active == 'attendance' else '' }}">
+          <i class="bi bi-calendar-check"></i>
+          <span>{{ L("الحضور", "Attendance") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "shifts.manage") %}
+        <a href="/shifts" class="nav-item {{ 'active' if active == 'shifts' else '' }}">
+          <i class="bi bi-arrow-left-right"></i>
+          <span>{{ L("الورديات", "Shifts") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "leaves.manage") %}
+        <a href="/leave-requests" class="nav-item {{ 'active' if active == 'leave_requests' else '' }}">
+          <i class="bi bi-file-text"></i>
+          <span>{{ L("طلبات الإجازة", "Leave Requests") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "holidays.manage") %}
+        <a href="/holidays" class="nav-item {{ 'active' if active == 'holidays' else '' }}">
+          <i class="bi bi-calendar-event"></i>
+          <span>{{ L("العطلات", "Holidays") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "leaves.manage") %}
+        <a href="/leave-balance" class="nav-item {{ 'active' if active == 'leave_balance' else '' }}">
+          <i class="bi bi-pie-chart"></i>
+          <span>{{ L("رصيد الإجازات", "Leave Balance") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "payroll.view") and is_menu_visible('payroll') %}
+        <a href="/payroll" class="nav-item {{ 'active' if active == 'payroll' else '' }}">
+          <i class="bi bi-credit-card-2-front"></i>
+          <span>{{ L("الرواتب", "Payroll") }}</span>
+        </a>
+        <a href="/payroll-runs" class="nav-item {{ 'active' if active == 'payroll_runs' else '' }}">
+          <i class="bi bi-cash-stack"></i>
+          <span>{{ L("شهرية الرواتب", "Payroll Runs") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "withdrawals.manage") %}
+        <a href="/withdrawals" class="nav-item {{ 'active' if active == 'withdrawals' else '' }}">
+          <i class="bi bi-cash"></i>
+          <span>{{ L("سحب الموظفين", "Employee Withdrawals") }}</span>
+        </a>
+        {% endif %}
+
+        {% if has_permission(current_user, "contracts.view") or has_permission(current_user, "transport.view") or has_permission(current_user, "tickets.view") or has_permission(current_user, "umrah.view") or has_permission(current_user, "files.view") or has_permission(current_user, "police.view") %}
+        <div class="nav-section-label">{{ L("خدمات إضافية", "More Services") }}</div>
+        {% endif %}
+        {% if has_permission(current_user, "contracts.view") %}
+        <a href="/contracts" class="nav-item {{ 'active' if active == 'contracts' else '' }}">
+          <i class="bi bi-file-earmark-text"></i>
+          <span>{{ L("العقود", "Contracts") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "transport.view") %}
+        <a href="/transportations" class="nav-item {{ 'active' if active == 'transport' else '' }}">
+          <i class="bi bi-truck"></i>
+          <span>{{ L("النقل", "Transport") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "tickets.view") %}
+        <a href="/tickets" class="nav-item {{ 'active' if active == 'tickets' else '' }}">
+          <i class="bi bi-ticket-perforated"></i>
+          <span>{{ L("التذاكر", "Tickets") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "umrah.view") %}
+        <a href="/umrah" class="nav-item {{ 'active' if active == 'umrah' else '' }}">
+          <i class="bi bi-globe2"></i>
+          <span>{{ L("العمرة", "Umrah") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "files.view") %}
+        <a href="/tourism-files" class="nav-item {{ 'active' if active == 'files' else '' }}">
+          <i class="bi bi-folder2-open"></i>
+          <span>{{ L("ملفات السياحة", "Tourism Files") }}</span>
+        </a>
+        {% endif %}
+        {% if has_permission(current_user, "police.view") %}
+        <a href="/police-notification" class="nav-item {{ 'active' if active == 'police' else '' }}">
+          <i class="bi bi-shield-check"></i>
+          <span>{{ L("إخطار الشرطة", "Police Notification") }}</span>
+        </a>
+        {% endif %}
+
+        {% if has_permission(current_user, "reports.view") %}
+        <div class="nav-section-label">{{ L("التقارير", "Reports") }}</div>
+        <a href="/reports" class="nav-item {{ 'active' if active == 'reports' else '' }}">
+          <i class="bi bi-bar-chart-fill"></i>
+          <span>{{ L("التقارير", "Reports") }}</span>
+        </a>
+        <a href="/reports/customer-credit" class="nav-item {{ 'active' if active == 'credit_report' else '' }}">
+          <i class="bi bi-credit-card"></i>
+          <span>{{ L("تقرير الائتمان", "Credit Report") }}</span>
+        </a>
+        {% if is_menu_visible('insights') %}
+        <a href="/insights" class="nav-item {{ 'active' if active == 'insights' else '' }}">
+          <i class="bi bi-graph-up-arrow"></i>
+          <span>{{ L("التحليلات الذكية", "Insights") }}</span>
+        </a>
+        {% endif %}
+        <a href="/reconciliation/report" class="nav-item {{ 'active' if active == 'reconciliation' else '' }}">
+          <i class="bi bi-shuffle"></i>
+          <span>{{ L("تسوية المدفوعات", "Payment Reconcil.") }}</span>
+        </a>
+        {% endif %}
+
+        {% if has_permission(current_user, "settings.manage") %}
+        <div class="nav-section-label">{{ L("الإعدادات", "Settings") }}</div>
+        {% if is_menu_visible('commission_policies') %}
+        <a href="/settings/commission-policies" class="nav-item {{ 'active' if active == 'commission_policies' or active == 'commission_entries' else '' }}">
+          <i class="bi bi-percent"></i>
+          <span>{{ L("سياسات العمولات", "Commission Policies") }}</span>
+        </a>
+        {% endif %}
+        {% endif %}
+        {% if has_permission(current_user, "departments.manage") %}
+        {% if is_menu_visible('departments') %}
+        <a href="/settings/departments" class="nav-item {{ 'active' if active == 'departments' else '' }}">
+          <i class="bi bi-diagram-3-fill"></i>
+          <span>{{ L("الأقسام", "Departments") }}</span>
+        </a>
+        {% endif %}
+        {% endif %}
+        {% if has_permission(current_user, "settings.manage") %}
+        {% if is_menu_visible('settings') %}
+        <a href="/settings" class="nav-item {{ 'active' if active == 'settings' else '' }}">
+          <i class="bi bi-gear-fill"></i>
+          <span>{{ L("الإعدادات", "Settings") }}</span>
+        </a>
+        {% endif %}
+        <a href="/settings/menu-config" class="nav-item {{ 'active' if active == 'menu_config' else '' }}">
+          <i class="bi bi-layout-sidebar-inset"></i>
+          <span>{{ L("إعدادات القائمة", "Menu Settings") }}</span>
+        </a>
+        {% endif %}
+
+      </nav>
+
+      <div class="sidebar-footer">
+        <strong>Tourism ERP</strong>
+        <span>{{ L("نظام إدارة سياحة متكامل للحجوزات، التحصيلات، الفنادق، والخزنة.", "Integrated system for reservations, collections, hotels, and treasury.") }}</span>
+      </div>
+    </aside>
+
+    <main class="pro-main">
+      <header class="topbar">
+        <div class="top-left">
+          {% if current_user %}
+          <div class="notif-bell-wrap">
+            <button type="button" class="notif-bell-btn" onclick="toggleNotifDropdown()" title="{{ L('الإشعارات', 'Notifications') }}">
+              <i class="bi bi-bell-fill"></i>
+              <span id="notifBadge" class="notif-badge" style="display:none;">0</span>
+            </button>
+            <div id="notifDropdown" class="notif-dropdown"></div>
+          </div>
+          {% endif %}
+
+          <div class="lang-switch">
+            <a href="/set-language/ar" class="{{ 'active' if lang == 'ar' else '' }}">AR</a>
+            <a href="/set-language/en" class="{{ 'active' if lang == 'en' else '' }}">EN</a>
+          </div>
+
+          <div class="user-chip">
+            <div class="user-avatar">
+              {%- if current_user -%}
+                {%- set _name = current_user.full_name or current_user.username or 'U' -%}
+                {%- if lang == 'en' -%}
+                  {{ (current_user.username or _name or 'U')[:1] | upper }}
+                {%- else -%}
+                  {{ _name[:1] }}
+                {%- endif -%}
+              {%- else -%}U{%- endif -%}
+            </div>
+            <div class="user-info">
+              <div class="user-name">
+                {% if current_user and current_user.role == 'owner' %}{{ L('مالك النظام', 'System Owner') }}{% else %}{{ (current_user.full_name or current_user.username) if current_user else L('مستخدم', 'User') }}{% endif %}
+              </div>
+              <div class="user-role">
+                {% if current_user %}
+                  {{ L(ROLE_LABELS.get(current_user.role, current_user.role), current_user.role|replace('_', ' ')|title) }}
+                {% endif %}
+              </div>
+            </div>
+          </div>
+
+          <a href="/settings/mfa" class="logout-btn" title="{{ L('المصادقة الثنائية', 'Two-Factor Auth') }}" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;{{ 'color:#0a4f4a' if current_user and current_user.mfa_enabled else '' }}">
+            <i class="bi bi-shield-lock{{ '-fill' if current_user and current_user.mfa_enabled else '' }}"></i>
+          </a>
+          <a href="/sessions" class="logout-btn" title="{{ L('الجلسات النشطة', 'Active Sessions') }}" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">
+            <i class="bi bi-pc-display-horizontal"></i>
+          </a>
+          <a href="/change-password" class="logout-btn" title="{{ L('تغيير كلمة المرور', 'Change Password') }}" style="text-decoration:none;display:inline-flex;align-items:center;justify-content:center;">
+            <i class="bi bi-key"></i>
+          </a>
+          <form method="post" action="/logout" style="margin:0;display:inline">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit" class="logout-btn" title="{{ L('تسجيل الخروج', 'Logout') }}">
+              <i class="bi bi-box-arrow-right"></i>
+            </button>
+          </form>
+        </div>
+
+        <div class="top-right">
+          <div class="page-date">
+            <i class="bi bi-calendar3"></i>
+            {{ today() }}
+          </div>
+        </div>
+      </header>
+
+      <section class="content-wrap">
+        {% block content %}{% endblock %}
+      </section>
+    </main>
+
+  </div>
+
+  <!-- ===== تأثيرات الدخول العامة لكل الصفحات (سكربت موحد) ===== -->
+  <script src="/static/js/animations.js"></script>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function () {
+      const shell = document.getElementById('appShell');
+      const btn = document.getElementById('sidebarToggleBtn');
+      const icon = document.getElementById('sidebarToggleIcon');
+
+      if (!shell || !btn) return;
+
+      function updateSidebarIcon() {
+        const isCollapsed = shell.classList.contains('sidebar-collapsed');
+        const isRtl = document.documentElement.getAttribute('dir') === 'rtl';
+
+        if (!icon) return;
+
+        if (isRtl) {
+          icon.className = isCollapsed ? 'bi bi-chevron-left' : 'bi bi-chevron-right';
+        } else {
+          icon.className = isCollapsed ? 'bi bi-chevron-right' : 'bi bi-chevron-left';
+        }
+      }
+
+      if (localStorage.getItem('sidebarCollapsed') === '1') {
+        shell.classList.add('sidebar-collapsed');
+      }
+
+      updateSidebarIcon();
+
+      btn.addEventListener('click', function () {
+        shell.classList.toggle('sidebar-collapsed');
+
+        if (shell.classList.contains('sidebar-collapsed')) {
+          localStorage.setItem('sidebarCollapsed', '1');
+        } else {
+          localStorage.removeItem('sidebarCollapsed');
+        }
+
+        updateSidebarIcon();
+      });
+    });
+
+  </script>
+
+  <!-- ===== الحفاظ على موقع التمرير في الشريط الجانبي ===== -->
+  <script>
+    (function () {
+      var SKEY = 'erpSidebarScroll';
+      var sidebar = document.querySelector('.pro-sidebar');
+
+      if (sidebar) {
+        // استرجاع آخر موضع عند تحميل الصفحة
+        var saved = sessionStorage.getItem(SKEY);
+        if (saved !== null) {
+          sidebar.scrollTop = parseInt(saved, 10) || 0;
+        }
+
+        // حفظ الموضع عند أي تمرير
+        sidebar.addEventListener('scroll', function () {
+          sessionStorage.setItem(SKEY, String(sidebar.scrollTop));
+        }, { passive: true });
+
+        // حفظ الموضع قبل التنقل لأي رابط داخل الشريط
+        sidebar.querySelectorAll('a[href]').forEach(function (link) {
+          link.addEventListener('click', function () {
+            sessionStorage.setItem(SKEY, String(sidebar.scrollTop));
+          });
+        });
+      }
+    })();
+  </script>
+  <script>
+  window.APP_LANG = "{{ lang }}";
+
+window.AUTO_TRANSLATE = {
+    // ===== القائمة الجانبية =====
+    "الرئيسية": "Dashboard",
+    "الحجوزات": "Reservations",
+    "لوحة الحجز": "Booking Board",
+    "كل الحجوزات": "All Reservations",
+    "الخدمات": "Services",
+    "الفنادق": "Hotels",
+    "العملاء": "Customers",
+    "الموردين": "Suppliers",
+    "التحصيلات": "Collections",
+    "الخزنة": "Treasury",
+    "المصروفات": "Expenses",
+    "الموظفين": "Employees",
+    "الحضور": "Attendance",
+    "الرواتب": "Payroll",
+    "الرواتب الشهرية": "Monthly Payroll",
+    "العقود": "Contracts",
+    "النقل": "Transport",
+    "التذاكر": "Tickets",
+    "العمرة": "Umrah",
+    "ملفات السياحة": "Tourism Files",
+    "إخطار الشرطة": "Police Notification",
+    "التقارير": "Reports",
+    "سداد الموردين": "Supplier Payments",
+    "الحسابات": "Accounting",
+    "سحب الموظفين": "Employee Withdrawals",
+    "الإعدادات": "Settings",
+    "سجل التتبع": "Audit Log",
+    "الإدارة": "Management",
+
+    // ===== الداشبورد =====
+    "لوحة التحكم الرئيسية": "Main Dashboard",
+    "نظرة منظمة على الحجوزات، الإيرادات، التحصيلات، الفنادق، وحركة اليوم.": "Organized overview of reservations, revenue, collections, hotels, and today's activity.",
+    "إجمالي الحجوزات": "Total Reservations",
+    "عدد الحجوزات": "Total Reservations",
+    "إجمالي الإيرادات": "Total Revenue",
+    "إجمالي المبيعات": "Total Sales",
+    "الربح الإجمالي": "Gross Profit",
+    "مدفوعات معلقة": "Pending Payments",
+    "وصول اليوم": "Today Arrivals",
+    "مغادرة اليوم": "Today Departures",
+    "إجمالي عدد الحجوزات داخل النظام": "Total reservations in the system",
+    "إجمالي أسعار البيع للحجوزات": "Total reservation sales",
+    "قبل العمولات والمصروفات": "Before commissions and expenses",
+    "إجمالي المتبقي على العملاء": "Total outstanding from customers",
+    "حجوزات متوقع وصولها اليوم": "Expected arrivals today",
+    "حجوزات تغادر اليوم": "Expected departures today",
+    "أداء الحجوزات والإيرادات": "Reservations & Revenue Performance",
+    "آخر 14 يوم": "Last 14 Days",
+    "الحالة العامة للحجوزات": "Reservation Status",
+    "آخر الحجوزات": "Recent Reservations",
+    "حركة اليوم": "Today's Activity",
+    "أعلى الوجهات": "Top Destinations",
+    "الإيرادات مقابل التكلفة": "Revenue vs Cost",
+    "ملخص الربحية": "Profit Summary",
+    "مصادر الحجوزات": "Reservation Sources",
+    "أفضل المندوبين": "Top Agents",
+    "أعلى المبالغ المعلقة": "Highest Outstanding Amounts",
+    "صافي الربح": "Net Profit",
+    "إجمالي المصروفات": "Total Expenses",
+    "تحصيلات معلقة": "Pending Collections",
+    "إجمالي العمولات": "Total Commissions",
+    "إجمالي العمولة": "Total Commission",
+    "نظام إدارة سياحة متكامل": "Integrated Tourism Management System",
+    "نظام إدارة سياحة متكامل للحجوزات، التحصيلات، الفنادق، والخزنة.": "Integrated system for reservations, collections, hotels, and treasury.",
+
+    // ===== أعمدة الجداول =====
+    "رقم الحجز": "Reservation No.",
+    "التاريخ": "Date",
+    "العميل": "Customer",
+    "النزيل": "Guest",
+    "الفندق": "Hotel",
+    "الوصول": "Arrival",
+    "المغادرة": "Departure",
+    "المبلغ": "Amount",
+    "الدفع": "Payment",
+    "الحالة": "Status",
+    "إجراءات": "Actions",
+    "الاسم": "Name",
+    "الهاتف": "Phone",
+    "النوع": "Type",
+    "الرصيد": "Balance",
+    "المدينة": "City",
+    "السعر": "Price",
+    "التكلفة": "Cost",
+    "البيع": "Sale",
+    "الربح": "Profit",
+    "ملاحظات": "Notes",
+    "الوصف": "Description",
+    "التصنيف": "Category",
+    "المورد": "Supplier",
+    "الراتب": "Salary",
+    "العمولة": "Commission",
+    "المبلغ المسدد": "Amount Paid",
+    "المتبقي": "Remaining",
+    "المسدد": "Paid",
+    "المدفوع": "Paid",
+    "المستحق": "Due",
+    "القيمة": "Value",
+    "الجنسية": "Nationality",
+    "رقم الجواز": "Passport No.",
+    "الغرفة": "Room",
+    "نوع الغرفة": "Room Type",
+    "عدد الغرف": "No. of Rooms",
+    "عدد الليالي": "Nights",
+    "الوجهة": "Destination",
+    "الخدمة": "Service",
+    "المبلغ الكلي": "Total Amount",
+    "الدور": "Role",
+    "الصلاحيات": "Permissions",
+    "المستخدم": "User",
+    "العملية": "Operation",
+    "القسم": "Section",
+    "رقم السجل": "Record No.",
+    "سعر البيع": "Sale Price",
+    "سعر التكلفة": "Cost Price",
+    "تاريخ الحجز": "Booking Date",
+    "تاريخ الوصول": "Check-in Date",
+    "تاريخ المغادرة": "Check-out Date",
+    "تاريخ الإخطار": "Notification Date",
+    "شركة الطيران": "Airline",
+    "نوع العملة": "Currency Type",
+    "سعر الصرف": "Exchange Rate",
+    "العملة": "Currency",
+    "الرمز": "Symbol",
+    "الكود": "Code",
+    "رقم العقد": "Contract No.",
+    "الطرف الآخر": "Counterparty",
+    "تاريخ الانتهاء": "Expiry Date",
+    "تاريخ البداية": "Start Date",
+    "قيمة العقد": "Contract Value",
+    "السائق": "Driver",
+    "المركبة": "Vehicle",
+    "تاريخ الرحلة": "Trip Date",
+    "المعتمر": "Pilgrim",
+    "تاريخ السفر": "Travel Date",
+    "تاريخ العودة": "Return Date",
+    "عدد الأفراد": "No. of People",
+    "رقم الملف": "File No.",
+    "عنوان الملف": "File Title",
+    "رقم الإخطار": "Notification No.",
+    "رئيس المجموعة": "Group Leader",
+    "عدد النزلاء": "No. of Guests",
+    "الحساب": "Account",
+    "نوع الحساب": "Account Type",
+    "الحساب الأب": "Parent Account",
+    "الرصيد الافتتاحي": "Opening Balance",
+    "رقم التحصيل": "Collection No.",
+    "الدافع": "Payer",
+    "طريقة الدفع": "Payment Method",
+    "موزّع": "Allocated",
+    "غير موزّع": "Unallocated",
+    "نقدي": "Cash",
+    "تحويل": "Transfer",
+    "شيك": "Cheque",
+    "نوع المورد": "Supplier Type",
+
+    // ===== أزرار وعمليات =====
+    "بحث سريع...": "Quick search...",
+    "بحث": "Search",
+    "إضافة": "Add",
+    "إضافة فلتر...": "Add filter...",
+    "حفظ": "Save",
+    "تعديل": "Edit",
+    "حذف": "Delete",
+    "عرض": "View",
+    "فتح": "Open",
+    "إلغاء": "Cancel",
+    "تأكيد": "Confirm",
+    "تطبيق الفلتر": "Apply Filter",
+    "تصدير Excel": "Export Excel",
+    "طباعة / PDF": "Print / PDF",
+    "طباعة": "Print",
+    "تسجيل الخروج": "Logout",
+    "حفظ التغييرات": "Save Changes",
+    "إغلاق": "Close",
+    "تنزيل": "Download",
+    "إرسال": "Send",
+    "إرسال بالبريد": "Send by Email",
+    "إرسال عبر واتساب": "Send via WhatsApp",
+    "إرسال تأكيد الحجز": "Send Booking Confirmation",
+    "تفاصيل": "Details",
+    "كشف حساب": "Account Statement",
+    "تحديث": "Update",
+    "رفع": "Upload",
+
+    // ===== الحجوزات =====
+    "إضافة حجز": "Add Reservation",
+    "إضافة حجز جديد": "Add New Reservation",
+    "إنشاء حجز جديد": "Create New Reservation",
+    "إنشاء الحجز": "Create Reservation",
+    "حفظ الحجز": "Save Reservation",
+    "إدارة الحجوزات": "Manage Reservations",
+    "إدارة الحجوزات، الفلاتر، التحصيلات، الإكسيل، والطباعة من مكان واحد بشكل أوضح.": "Manage reservations, filters, collections, Excel and printing from one place.",
+    "أدخل بيانات الحجز، الإقامة، الأسعار، التحصيل والعمولات من مكان واحد": "Enter reservation data, stay details, prices, payments and commissions in one place",
+    "تفاصيل الحجز": "Reservation Details",
+    "بيانات النزيل": "Guest Information",
+    "بيانات الإقامة": "Stay Details",
+    "الأسعار والتحصيل": "Prices & Collection",
+    "العمولات": "Commissions",
+    "خدمات إضافية": "Additional Services",
+    "مواعيد الوصول والمغادرة": "Arrival & Departure Times",
+    "بيانات التشغيل": "Operations Data",
+    "مسودة": "Draft",
+    "مؤكدة": "Confirmed",
+    "ملغية": "Cancelled",
+    "تسكين": "Checked In",
+    "مغادرة": "Checked Out",
+    "مغلق": "Closed",
+    "حجوزات مفتوحة": "Open Reservations",
+    "حجوزات مسددة": "Paid Reservations",
+    "اختر فندق": "Select Hotel",
+    "اختر موظف": "Select Employee",
+    "اختر مورد": "Select Supplier",
+    "اختر خدمة": "Select Service",
+    "اختر حالة": "Select Status",
+    "لا توجد حجوزات بعد": "No reservations yet",
+    "لا توجد حجوزات": "No reservations",
+    "لا توجد نتائج": "No results",
+    "مسدد بالكامل": "Fully Paid",
+
+    // ===== التحصيلات =====
+    "تحصيل لأكثر من حجز": "Collect Multiple Reservations",
+    "حفظ التحصيل وتوزيعه": "Save Collection & Allocate",
+    "مدفوعات خارجة من السيستم": "Outgoing System Payments",
+    "إجمالي الخارج": "Total Outgoing",
+    "إجمالي الخارج:": "Total Outgoing:",
+    "إضافة جهة أخرى": "Add Another Payee",
+    "إضافة تحصيل جديد": "Add New Collection",
+    "توزيع تلقائي": "Auto Allocation",
+    "توزيع يدوي": "Manual Allocation",
+    "توزيع يدوي (أدخل المبلغ لكل حجز)": "Manual allocation (enter amount per reservation)",
+    "توزيع تلقائي بالترتيب": "Auto allocation by order",
+    "إجمالي التوزيع اليدوي": "Total Manual Allocation",
+    "إجمالي التوزيع أكبر من مبلغ التحصيل.": "Total allocation exceeds collection amount.",
+    "مبلغ التحصيل": "Collection Amount",
+    "اسم الدافع": "Payer Name",
+    "التوزيع على الحجوزات": "Allocation to Reservations",
+    "الحجوزات المفتوحة": "Open Reservations",
+    "المبلغ الموزّع": "Allocated Amount",
+    "المبلغ غير الموزّع": "Unallocated Amount",
+    "إجمالي التحصيلات": "Total Collections",
+
+    // ===== الفنادق =====
+    "اسم الفندق": "Hotel Name",
+    "فندق جديد": "New Hotel",
+    "فندق جديد لو مش هو": "New hotel if not listed",
+    "الفندق ده موجود بالفعل، سيتم استخدام الفندق الموجود بدل إنشاء فندق جديد.": "This hotel already exists. The existing hotel will be used instead.",
+    "إضافة فندق": "Add Hotel",
+    "إدارة الفنادق، المورد المرتبط، الأسعار، الغرف المتاحة، وكشف الحساب لكل فندق.": "Manage hotels, linked supplier, prices, available rooms, and account statement per hotel.",
+    "الغرف المتاحة": "Available Rooms",
+    "سعر الليلة": "Price per Night",
+    "إجمالي الفنادق": "Total Hotels",
+    "إجمالي مبلغ الحجوزات": "Total Booking Amount",
+    "لا توجد فنادق بعد": "No hotels yet",
+    "دفعة للفندق": "Pay Hotel",
+    "إجمالي المسدد للفندق": "Total Paid to Hotel",
+    "إجمالي تكلفة الإقامة للفنادق": "Total Stay Cost for Hotels",
+    "كشف حساب الفندق": "Hotel Account Statement",
+    "آخر الحركات": "Recent Transactions",
+
+    // ===== الموظفين =====
+    "اسم الموظف": "Employee Name",
+    "إضافة موظف جديد": "Add New Employee",
+    "+ إضافة موظف جديد": "+ Add New Employee",
+    "إنشاء الموظف واختياره": "Create & Select Employee",
+    "رقم الهاتف": "Phone Number",
+    "إضافة موظف": "Add Employee",
+    "إدارة بيانات الموظفين، الرواتب، نسب العمولة، وعدد الحجوزات المرتبطة بكل موظف.": "Manage employee data, salaries, commission rates, and linked reservations.",
+    "نسبة العمولة": "Commission Rate",
+    "عدد الحجوزات": "No. of Reservations",
+    "تفاصيل الموظف": "Employee Details",
+    "لا يوجد موظفين بعد": "No employees yet",
+    "الحجوزات المرتبطة": "Linked Reservations",
+    "أيام الحضور": "Attendance Days",
+    "أيام الغياب": "Absence Days",
+    "إجمالي الموظفين": "Total Employees",
+    "إجمالي الرواتب والعمولات": "Total Salaries & Commissions",
+    "إجمالي ما حصّله الموظفون": "Total Employee Earnings",
+    "إجمالي ما حصّله هذا الشهر": "Total Earnings This Month",
+
+    // ===== الحضور =====
+    "حاضر": "Present",
+    "غائب": "Absent",
+    "إجازة": "Leave",
+    "إجازات اليوم": "Today's Leave",
+    "أيام الإقامة": "Stay Days",
+    "اختر شهر": "Select Month",
+    "حضور اليوم": "Today's Attendance",
+    "ملخص الشهر": "Monthly Summary",
+    "تسجيل الحضور والانصراف": "Mark Attendance",
+
+    // ===== الرواتب =====
+    "الرواتب الشهرية (Payroll)": "Monthly Payroll",
+    "إجمالي الراتب": "Total Salary",
+    "إجمالي الرواتب": "Total Salaries",
+    "المسحوبات": "Withdrawals",
+    "صافي المستحق": "Net Due",
+    "إجمالي المسحوبات": "Total Withdrawals",
+
+    // ===== العملاء =====
+    "إضافة عميل جديد": "Add New Customer",
+    "إدارة العملاء، بيانات التواصل، نوع العميل، والأرصدة الحالية.": "Manage customers, contact details, customer type, and current balances.",
+    "إدارة العملاء، بيانات التواصل، أرصدة العملاء، وتحديث بياناتهم.": "Manage customers, contact details, balances, and update their information.",
+    "أضف بيانات العميل الأساسية، وحدد هل هو عميل فردي B2C أو شركة سياحة B2B.": "Add basic customer details, specify individual (B2C) or travel company (B2B).",
+    "أضف بيانات العميل الأساسية، وسيظهر مباشرة داخل قائمة العملاء بنفس وظائف النظام الحالية.": "Add basic customer details; they will appear directly in the customer list.",
+    "قائمة العملاء": "Customer List",
+    "اسم العميل": "Customer Name",
+    "نوع العميل": "Customer Type",
+    "عميل فردي (B2C)": "Individual Customer (B2C)",
+    "شركة سياحة (B2B)": "Travel Company (B2B)",
+    "فردي (B2C)": "Individual (B2C)",
+    "شركة (B2B)": "Company (B2B)",
+    "إجمالي العملاء": "Total Customers",
+    "إجمالي الأرصدة": "Total Balances",
+    "لا يوجد عملاء بعد": "No customers yet",
+    "الرحلات القادمة": "Upcoming Trips",
+    "الرحلات السابقة": "Past Trips",
+    "إجمالي المبيعات على العميل": "Total Sales for Customer",
+    "إجمالي الرحلات": "Total Trips",
+
+    // ===== الموردين =====
+    "إضافة مورد جديد": "Add New Supplier",
+    "إدارة بيانات الموردين والفنادق والمنفذين وأرصدة المستحقات.": "Manage supplier and hotel data, contractors, and outstanding balances.",
+    "أضف المورد أو المنفذ بنفس بيانات النظام الحالية. لن يتم تغيير أي ربط في السيستم.": "Add the supplier or contractor. No existing links will be changed.",
+    "إجمالي الموردين": "Total Suppliers",
+    "إجمالي المستحق": "Total Due",
+    "لا يوجد موردين بعد": "No suppliers yet",
+    "فندق": "Hotel",
+    "شركة نقل": "Transport Company",
+    "مورد عام": "General Supplier",
+
+    // ===== الخزنة =====
+    "إضافة حركة خزنة": "Add Treasury Transaction",
+    "وارد": "Incoming",
+    "صادر": "Outgoing",
+    "رصيد الخزنة": "Treasury Balance",
+    "إجمالي الوارد": "Total In",
+    "إجمالي الصادر": "Total Out",
+    "الحركات الأخيرة": "Recent Transactions",
+    "آخر 30 حركة": "Last 30 Transactions",
+    "لا توجد حركات بعد": "No transactions yet",
+    "الحساب الرئيسي": "Main Account",
+
+    // ===== المصروفات =====
+    "إضافة مصروف": "Add Expense",
+    "لا توجد مصروفات في هذه الفترة": "No expenses in this period",
+    "مصروفات هذا الشهر": "This Month's Expenses",
+    "إجمالي المصروفات التشغيلية": "Total Operating Expenses",
+    "اسم المصروف": "Expense Name",
+    "تصنيف المصروف": "Expense Category",
+
+    // ===== الخدمات =====
+    "إضافة خدمة جديدة": "Add New Service",
+    "اسم الخدمة": "Service Name",
+    "سعر الخدمة": "Service Price",
+    "صورة الخدمة": "Service Image",
+    "إجمالي الخدمات": "Total Services",
+    "إجمالي أسعار الخدمات": "Total Service Prices",
+    "أضف اسم الخدمة وسعرها وصورة اختيارية. الخدمة ستظهر بعد ذلك عند إنشاء الحجز في قسم الخدمات الإضافية.": "Add service name, price, and optional image. It will appear in reservation forms.",
+    "لا توجد خدمات بعد": "No services yet",
+
+    // ===== العقود =====
+    "إضافة عقد جديد": "Add New Contract",
+    "أضف بيانات العقد وحدد هل الطرف مورد أم فندق، ثم ارفع ملف العقد إن وجد.": "Add contract details, specify supplier or hotel, then upload the contract file if available.",
+    "إجمالي العقود": "Total Contracts",
+    "ساري": "Active",
+    "منتهي": "Expired",
+    "مفسوخ": "Terminated",
+    "لا توجد عقود بعد": "No contracts yet",
+    "ملف العقد": "Contract File",
+    "تحميل العقد": "Download Contract",
+
+    // ===== النقل =====
+    "إضافة رحلة نقل": "Add Transport Trip",
+    "إدارة رحلات النقل والسائقين والموردين والتكلفة وسعر البيع بشكل منظم وواضح.": "Manage transport trips, drivers, suppliers, cost and sale price in an organized way.",
+    "أدخل بيانات المركبة والسائق والمورد والمسار، وسيتم احتساب الربح من الفرق بين سعر البيع والتكلفة.": "Enter vehicle, driver, supplier and route. Profit is calculated from the difference between sale and cost.",
+    "لا توجد رحلات نقل مسجّلة بعد": "No transport trips registered yet",
+    "اسم السائق": "Driver Name",
+
+    // ===== التذاكر =====
+    "إضافة تذكرة جديدة": "Add New Ticket",
+    "إدارة تذاكر الطيران، بيانات الراكب، شركة الطيران، التكلفة، البيع، والربح.": "Manage flight tickets, passenger data, airline, cost, sale price, and profit.",
+    "أضف بيانات التذكرة، ثم أدخل تكلفة التذكرة وسعر البيع. الربح يتم حسابه من الفرق بين البيع والتكلفة.": "Add ticket details, enter cost and sale price. Profit is calculated from the difference.",
+    "لا توجد تذاكر مسجّلة بعد": "No tickets registered yet",
+    "إجمالي التذاكر": "Total Tickets",
+    "اسم الراكب": "Passenger Name",
+    "رقم الرحلة": "Flight No.",
+    "ذهاب": "One Way",
+    "ذهاب وعودة": "Round Trip",
+
+    // ===== العمرة =====
+    "إضافة برنامج عمرة": "Add Umrah Package",
+    "إدارة برامج العمرة، بيانات المعتمر، الفنادق، التكلفة، البيع، والتحصيلات.": "Manage Umrah packages, pilgrim data, hotels, cost, sale price, and collections.",
+    "أضف بيانات المعتمر والرحلة والفنادق، ثم أدخل التكلفة وسعر البيع والمبلغ المسدد.": "Add pilgrim data, trip and hotel details, then enter cost, sale price and amount paid.",
+    "لا توجد برامج عمرة مسجّلة بعد": "No Umrah packages registered yet",
+    "إجمالي البرامج": "Total Packages",
+    "إجمالي الأفراد": "Total Pilgrims",
+    "اسم المعتمر": "Pilgrim Name",
+
+    // ===== ملفات السياحة =====
+    "أرشيف الملفات والمستندات": "Files & Documents Archive",
+    "أرشفة مستندات السياحة والملفات المهمة وربطها بالحجوزات أو النزلاء أو الفنادق.": "Archive tourism documents and important files, link them to reservations, guests, or hotels.",
+    "أضف عنوان الملف والتصنيف وارفع المستند. يمكن ربط الملف باسم نزيل أو فندق أو رقم حجز.": "Add file title, category and upload document. Can be linked to guest, hotel or booking number.",
+    "إضافة ملف": "Add File",
+    "إجمالي الملفات": "Total Files",
+    "لا توجد ملفات مؤرشفة بعد": "No archived files yet",
+    "تحميل الملف": "Download File",
+
+    // ===== إخطار الشرطة =====
+    "إضافة إخطار جديد": "Add New Notification",
+    "أضف بيانات رئيس المجموعة أو النزيل، الجنسية، العدد، الفندق، وتاريخ الوصول وتاريخ الإخطار.": "Add group leader or guest details, nationality, count, hotel, arrival and notification dates.",
+    "لا توجد إخطارات مسجّلة بعد": "No notifications registered yet",
+    "إجمالي الإخطارات": "Total Notifications",
+    "إخطارات الشرطة": "Police Notifications",
+
+    // ===== سداد الموردين =====
+    "إضافة دفعة مورد": "Add Supplier Payment",
+    "لا توجد مدفوعات بعد": "No payments yet",
+    "إجمالي المدفوع": "Total Paid",
+    "إجمالي المستحق للموردين": "Total Due to Suppliers",
+
+    // ===== الحسابات =====
+    "شجرة الحسابات": "Chart of Accounts",
+    "إضافة حساب فرعي جديد": "Add New Sub-Account",
+    "أضف حساب جديد داخل شجرة الحسابات، وحدد نوع الحساب والحساب الأب إن وجد.": "Add a new account in the chart of accounts, specify account type and parent account.",
+    "إجمالي الأصول": "Total Assets",
+    "إجمالي الخصوم": "Total Liabilities",
+    "إجمالي الخصوم + حقوق الملكية": "Total Liabilities + Equity",
+    "أصول": "Assets",
+    "خصوم": "Liabilities",
+    "حقوق ملكية": "Equity",
+    "إيرادات": "Revenue",
+    "الميزانية العمومية": "Balance Sheet",
+
+    // ===== سحب الموظفين =====
+    "إضافة سحب": "Add Withdrawal",
+    "سحب جديد": "New Withdrawal",
+    "إجمالي المسحوب فعلاً": "Total Actually Withdrawn",
+    "إجمالي المتاح للسحب": "Total Available for Withdrawal",
+    "لا توجد سحوبات بعد": "No withdrawals yet",
+
+    // ===== التقارير =====
+    "التقارير المالية": "Financial Reports",
+    "تقرير الحجوزات": "Reservations Report",
+    "تقرير الإيرادات": "Revenue Report",
+    "تقرير المصروفات": "Expenses Report",
+    "تقرير الأرباح": "Profit Report",
+    "من تاريخ": "From Date",
+    "إلى تاريخ": "To Date",
+    "الفترة من": "Period from",
+    "إلى": "to",
+    "تصفية": "Filter",
+    "إجمالي البيع": "Total Sales",
+    "إجمالي التكلفة": "Total Cost",
+    "إجمالي الربح": "Total Profit",
+
+    // ===== الإعدادات =====
+    "إدارة المستخدمين، الأدوار، الصلاحيات، سجل العمليات، والعملات داخل النظام.": "Manage users, roles, permissions, operation logs, and currencies.",
+    "إضافة مستخدم جديد": "Add New User",
+    "أنشئ مستخدم جديد وحدد الدور الخاص به، ويمكن ربطه بموظف من الموظفين المسجلين.": "Create a new user, specify their role, and optionally link to a registered employee.",
+    "إنشاء المستخدم": "Create User",
+    "إضافة عملة جديدة": "Add New Currency",
+    "أضف كود العملة واسمها ورمزها وسعر الصرف بالنسبة للعملة الأساسية الحالية.": "Add currency code, name, symbol, and exchange rate relative to the current base currency.",
+    "إجمالي المستخدمين": "Total Users",
+    "العملات المدعومة": "Supported Currencies",
+    "مدير النظام": "System Admin",
+    "محاسب": "Accountant",
+    "موظف حجوزات": "Reservations Staff",
+    "نشط": "Active",
+    "غير نشط": "Inactive",
+    "تعديل الصلاحيات": "Edit Permissions",
+
+    // ===== سجل التتبع =====
+    "آخر 300 عملية تمت في النظام": "Last 300 operations in the system",
+    "آخر 300 عملية تمت داخل النظام: إضافة، تعديل، حذف، المستخدم، القسم، ورقم السجل.": "Last 300 operations: add, edit, delete - with user, section, and record number.",
+    "إجمالي العمليات المعروضة": "Total Displayed Operations",
+
+    // ===== حالات عامة =====
+    "مسدد": "Paid",
+    "مفتوح": "Open",
+    "معلق": "Pending",
+    "مهم": "Important",
+    "متابعة": "Follow",
+    "لا توجد بيانات": "No data",
+    "لا توجد نتائج مطابقة": "No matching results",
+    "لا توجد بيانات وجهات": "No destination data",
+    "لا توجد بيانات مندوبين": "No agent data",
+    "لا توجد مبالغ معلقة": "No outstanding amounts",
+    "أخرى": "Other",
+    "غير محدد": "Unspecified",
+    "جميع الحالات": "All Statuses",
+    "كل الأنواع": "All Types",
+    "كل الفترات": "All Periods",
+
+    // ===== خيارات الفورم =====
+    "-- فندق --": "-- Hotel --",
+    "-- مورد --": "-- Supplier --",
+    "اختياري": "Optional",
+    "مطلوب": "Required",
+    "أطفال": "Children",
+    "أعمار الأطفال": "Children Ages",
+    "بالغين": "Adults",
+    "أولوية عادية": "Normal Priority",
+    "أولوية عالية": "High Priority",
+    "أولوية منخفضة": "Low Priority",
+    "مباشر": "Direct",
+    "وكيل سياحي": "Travel Agent",
+    "مواقع حجز": "Booking Sites",
+    "إفطار": "Breakfast",
+    "نصف إقامة": "Half Board",
+    "إقامة كاملة": "Full Board",
+    "كل شيء شامل": "All Inclusive",
+    "بدون وجبات": "No Meals",
+    "غرفة مفردة": "Single Room",
+    "غرفة مزدوجة": "Double Room",
+    "غرفة ثلاثية": "Triple Room",
+    "جناح": "Suite",
+    "شقة": "Apartment",
+
+    // ===== تسجيل الدخول =====
+    "اسم المستخدم": "Username",
+    "كلمة المرور": "Password",
+    "تسجيل الدخول": "Login",
+    "بيانات الدخول غير صحيحة": "Invalid credentials",
+
+    // ===== كشف حساب الحجز =====
+    "ملخص الحساب": "Account Summary",
+    "حركة الحساب": "Account Movements",
+    "قيمة الفاتورة": "Invoice Amount",
+    "إجمالي المسدد": "Total Paid",
+    "التكلفة والربح": "Cost & Profit",
+    "فاتورة": "Invoice",
+    "فاتورة الحجز": "Booking Invoice",
+    "دفعة": "Payment",
+    "دفعة مورد": "Supplier Payment",
+    "دفعة لمورد": "Payment to Supplier",
+    "تحصيل": "Collection",
+    "مرتجع": "Refund",
+    "مرتجع (إلغاء الحجز)": "Refund (Cancellation)",
+    "صافي الربح": "Net Profit",
+
+    // ===== عناوين أزرار =====
+    "طباعة قسيمة": "Print Voucher",
+    "كشف حساب": "Statement",
+    "إرسال تأكيد": "Send Confirmation",
+    "نسخ الحجز": "Copy Booking",
+    "إضافة عميل جديد": "Add New Customer",
+    "إدارة العملاء": "Manage Customers",
+    "إدارة الموظفين": "Manage Employees",
+    "إدارة الموردين": "Manage Suppliers",
+    "حذف جهة الدفع": "Delete Payee",
+
+    // ===== رسائل JavaScript =====
+    "متبقي: ": "Remaining: ",
+    "تم السداد بالكامل": "Fully Paid",
+    "زيادة: ": "Overpayment: ",
+    "جاري الحفظ...": "Saving...",
+    "اكتب اسم العميل أولاً.": "Please enter customer name first.",
+    "اكتب اسم الموظف أولاً.": "Please enter employee name first.",
+    "اسم الفندق مطلوب.": "Hotel name is required.",
+    "اسم الشركة / المورد مطلوب.": "Company/Supplier name is required.",
+
+    // ===== أزرار عامة =====
+    "الكل": "All",
+    "تعديل": "Edit",
+    "الموظف": "Employee"
+  };
+
+
+  (function () {
+    if (window.APP_LANG !== "en") return;
+
+    const dictionary = window.AUTO_TRANSLATE || {};
+
+    function hasArabic(text) {
+      return /[\u0600-\u06FF]/.test(String(text || ""));
+    }
+
+    function translateString(value) {
+      let result = String(value || "");
+
+      Object.keys(dictionary)
+        .sort(function (a, b) { return b.length - a.length; })
+        .forEach(function (key) {
+          if (!key || !dictionary[key]) return;
+          result = result.split(key).join(dictionary[key]);
+        });
+
+      return result;
+    }
+
+    function translateTextNodes(root) {
+      const walker = document.createTreeWalker(
+        root,
+        NodeFilter.SHOW_TEXT,
+        {
+          acceptNode(node) {
+            const parent = node.parentElement;
+            if (!parent) return NodeFilter.FILTER_REJECT;
+
+            const tag = parent.tagName.toLowerCase();
+
+            if (["script", "style", "textarea", "code", "pre"].includes(tag)) {
+              return NodeFilter.FILTER_REJECT;
+            }
+
+            if (!hasArabic(node.nodeValue)) {
+              return NodeFilter.FILTER_REJECT;
+            }
+
+            return NodeFilter.FILTER_ACCEPT;
+          }
+        }
+      );
+
+      const nodes = [];
+      while (walker.nextNode()) {
+        nodes.push(walker.currentNode);
+      }
+
+      nodes.forEach(function (node) {
+        const oldValue = node.nodeValue;
+        const newValue = translateString(oldValue);
+
+        if (newValue !== oldValue) {
+          node.nodeValue = newValue;
+        }
+      });
+    }
+
+    function translateAttributes(root) {
+      const elements = root.querySelectorAll(
+        "[placeholder], [title], [aria-label], input[type='submit'], input[type='button'], input[type='reset']"
+      );
+
+      elements.forEach(function (el) {
+        ["placeholder", "title", "aria-label"].forEach(function (attr) {
+          const value = el.getAttribute(attr);
+          if (value && hasArabic(value)) {
+            el.setAttribute(attr, translateString(value));
+          }
+        });
+
+        if (el.tagName === "INPUT") {
+          const type = (el.getAttribute("type") || "").toLowerCase();
+
+          if (["button", "submit", "reset"].includes(type) && hasArabic(el.value)) {
+            el.value = translateString(el.value);
+          }
+        }
+      });
+    }
+
+    function applyTranslation(root) {
+      if (!root) return;
+      translateTextNodes(root);
+      translateAttributes(root);
+    }
+
+    function bootTranslation() {
+      document.documentElement.lang = "en";
+      document.documentElement.dir = "ltr";
+      document.body.dir = "ltr";
+      document.body.classList.add("lang-en");
+
+      applyTranslation(document.body);
+
+      const observer = new MutationObserver(function (mutations) {
+        mutations.forEach(function (mutation) {
+          mutation.addedNodes.forEach(function (node) {
+            if (node.nodeType === 1) {
+              applyTranslation(node);
+            }
+          });
+        });
+      });
+
+      observer.observe(document.body, {
+        childList: true,
+        subtree: true
+      });
+    }
+
+    if (document.readyState === "loading") {
+      document.addEventListener("DOMContentLoaded", bootTranslation);
+    } else {
+      bootTranslation();
+    }
+  })();
+
+function autoFillExchangeRate(currencySelectId, rateInputId) {
+  const sel = document.querySelector(`[name="${currencySelectId}"]`) || document.getElementById(currencySelectId);
+  const rateInput = document.querySelector(`[name="${rateInputId}"]`) || document.getElementById(rateInputId);
+  if (!sel || !rateInput) return;
+  const opt = sel.options[sel.selectedIndex];
+  rateInput.value = opt && opt.dataset.rate ? opt.dataset.rate : '1.0';
+}
+
+// ─── CSRF-aware fetch wrapper ─────────────────────
+// يُرفق رمز CSRF تلقائياً عبر ترويسة X-CSRF-Token (يقبله الوسيط)
+function csrfFetch(url, options) {
+  options = options || {};
+  const headers = new Headers(options.headers || {});
+  const token = document.querySelector('meta[name="csrf-token"]');
+  if (token && token.getAttribute('content')) {
+    headers.set('X-CSRF-Token', token.getAttribute('content'));
+  }
+  options.headers = headers;
+  if (!options.method) options.method = 'POST';
+  return fetch(url, options);
+}
+</script>
+  {% block scripts %}{% endblock %}
+
+  <script>
+    // كل صفحة تستخدم تأثيرات الدخول الموحدة
+    if (window.ERPAnimations) ERPAnimations.init();
+  </script>
+
+  <!-- ===== نظام التوست (إشعارات خفيفة) ===== -->
+  <div id="erpToastWrap"></div>
+  <script>
+    window.ERPToast = {
+      show: function (msg, type) {
+        type = type || 'info';
+        var wrap = document.getElementById('erpToastWrap');
+        if (!wrap) return;
+        var el = document.createElement('div');
+        el.className = 'erp-toast ' + type;
+        var icon = type === 'ok' ? 'bi-check-circle-fill'
+                 : type === 'err' ? 'bi-exclamation-triangle-fill'
+                 : 'bi-info-circle-fill';
+        el.innerHTML = '<i class="bi ' + icon + '"></i><span></span>';
+        el.querySelector('span').textContent = msg;
+        wrap.appendChild(el);
+        setTimeout(function () {
+          el.style.transition = 'opacity .3s ease, transform .3s ease';
+          el.style.opacity = '0';
+          el.style.transform = 'translateY(12px)';
+          setTimeout(function () { if (el.parentNode) el.parentNode.removeChild(el); }, 320);
+        }, 2600);
+      }
+    };
+
+    // ─── جرس الإشعارات ───
+    {% if current_user %}
+    var notifDropdownOpen = false;
+
+    function toggleNotifDropdown() {
+      var dd = document.getElementById('notifDropdown');
+      notifDropdownOpen = !notifDropdownOpen;
+      if (notifDropdownOpen) {
+        dd.classList.add('open');
+        loadNotifDropdown();
+      } else {
+        dd.classList.remove('open');
+      }
+    }
+
+    function loadNotifDropdown() {
+      fetch('/notifications/dropdown')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          document.getElementById('notifDropdown').innerHTML = html;
+          refreshNotifBadge();
+        })
+        .catch(function () {});
+    }
+
+    function refreshNotifBadge() {
+      fetch('/notifications/dropdown')
+        .then(function (r) { return r.text(); })
+        .then(function (html) {
+          var m = html.match(/data-unread-count="(\d+)"/);
+          var badge = document.getElementById('notifBadge');
+          if (!badge) return;
+          var count = m ? parseInt(m[1], 10) : 0;
+          if (count > 0) {
+            badge.style.display = 'flex';
+            badge.textContent = count > 99 ? '99+' : count;
+          } else {
+            badge.style.display = 'none';
+          }
+        })
+        .catch(function () {});
+    }
+
+    document.addEventListener('click', function (e) {
+      var wrap = document.querySelector('.notif-bell-wrap');
+      if (wrap && notifDropdownOpen && !wrap.contains(e.target)) {
+        document.getElementById('notifDropdown').classList.remove('open');
+        notifDropdownOpen = false;
+      }
+    });
+
+    refreshNotifBadge();
+    setInterval(refreshNotifBadge, 30000);
+    {% endif %}
+  </script>
+</body>
+</html>

@@ -1,0 +1,2172 @@
+{% extends "base.html" %}
+{% block content %}
+{% if request.query_params.get('error') %}
+<div class="mb-4 rounded-2xl border border-red-200 bg-red-50 px-4 py-3 text-sm font-bold text-red-700">
+  <i class="bi bi-exclamation-triangle-fill"></i>
+  {{ request.query_params.get('error') }}
+</div>
+{% endif %}
+
+{% if request.query_params.get('created') %}
+<div class="mb-4 rounded-2xl border border-green-200 bg-green-50 px-4 py-3 text-sm font-bold text-green-700">
+  <i class="bi bi-check-circle-fill"></i>
+  {{ L("تم إضافة الفندق بنجاح.", "Hotel added successfully.") }}
+</div>
+{% endif %}
+
+{% set selected_id = request.query_params.get('selected', '') %}
+{% set active_tab = request.query_params.get('tab', 'info') %}
+
+<style>
+  .hotels-page {
+    --green: #20b874;
+    --green-dark: #11885a;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f5c84c;
+    --yellow-soft: #fff7df;
+    --red: #ef5b6c;
+    --red-soft: #fff0f2;
+    --purple: #8b7cf6;
+    --purple-soft: #f3f0ff;
+    --text: #172033;
+    --muted: #6f7d90;
+    --border: #e3ebe5;
+    --card: #ffffff;
+    direction: inherit;
+  }
+
+  .hotels-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .hotels-head h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .hotels-head p {
+    margin-top: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .hotels-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .hotel-kpi,
+  .hotel-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.045);
+  }
+
+  .hotel-kpi {
+    padding: 18px;
+    min-height: 124px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .hotel-kpi::after {
+    content: "";
+    position: absolute;
+    left: -45px;
+    bottom: -50px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+  }
+
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-icon.orange { background: var(--yellow-soft); color: #b17a00; }
+  .kpi-icon.purple { background: var(--purple-soft); color: var(--purple); }
+  .kpi-icon.green { background: var(--green-soft); color: var(--green); }
+  .kpi-icon.red { background: var(--red-soft); color: var(--red); }
+
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 850;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .hotel-card-head {
+    padding: 19px 22px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .hotel-card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .hotel-card-head span {
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-size: 12px;
+    font-weight: 850;
+    white-space: nowrap;
+  }
+
+  .hotel-card-body {
+    padding: 18px 22px 22px;
+  }
+
+  .hotel-toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-wrap: wrap;
+  }
+
+  .hotel-search {
+    width: 260px;
+    max-width: 100%;
+    height: 43px;
+    display: flex;
+    align-items: center;
+    gap: 9px;
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0 14px;
+  }
+
+  .hotel-search i {
+    color: var(--muted);
+  }
+
+  .hotel-search input {
+    width: 100%;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    font-weight: 700;
+  }
+
+  .btn-soft {
+    min-height: 42px;
+    border: 0;
+    border-radius: 15px;
+    background: linear-gradient(135deg, var(--lime), #b8c96a);
+    color: #172033;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 15px;
+    font-size: 13px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 8px 16px rgba(103, 197, 80, 0.24);
+    transition: 0.16s ease;
+    white-space: nowrap;
+  }
+
+  .btn-soft:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.98);
+  }
+
+  .add-hotel-panel {
+    margin: 18px 22px 0;
+    padding: 16px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: #fbfdfc;
+  }
+
+  .hotel-form-grid {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 150px 150px 1fr;
+    gap: 10px;
+  }
+
+  .hotel-input,
+  .hotel-select {
+    width: 100%;
+    height: 43px;
+    border: 1px solid #dde7e1;
+    border-radius: 14px;
+    padding: 0 13px;
+    background: #fff;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .hotel-input:focus,
+  .hotel-select:focus {
+    outline: none;
+    border-color: var(--green);
+    box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.10);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .table-wrap::-webkit-scrollbar {
+    height: 10px;
+  }
+
+  .table-wrap::-webkit-scrollbar-thumb {
+    background: #cfdcd4;
+    border-radius: 999px;
+  }
+
+  .table-wrap::-webkit-scrollbar-track {
+    background: #f3f7f4;
+    border-radius: 999px;
+  }
+
+  .hotels-table {
+    width: 100%;
+    min-width: 900px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+
+  .hotels-table th {
+    background: #f8fcfa;
+    color: var(--muted);
+    padding: 14px 10px;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .hotels-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .hotels-table tr:hover td {
+    background: #fbfefc;
+  }
+
+  .hotel-name {
+    color: var(--green-dark);
+    font-weight: 950;
+  }
+
+  .hotel-name-link {
+    color: var(--green-dark);
+    font-weight: 950;
+    text-decoration: none;
+    cursor: pointer;
+    transition: 0.15s ease;
+  }
+
+  .hotel-name-link:hover {
+    color: var(--green);
+    text-decoration: underline;
+  }
+
+  .money {
+    direction: ltr;
+    font-weight: 950;
+  }
+
+  .soft-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .badge-blue {
+    background: var(--blue-soft);
+    color: #11885a;
+  }
+
+  .badge-gray {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .action-row {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 7px;
+    flex-wrap: nowrap;
+  }
+
+  .icon-btn {
+    width: 34px;
+    height: 34px;
+    min-height: 34px;
+    border-radius: 12px;
+    border: 1px solid #dde7e1;
+    background: #ffffff;
+    color: #334155;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 6px 14px rgba(15, 23, 42, 0.055);
+    cursor: pointer;
+    transition: 0.15s ease;
+  }
+
+  .icon-btn:hover {
+    transform: translateY(-1px);
+    background: var(--green-soft);
+    color: var(--green-dark);
+  }
+
+  .icon-view { color: #6d5dfc; }
+  .icon-edit { color: #11885a; }
+  .icon-delete { color: var(--red); }
+  .icon-detail { color: #3b82f6; }
+  .icon-detail:hover { background: #eff6ff; color: #3b82f6; }
+
+  .edit-row td {
+    background: #fbfdfc !important;
+    padding: 0 10px 16px !important;
+  }
+
+  .edit-panel {
+    margin-top: 4px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: #ffffff;
+  }
+
+  .edit-form {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr 140px 130px 1fr 120px;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .empty-state {
+    padding: 34px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1200px) {
+    .hotels-kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hotel-form-grid,
+    .edit-form {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .hotel-form-grid .btn-soft,
+    .edit-form .btn-soft {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .hotels-head,
+    .hotel-card-head,
+    .hotel-toolbar {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .hotels-kpis,
+    .hotel-form-grid,
+    .edit-form {
+      grid-template-columns: 1fr;
+    }
+
+    .hotel-search {
+      width: 100%;
+    }
+  }
+
+  /* ===== HOTEL DETAIL PANEL ===== */
+  .hotel-detail-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.045);
+    margin-top: 18px;
+    overflow: hidden;
+  }
+  .hotel-detail-body {
+    overflow-y: hidden;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+  .hotel-detail-body::-webkit-scrollbar {
+    display: none;
+  }
+
+  .hotel-detail-head {
+    padding: 20px 24px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .hotel-detail-head h2 {
+    margin: 0;
+    font-size: 20px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .hotel-detail-head .detail-sub {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--muted);
+    margin-top: 4px;
+  }
+
+  .hotel-detail-head .close-detail {
+    width: 38px;
+    height: 38px;
+    border-radius: 14px;
+    border: 1px solid var(--border);
+    background: #fff;
+    color: var(--muted);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    text-decoration: none;
+    transition: 0.15s ease;
+    font-size: 16px;
+  }
+
+  .hotel-detail-head .close-detail:hover {
+    background: var(--red-soft);
+    color: var(--red);
+    border-color: var(--red);
+  }
+
+  .hotel-tabs {
+    display: flex;
+    gap: 4px;
+    padding: 12px 24px 0;
+    overflow-x: auto;
+    border-bottom: 1px solid var(--border);
+    background: #fbfdfc;
+  }
+
+  .hotel-tabs::-webkit-scrollbar {
+    height: 0;
+  }
+
+  .tab-link {
+    padding: 10px 16px;
+    border-radius: 12px 12px 0 0;
+    font-size: 12px;
+    font-weight: 850;
+    color: var(--muted);
+    text-decoration: none;
+    white-space: nowrap;
+    transition: 0.15s ease;
+    border: 1px solid transparent;
+    border-bottom: 0;
+    margin-bottom: -1px;
+    background: transparent;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .tab-link i {
+    font-size: 13px;
+  }
+
+  .tab-link:hover {
+    color: var(--green-dark);
+    background: var(--green-soft);
+  }
+
+  .tab-link.active {
+    color: var(--green-dark);
+    background: #fff;
+    border-color: var(--border);
+    font-weight: 950;
+  }
+
+  .tab-content-area {
+    padding: 22px 24px 24px;
+  }
+
+  .tab-pane.hidden {
+    display: none;
+  }
+
+  .detail-form-panel {
+    margin-bottom: 22px;
+    padding: 18px;
+    border-radius: 20px;
+    border: 1px solid var(--border);
+    background: #fbfdfc;
+  }
+
+  .detail-form-panel h3 {
+    margin: 0 0 14px;
+    font-size: 14px;
+    font-weight: 950;
+    color: var(--text);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .detail-form-panel h3 i {
+    color: var(--green);
+  }
+
+  .detail-form-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px;
+    align-items: end;
+  }
+
+  .detail-form-grid .btn-soft {
+    grid-column: 1 / -1;
+    max-width: 220px;
+    justify-self: start;
+  }
+
+  .detail-label {
+    font-size: 11px;
+    font-weight: 850;
+    color: var(--muted);
+    margin-bottom: 5px;
+    display: block;
+  }
+
+  .detail-table-wrap {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .detail-table-wrap::-webkit-scrollbar {
+    height: 8px;
+  }
+
+  .detail-table-wrap::-webkit-scrollbar-thumb {
+    background: #cfdcd4;
+    border-radius: 999px;
+  }
+
+  .detail-table {
+    width: 100%;
+    min-width: 500px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+
+  .detail-table th {
+    background: #f8fcfa;
+    color: var(--muted);
+    padding: 12px 10px;
+    font-size: 11px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .detail-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .detail-table tr:hover td {
+    background: #fbfefc;
+  }
+
+  .detail-edit-row td {
+    background: #fbfdfc !important;
+    padding: 0 10px 14px !important;
+    white-space: normal;
+  }
+
+  .detail-edit-form {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(170px, 1fr));
+    gap: 10px;
+    align-items: end;
+  }
+
+  .detail-edit-form .btn-soft {
+    max-width: 140px;
+    justify-self: start;
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    gap: 16px;
+  }
+
+  .info-item {
+    padding: 14px 16px;
+    border-radius: 16px;
+    border: 1px solid var(--border);
+    background: #fbfdfc;
+  }
+
+  .info-item .info-label {
+    font-size: 11px;
+    font-weight: 850;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+
+  .info-item .info-value {
+    font-size: 15px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  @media (max-width: 1200px) {
+    .detail-form-grid,
+    .detail-edit-form {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 700px) {
+    .hotel-detail-head {
+      flex-direction: column;
+      align-items: stretch;
+      gap: 12px;
+    }
+
+    .hotel-tabs {
+      padding: 10px 14px 0;
+    }
+
+    .tab-link {
+      padding: 8px 12px;
+      font-size: 11px;
+    }
+
+    .tab-content-area {
+      padding: 16px 14px;
+    }
+
+    .detail-form-grid,
+    .detail-edit-form {
+      grid-template-columns: 1fr;
+    }
+
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="hotels-page">
+
+  <div class="hotels-head">
+    <div>
+      <h1>{{ L("الفنادق", "Hotels") }}</h1>
+      <p>{{ L("إدارة الفنادق، المورد المرتبط، الأسعار، الغرف المتاحة، وكشف الحساب لكل فندق.", "Manage hotels, linked supplier, prices, available rooms, and account statement per hotel.") }}</p>
+    </div>
+  </div>
+
+  <div class="hotels-kpis">
+    <div class="hotel-kpi">
+      <div class="kpi-icon orange">
+        <i class="bi bi-buildings"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي الفنادق", "Total Hotels") }}</div>
+      <div class="kpi-value">{{ hotels|length }}</div>
+    </div>
+
+    <div class="hotel-kpi">
+      <div class="kpi-icon purple">
+        <i class="bi bi-check-circle"></i>
+      </div>
+      <div class="kpi-label">{{ L("فنادق نشطة", "Active Hotels") }}</div>
+      <div class="kpi-value">{{ hotels|length }}</div>
+    </div>
+
+    <div class="hotel-kpi">
+      <div class="kpi-icon green">
+        <i class="bi bi-calendar2-check"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي الحجوزات", "Total Bookings") }}</div>
+      <div class="kpi-value">{{ total_bookings }}</div>
+    </div>
+
+    <div class="hotel-kpi">
+      <div class="kpi-icon red">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي مبلغ الحجوزات", "Total Bookings Amount") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(total_booking_amount or 0) }}</div>
+    </div>
+  </div>
+
+  <div class="hotel-card">
+    <div class="hotel-card-head">
+      <div>
+        <h2>{{ L("قائمة الفنادق", "Hotels List") }}</h2>
+      </div>
+
+      <div class="hotel-toolbar">
+        <div class="hotel-search">
+          <i class="bi bi-search"></i>
+          <input placeholder="{{ L("بحث عن فندق...", "Search hotel...") }}" onkeyup="filterTable(this,'hotelTable')">
+        </div>
+
+        <button type="button" onclick="document.getElementById('addHotelForm').classList.toggle('hidden')" class="btn-soft">
+          <i class="bi bi-plus-lg"></i>
+          {{ L("إضافة فندق", "Add Hotel") }}
+        </button>
+      </div>
+    </div>
+
+    <div id="addHotelForm" class="hidden add-hotel-panel">
+      {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/add" class="hotel-form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input name="name" placeholder="{{ L("اسم الفندق", "Hotel Name") }}" required class="hotel-input">
+        <input name="city" placeholder="{{ L("المدينة", "City") }}" class="hotel-input">
+        <input name="price_per_night" type="number" step="0.01" placeholder="{{ L("سعر الليلة", "Nightly Rate") }}" class="hotel-input">
+        <input name="available_rooms" type="number" placeholder="{{ L("الغرف المتاحة", "Available Rooms") }}" class="hotel-input">
+
+        <select name="supplier_id" class="hotel-select">
+          <option value="">{{ L("المورد (اختياري)", "Supplier (Optional)") }}</option>
+          {% for s in suppliers %}
+          <option value="{{ s.id }}">{{ s.name }}</option>
+          {% endfor %}
+        </select>
+
+        <button class="btn-soft" style="grid-column: 1 / -1;">
+          {{ L("حفظ الفندق", "Save Hotel") }}
+        </button>
+      </form>
+{% endif %}
+    </div>
+
+    <div class="hotel-card-body">
+      <div class="table-wrap">
+        <table class="hotels-table" id="hotelTable">
+          <thead>
+            <tr>
+              <th>S/N</th>
+              <th>{{ L("اسم الفندق", "Hotel Name") }}</th>
+              <th>{{ L("المدينة", "City") }}</th>
+              <th>{{ L("سعر الليلة", "Nightly Rate") }}</th>
+              <th>{{ L("المورد", "Supplier") }}</th>
+              <th>{{ L("كشف حساب", "Statement") }}</th>
+              <th>{{ L("إجراءات", "Actions") }}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for h in hotels %}
+            <tr>
+              <td>{{ loop.index }}</td>
+
+              <td>
+                <a href="?selected={{ h.id }}&tab=info" class="hotel-name-link">{{ h.name }}</a>
+              </td>
+
+              <td>{{ h.city or '-' }}</td>
+
+              <td class="money">
+                {{ "%.2f"|format(h.price_per_night or 0) }}
+              </td>
+
+              <td>
+                {% if h.supplier %}
+                <span class="soft-badge badge-blue">{{ h.supplier.name }}</span>
+                {% else %}
+                <span class="soft-badge badge-gray">{{ L("بدون مورد", "No Supplier") }}</span>
+                {% endif %}
+              </td>
+
+              <td>
+                <a href="/hotels/{{ h.id }}/statement" class="icon-btn icon-view" title="كشف حساب">
+                  <i class="bi bi-receipt"></i>
+                </a>
+              </td>
+
+              <td>
+                <div class="action-row">
+                  <a href="?selected={{ h.id }}&tab=info" class="icon-btn icon-detail" title="{{ L("تفاصيل", "Details") }}">
+                    <i class="bi bi-eye-fill"></i>
+                  </a>
+
+                  <button type="button" onclick="document.getElementById('edit-{{ h.id }}').classList.toggle('hidden')" class="icon-btn icon-edit" title="تعديل">
+                    <i class="bi bi-pencil-fill"></i>
+                  </button>
+
+                  {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="icon-btn icon-delete" title="حذف">
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                  </form>
+{% endif %}
+                </div>
+              </td>
+            </tr>
+
+            <tr id="edit-{{ h.id }}" class="hidden edit-row">
+              <td colspan="7">
+                <div class="edit-panel">
+                  {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/edit" class="edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input name="name" value="{{ h.name }}" required class="hotel-input">
+                    <input name="city" value="{{ h.city or '' }}" class="hotel-input">
+                    <input name="price_per_night" type="number" step="0.01" value="{{ h.price_per_night or 0 }}" class="hotel-input">
+                    <input name="available_rooms" type="number" value="{{ h.available_rooms or 0 }}" class="hotel-input">
+
+                    <select name="supplier_id" class="hotel-select">
+                      <option value="">{{ L("بدون مورد", "No Supplier") }}</option>
+                      {% for s in suppliers %}
+                      <option value="{{ s.id }}" {{ 'selected' if h.supplier_id==s.id }}>
+                        {{ s.name }}
+                      </option>
+                      {% endfor %}
+                    </select>
+
+                    <button class="btn-soft">
+                      {{ L("حفظ", "Save") }}
+                    </button>
+                  </form>
+{% endif %}
+                </div>
+              </td>
+            </tr>
+            {% endfor %}
+
+            {% if not hotels %}
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">{{ L("لا توجد فنادق مسجّلة بعد", "No hotels registered yet") }}</div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+        {% import '_pagination.html' as pgn %}
+        {{ pgn.pagination_bar(p, base_url) }}
+      </div>
+    </div>
+  </div>
+
+  {# ===== HOTEL DETAIL PANEL ===== #}
+  {% if selected_id %}
+  {% for h in hotels if h.id|string == selected_id %}
+
+  <div class="hotel-detail-card">
+    <div class="hotel-detail-head">
+      <div>
+        <h2><i class="bi bi-building" style="color:var(--green);margin-inline-end:8px;"></i>{{ h.name }}</h2>
+        <div class="detail-sub">
+          {{ h.city or '' }}
+          {% if h.supplier %} &middot; {{ h.supplier.name }}{% endif %}
+          &middot; {{ "%.2f"|format(h.price_per_night or 0) }} / {{ L("ليلة", "night") }}
+        </div>
+      </div>
+      <a href="/hotels" class="close-detail" title="{{ L("إغلاق", "Close") }}">
+        <i class="bi bi-x-lg"></i>
+      </a>
+    </div>
+
+    <div class="hotel-detail-body">
+    <div class="hotel-tabs">
+      <a href="?selected={{ h.id }}&tab=info" class="tab-link {{ 'active' if active_tab == 'info' }}">
+        <i class="bi bi-info-circle"></i>{{ L("المعلومات", "Info") }}
+      </a>
+      <a href="?selected={{ h.id }}&tab=room_types" class="tab-link {{ 'active' if active_tab == 'room_types' }}">
+        <i class="bi bi-door-open"></i>{{ L("أنواع الغرف", "Room Types") }}
+      </a>
+      <a href="?selected={{ h.id }}&tab=meal_plans" class="tab-link {{ 'active' if active_tab == 'meal_plans' }}">
+        <i class="bi bi-egg-fried"></i>{{ L("خطط الوجبات", "Meal Plans") }}
+      </a>
+      <a href="?selected={{ h.id }}&tab=contracts" class="tab-link {{ 'active' if active_tab == 'contracts' }}">
+        <i class="bi bi-file-earmark-text"></i>{{ L("العقود", "Contracts") }}
+      </a>
+      <a href="?selected={{ h.id }}&tab=seasons" class="tab-link {{ 'active' if active_tab == 'seasons' }}">
+        <i class="bi bi-calendar3"></i>{{ L("المواسم والأسعار", "Seasons") }}
+      </a>
+      <a href="?selected={{ h.id }}&tab=nationality_pricing" class="tab-link {{ 'active' if active_tab == 'nationality_pricing' }}">
+        <i class="bi bi-globe2"></i>{{ L("أسعار الجنسية", "Nationality") }}
+      </a>
+      <a href="?selected={{ h.id }}&tab=blackout" class="tab-link {{ 'active' if active_tab == 'blackout' }}">
+        <i class="bi bi-calendar-x"></i>{{ L("التواريخ المحظورة", "Blackout") }}
+      </a>
+      <a href="?selected={{ h.id }}&tab=minimum_stays" class="tab-link {{ 'active' if active_tab == 'minimum_stays' }}">
+        <i class="bi bi-hourglass-split"></i>{{ L("الحد الأدنى", "Min Stay") }}
+      </a>
+      <a href="?selected={{ h.id }}&tab=cancellation" class="tab-link {{ 'active' if active_tab == 'cancellation' }}">
+        <i class="bi bi-x-octagon"></i>{{ L("سياسة الإلغاء", "Cancellation") }}
+      </a>
+      <a href="?selected={{ h.id }}&tab=taxes" class="tab-link {{ 'active' if active_tab == 'taxes' }}">
+        <i class="bi bi-percent"></i>{{ L("الضرائب والرسوم", "Taxes") }}
+      </a>
+    </div>
+
+    <div class="tab-content-area">
+
+      {# ===== INFO TAB ===== #}
+      <div class="tab-pane {{ '' if active_tab == 'info' else 'hidden' }}" id="tab-info">
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-label">{{ L("اسم الفندق", "Hotel Name") }}</div>
+            <div class="info-value">{{ h.name }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">{{ L("المدينة", "City") }}</div>
+            <div class="info-value">{{ h.city or '-' }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">{{ L("سعر الليلة", "Nightly Rate") }}</div>
+            <div class="info-value money">{{ "%.2f"|format(h.price_per_night or 0) }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">{{ L("الغرف المتاحة", "Available Rooms") }}</div>
+            <div class="info-value">{{ h.available_rooms or 0 }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">{{ L("المورد", "Supplier") }}</div>
+            <div class="info-value">{{ h.supplier.name if h.supplier else '-' }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">{{ L("أنواع الغرف", "Room Types") }}</div>
+            <div class="info-value">{{ h.room_types|length }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">{{ L("خطط الوجبات", "Meal Plans") }}</div>
+            <div class="info-value">{{ h.meal_plans|length }}</div>
+          </div>
+          <div class="info-item">
+            <div class="info-label">{{ L("المواسم", "Seasons") }}</div>
+            <div class="info-value">{{ h.seasons|length }}</div>
+          </div>
+        </div>
+      </div>
+
+      {# ===== ROOM TYPES TAB ===== #}
+      <div class="tab-pane {{ '' if active_tab == 'room_types' else 'hidden' }}" id="tab-room_types">
+        {% if has_permission(current_user, "hotels.manage") %}
+        <div class="detail-form-panel">
+          <h3><i class="bi bi-plus-circle"></i>{{ L("إضافة نوع غرفة", "Add Room Type") }}</h3>
+          {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/room-types/add" class="detail-form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+              <span class="detail-label">{{ L("الاسم (عربي)", "Name (Ar)") }}</span>
+              <input name="name_ar" required class="hotel-input" placeholder="{{ L("مثال: ستاندرد", "e.g. Standard") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("الاسم (إنجليزي)", "Name (En)") }}</span>
+              <input name="name_en" required class="hotel-input" placeholder="{{ L("e.g. Standard", "e.g. Standard") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("الوصف", "Description") }}</span>
+              <input name="description" class="hotel-input" placeholder="{{ L("وصف مختصر", "Short description") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("الحد الأقصى للضيوف", "Max Guests") }}</span>
+              <input name="max_guests" type="number" class="hotel-input" value="2" placeholder="2">
+            </div>
+            <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+          </form>
+{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>S/N</th>
+                <th>{{ L("الاسم (عربي)", "Name (Ar)") }}</th>
+                <th>{{ L("الاسم (إنجليزي)", "Name (En)") }}</th>
+                <th>{{ L("الوصف", "Description") }}</th>
+                <th>{{ L("الحد الأقصى", "Max Guests") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for rt in h.room_types %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><span class="hotel-name">{{ rt.name_ar }}</span></td>
+                <td>{{ rt.name_en }}</td>
+                <td>{{ rt.description or '-' }}</td>
+                <td>{{ rt.max_guests or '-' }}</td>
+                <td>
+                  <div class="action-row">
+                    {% if has_permission(current_user, "hotels.manage") %}
+                    {% if has_permission(current_user, "hotels.manage") %}<button type="button" onclick="toggle('edit-rt-{{ rt.id }}')" class="icon-btn icon-edit" title="{{ L("تعديل", "Edit") }}">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>{% endif %}
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/room-types/{{ rt.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="icon-btn icon-delete" title="{{ L("حذف", "Delete") }}">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+{% endif %}
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% if has_permission(current_user, "hotels.manage") %}
+              <tr id="edit-rt-{{ rt.id }}" class="hidden detail-edit-row">
+                <td colspan="6">
+                  <div class="edit-panel">
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/room-types/{{ rt.id }}/edit" class="detail-edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <div>
+                        <span class="detail-label">{{ L("الاسم (عربي)", "Name (Ar)") }}</span>
+                        <input name="name_ar" value="{{ rt.name_ar }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("الاسم (إنجليزي)", "Name (En)") }}</span>
+                        <input name="name_en" value="{{ rt.name_en }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("الوصف", "Description") }}</span>
+                        <input name="description" value="{{ rt.description or '' }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("الحد الأقصى", "Max Guests") }}</span>
+                        <input name="max_guests" type="number" value="{{ rt.max_guests or 2 }}" class="hotel-input">
+                      </div>
+                      <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+                    </form>
+{% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+
+              {% if not h.room_types %}
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">{{ L("لا توجد أنواع غرف مسجّلة", "No room types registered") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {# ===== MEAL PLANS TAB ===== #}
+      <div class="tab-pane {{ '' if active_tab == 'meal_plans' else 'hidden' }}" id="tab-meal_plans">
+        {% if has_permission(current_user, "hotels.manage") %}
+        <div class="detail-form-panel">
+          <h3><i class="bi bi-plus-circle"></i>{{ L("إضافة خطة وجبات", "Add Meal Plan") }}</h3>
+          {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/meal-plans/add" class="detail-form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+              <span class="detail-label">{{ L("الكود", "Code") }}</span>
+              <input name="code" required class="hotel-input" placeholder="{{ L("مثال: BB, HB, AI", "e.g. BB, HB, AI") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("الاسم (عربي)", "Name (Ar)") }}</span>
+              <input name="name_ar" required class="hotel-input" placeholder="{{ L("مثال: إفطار", "e.g. Breakfast") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("الاسم (إنجليزي)", "Name (En)") }}</span>
+              <input name="name_en" required class="hotel-input" placeholder="{{ L("e.g. Breakfast", "e.g. Breakfast") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("السعر للفرد/ليلة", "Price/Person/Night") }}</span>
+              <input name="price_per_person_night" type="number" step="0.01" class="hotel-input" placeholder="0.00">
+            </div>
+            <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+          </form>
+{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>S/N</th>
+                <th>{{ L("الكود", "Code") }}</th>
+                <th>{{ L("الاسم (عربي)", "Name (Ar)") }}</th>
+                <th>{{ L("الاسم (إنجليزي)", "Name (En)") }}</th>
+                <th>{{ L("السعر/فرد/ليلة", "Price/P/N") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for mp in h.meal_plans %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><span class="hotel-name">{{ mp.code }}</span></td>
+                <td>{{ mp.name_ar }}</td>
+                <td>{{ mp.name_en }}</td>
+                <td class="money">{{ "%.2f"|format(mp.price_per_person_night or 0) }}</td>
+                <td>
+                  <div class="action-row">
+                    {% if has_permission(current_user, "hotels.manage") %}
+                    {% if has_permission(current_user, "hotels.manage") %}<button type="button" onclick="toggle('edit-mp-{{ mp.id }}')" class="icon-btn icon-edit" title="{{ L("تعديل", "Edit") }}">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>{% endif %}
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/meal-plans/{{ mp.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="icon-btn icon-delete" title="{{ L("حذف", "Delete") }}">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+{% endif %}
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% if has_permission(current_user, "hotels.manage") %}
+              <tr id="edit-mp-{{ mp.id }}" class="hidden detail-edit-row">
+                <td colspan="6">
+                  <div class="edit-panel">
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/meal-plans/{{ mp.id }}/edit" class="detail-edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <div>
+                        <span class="detail-label">{{ L("الكود", "Code") }}</span>
+                        <input name="code" value="{{ mp.code }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("الاسم (عربي)", "Name (Ar)") }}</span>
+                        <input name="name_ar" value="{{ mp.name_ar }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("الاسم (إنجليزي)", "Name (En)") }}</span>
+                        <input name="name_en" value="{{ mp.name_en }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("السعر للفرد/ليلة", "Price/Person/Night") }}</span>
+                        <input name="price_per_person_night" type="number" step="0.01" value="{{ mp.price_per_person_night or 0 }}" class="hotel-input">
+                      </div>
+                      <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+                    </form>
+{% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+
+              {% if not h.meal_plans %}
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">{{ L("لا توجد خطط وجبات مسجّلة", "No meal plans registered") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {# ===== CONTRACTS TAB ===== #}
+      <div class="tab-pane {{ '' if active_tab == 'contracts' else 'hidden' }}" id="tab-contracts">
+        {% if has_permission(current_user, "hotels.manage") %}
+        <div class="detail-form-panel">
+          <h3><i class="bi bi-plus-circle"></i>{{ L("إضافة عقد", "Add Contract") }}</h3>
+          {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/contracts/add" class="detail-form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+              <span class="detail-label">{{ L("اسم العقد", "Contract Name") }}</span>
+              <input name="name" required class="hotel-input" placeholder="{{ L("اسم العقد", "Contract Name") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("تاريخ البدء", "Start Date") }}</span>
+              <input name="start_date" type="date" required class="hotel-input">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("تاريخ الانتهاء", "End Date") }}</span>
+              <input name="end_date" type="date" required class="hotel-input">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("نوع الهامش", "Margin Type") }}</span>
+              <select name="margin_type" class="hotel-select">
+                <option value="fixed">{{ L("مبلغ ثابت", "Fixed") }}</option>
+                <option value="percentage">{{ L("نسبة مئوية", "Percentage") }}</option>
+              </select>
+            </div>
+            <div>
+              <span class="detail-label">{{ L("قيمة الهامش", "Margin Value") }}</span>
+              <input name="margin_value" type="number" step="0.01" class="hotel-input" placeholder="0.00">
+            </div>
+            <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+          </form>
+{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>S/N</th>
+                <th>{{ L("اسم العقد", "Name") }}</th>
+                <th>{{ L("من", "Start") }}</th>
+                <th>{{ L("إلى", "End") }}</th>
+                <th>{{ L("نوع الهامش", "Margin Type") }}</th>
+                <th>{{ L("قيمة الهامش", "Margin Value") }}</th>
+                <th>{{ L("حالة", "Active") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for c in h.contracts %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><span class="hotel-name">{{ c.name }}</span></td>
+                <td>{{ c.start_date.strftime('%Y-%m-%d') if c.start_date else '-' }}</td>
+                <td>{{ c.end_date.strftime('%Y-%m-%d') if c.end_date else '-' }}</td>
+                <td>{{ c.margin_type }}</td>
+                <td class="money">{{ "%.2f"|format(c.margin_value or 0) }}</td>
+                <td>
+                  {% if c.is_active %}
+                  <span class="soft-badge badge-blue">{{ L("نشط", "Active") }}</span>
+                  {% else %}
+                  <span class="soft-badge badge-gray">{{ L("غير نشط", "Inactive") }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  <div class="action-row">
+                    {% if has_permission(current_user, "hotels.manage") %}
+                    {% if has_permission(current_user, "hotels.manage") %}<button type="button" onclick="toggle('edit-contract-{{ c.id }}')" class="icon-btn icon-edit" title="{{ L("تعديل", "Edit") }}">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>{% endif %}
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/contracts/{{ c.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="icon-btn icon-delete" title="{{ L("حذف", "Delete") }}">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+{% endif %}
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% if has_permission(current_user, "hotels.manage") %}
+              <tr id="edit-contract-{{ c.id }}" class="hidden detail-edit-row">
+                <td colspan="8">
+                  <div class="edit-panel">
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/contracts/{{ c.id }}/edit" class="detail-edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <div>
+                        <span class="detail-label">{{ L("اسم العقد", "Name") }}</span>
+                        <input name="name" value="{{ c.name }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("من", "Start") }}</span>
+                        <input name="start_date" type="date" value="{{ c.start_date.strftime('%Y-%m-%d') if c.start_date else '' }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("إلى", "End") }}</span>
+                        <input name="end_date" type="date" value="{{ c.end_date.strftime('%Y-%m-%d') if c.end_date else '' }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("نوع الهامش", "Margin Type") }}</span>
+                        <select name="margin_type" class="hotel-select">
+                          <option value="fixed" {{ 'selected' if c.margin_type == 'fixed' }}>{{ L("مبلغ ثابت", "Fixed") }}</option>
+                          <option value="percentage" {{ 'selected' if c.margin_type == 'percentage' }}>{{ L("نسبة مئوية", "Percentage") }}</option>
+                        </select>
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("قيمة الهامش", "Margin Value") }}</span>
+                        <input name="margin_value" type="number" step="0.01" value="{{ c.margin_value or 0 }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("نشط؟", "Active?") }}</span>
+                        <select name="is_active" class="hotel-select">
+                          <option value="1" {{ 'selected' if c.is_active }}>{{ L("نشط", "Active") }}</option>
+                          <option value="0" {{ 'selected' if not c.is_active }}>{{ L("غير نشط", "Inactive") }}</option>
+                        </select>
+                      </div>
+                      <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+                    </form>
+{% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+
+              {% if not h.contracts %}
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">{{ L("لا توجد عقود مسجّلة", "No contracts registered") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {# ===== SEASONS TAB ===== #}
+      <div class="tab-pane {{ '' if active_tab == 'seasons' else 'hidden' }}" id="tab-seasons">
+        {% if has_permission(current_user, "hotels.manage") %}
+        <div class="detail-form-panel">
+          <h3><i class="bi bi-plus-circle"></i>{{ L("إضافة موسم/فترة سعر", "Add Season / Price Period") }}</h3>
+          {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/seasons/add" class="detail-form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+              <span class="detail-label">{{ L("الاسم (عربي)", "Name (Ar)") }}</span>
+              <input name="name_ar" required class="hotel-input" placeholder="{{ L("مثال: صيف، عيد", "e.g. Summer, Holiday") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("الاسم (إنجليزي)", "Name (En)") }}</span>
+              <input name="name_en" required class="hotel-input" placeholder="{{ L("e.g. Summer, Holiday", "e.g. Summer, Holiday") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("من", "Start Date") }}</span>
+              <input name="start_date" type="date" required class="hotel-input">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("إلى", "End Date") }}</span>
+              <input name="end_date" type="date" required class="hotel-input">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("الأولوية", "Priority") }}</span>
+              <input name="priority" type="number" class="hotel-input" value="0" placeholder="0">
+            </div>
+            <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+          </form>
+{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>S/N</th>
+                <th>{{ L("الاسم (عربي)", "Name (Ar)") }}</th>
+                <th>{{ L("الاسم (إنجليزي)", "Name (En)") }}</th>
+                <th>{{ L("من", "Start") }}</th>
+                <th>{{ L("إلى", "End") }}</th>
+                <th>{{ L("الأولوية", "Priority") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for s in h.seasons %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><span class="hotel-name">{{ s.name_ar }}</span></td>
+                <td>{{ s.name_en }}</td>
+                <td>{{ s.start_date.strftime('%Y-%m-%d') if s.start_date else '-' }}</td>
+                <td>{{ s.end_date.strftime('%Y-%m-%d') if s.end_date else '-' }}</td>
+                <td>{{ s.priority or 0 }}</td>
+                <td>
+                  <div class="action-row">
+                    {% if has_permission(current_user, "hotels.manage") %}
+                    {% if has_permission(current_user, "hotels.manage") %}<button type="button" onclick="toggle('edit-season-{{ s.id }}')" class="icon-btn icon-edit" title="{{ L("تعديل", "Edit") }}">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>{% endif %}
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/seasons/{{ s.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="icon-btn icon-delete" title="{{ L("حذف", "Delete") }}">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+{% endif %}
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% if has_permission(current_user, "hotels.manage") %}
+              <tr id="edit-season-{{ s.id }}" class="hidden detail-edit-row">
+                <td colspan="7">
+                  <div class="edit-panel">
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/seasons/{{ s.id }}/edit" class="detail-edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <div>
+                        <span class="detail-label">{{ L("الاسم (عربي)", "Name (Ar)") }}</span>
+                        <input name="name_ar" value="{{ s.name_ar }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("الاسم (إنجليزي)", "Name (En)") }}</span>
+                        <input name="name_en" value="{{ s.name_en }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("من", "Start") }}</span>
+                        <input name="start_date" type="date" value="{{ s.start_date.strftime('%Y-%m-%d') if s.start_date else '' }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("إلى", "End") }}</span>
+                        <input name="end_date" type="date" value="{{ s.end_date.strftime('%Y-%m-%d') if s.end_date else '' }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("الأولوية", "Priority") }}</span>
+                        <input name="priority" type="number" value="{{ s.priority or 0 }}" class="hotel-input">
+                      </div>
+                      <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+                    </form>
+{% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+
+              {% if not h.seasons %}
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">{{ L("لا توجد مواسم مسجّلة", "No seasons registered") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {# ===== NATIONALITY PRICING TAB ===== #}
+      <div class="tab-pane {{ '' if active_tab == 'nationality_pricing' else 'hidden' }}" id="tab-nationality_pricing">
+        {% if has_permission(current_user, "hotels.manage") %}
+        <div class="detail-form-panel">
+          <h3><i class="bi bi-plus-circle"></i>{{ L("إضافة سعر حسب الجنسية", "Add Nationality Pricing") }}</h3>
+          {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/nationality-pricing/add" class="detail-form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+              <span class="detail-label">{{ L("الجنسية", "Nationality") }}</span>
+              <input name="nationality" required class="hotel-input" placeholder="{{ L("مثال: سعودي، مصري", "e.g. Saudi, Egyptian") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("سعر البيع/ليلة", "Sale/Night") }}</span>
+              <input name="sale_per_night" type="number" step="0.01" class="hotel-input" placeholder="0.00">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("سعر التكلفة/ليلة", "Cost/Night") }}</span>
+              <input name="cost_per_night" type="number" step="0.01" class="hotel-input" placeholder="0.00">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("سرير إضافي (بيع)", "Extra Bed Sale") }}</span>
+              <input name="extra_bed_sale" type="number" step="0.01" class="hotel-input" placeholder="0.00">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("سرير إضافي (تكلفة)", "Extra Bed Cost") }}</span>
+              <input name="extra_bed_cost" type="number" step="0.01" class="hotel-input" placeholder="0.00">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("نوع سعر الطفل", "Child Price Type") }}</span>
+              <select name="child_price_type" class="hotel-select">
+                <option value="">{{ L("بدون", "None") }}</option>
+                <option value="percentage">{{ L("نسبة مئوية", "Percentage") }}</option>
+                <option value="fixed">{{ L("مبلغ ثابت", "Fixed") }}</option>
+                <option value="free">{{ L("مجاني", "Free") }}</option>
+              </select>
+            </div>
+            <div>
+              <span class="detail-label">{{ L("قيمة سعر الطفل", "Child Price Value") }}</span>
+              <input name="child_price_value" type="number" step="0.01" class="hotel-input" placeholder="0.00">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("مكمل فردي (بيع)", "Single Supp. Sale") }}</span>
+              <input name="single_supplement_sale" type="number" step="0.01" class="hotel-input" placeholder="0.00">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("مكمل فردي (تكلفة)", "Single Supp. Cost") }}</span>
+              <input name="single_supplement_cost" type="number" step="0.01" class="hotel-input" placeholder="0.00">
+            </div>
+            <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+          </form>
+{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>S/N</th>
+                <th>{{ L("الجنسية", "Nationality") }}</th>
+                <th>{{ L("بيع/ليلة", "Sale/Night") }}</th>
+                <th>{{ L("تكلفة/ليلة", "Cost/Night") }}</th>
+                <th>{{ L("سرير إضافي (بيع)", "Extra Bed S.") }}</th>
+                <th>{{ L("سرير إضافي (تكلفة)", "Extra Bed C.") }}</th>
+                <th>{{ L("سعر الطفل", "Child Price") }}</th>
+                <th>{{ L("مكمل فردي (بيع)", "Sing. Supp. S.") }}</th>
+                <th>{{ L("مكمل فردي (تكلفة)", "Sing. Supp. C.") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for np in h.nationality_pricings %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><span class="hotel-name">{{ np.nationality }}</span></td>
+                <td class="money">{{ "%.2f"|format(np.sale_per_night or 0) }}</td>
+                <td class="money">{{ "%.2f"|format(np.cost_per_night or 0) }}</td>
+                <td class="money">{{ "%.2f"|format(np.extra_bed_sale or 0) }}</td>
+                <td class="money">{{ "%.2f"|format(np.extra_bed_cost or 0) }}</td>
+                <td>{{ np.child_price_type or '-' }}{{ (' ' ~ np.child_price_value) if np.child_price_value else '' }}</td>
+                <td class="money">{{ "%.2f"|format(np.single_supplement_sale or 0) }}</td>
+                <td class="money">{{ "%.2f"|format(np.single_supplement_cost or 0) }}</td>
+                <td>
+                  <div class="action-row">
+                    {% if has_permission(current_user, "hotels.manage") %}
+                    {% if has_permission(current_user, "hotels.manage") %}<button type="button" onclick="toggle('edit-np-{{ np.id }}')" class="icon-btn icon-edit" title="{{ L("تعديل", "Edit") }}">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>{% endif %}
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/nationality-pricing/{{ np.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="icon-btn icon-delete" title="{{ L("حذف", "Delete") }}">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+{% endif %}
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% if has_permission(current_user, "hotels.manage") %}
+              <tr id="edit-np-{{ np.id }}" class="hidden detail-edit-row">
+                <td colspan="10">
+                  <div class="edit-panel">
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/nationality-pricing/{{ np.id }}/edit" class="detail-edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <div>
+                        <span class="detail-label">{{ L("الجنسية", "Nationality") }}</span>
+                        <input name="nationality" value="{{ np.nationality }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("بيع/ليلة", "Sale/Night") }}</span>
+                        <input name="sale_per_night" type="number" step="0.01" value="{{ np.sale_per_night or 0 }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("تكلفة/ليلة", "Cost/Night") }}</span>
+                        <input name="cost_per_night" type="number" step="0.01" value="{{ np.cost_per_night or 0 }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("سرير إضافي (بيع)", "Extra Bed Sale") }}</span>
+                        <input name="extra_bed_sale" type="number" step="0.01" value="{{ np.extra_bed_sale or 0 }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("سرير إضافي (تكلفة)", "Extra Bed Cost") }}</span>
+                        <input name="extra_bed_cost" type="number" step="0.01" value="{{ np.extra_bed_cost or 0 }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("نوع سعر الطفل", "Child Price Type") }}</span>
+                        <select name="child_price_type" class="hotel-select">
+                          <option value="">{{ L("بدون", "None") }}</option>
+                          <option value="percentage" {{ 'selected' if np.child_price_type == 'percentage' }}>{{ L("نسبة مئوية", "Percentage") }}</option>
+                          <option value="fixed" {{ 'selected' if np.child_price_type == 'fixed' }}>{{ L("مبلغ ثابت", "Fixed") }}</option>
+                          <option value="free" {{ 'selected' if np.child_price_type == 'free' }}>{{ L("مجاني", "Free") }}</option>
+                        </select>
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("قيمة سعر الطفل", "Child Price Value") }}</span>
+                        <input name="child_price_value" type="number" step="0.01" value="{{ np.child_price_value or 0 }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("مكمل فردي (بيع)", "Single Supp. Sale") }}</span>
+                        <input name="single_supplement_sale" type="number" step="0.01" value="{{ np.single_supplement_sale or 0 }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("مكمل فردي (تكلفة)", "Single Supp. Cost") }}</span>
+                        <input name="single_supplement_cost" type="number" step="0.01" value="{{ np.single_supplement_cost or 0 }}" class="hotel-input">
+                      </div>
+                      <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+                    </form>
+{% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+
+              {% if not h.nationality_pricings %}
+              <tr>
+                <td colspan="10">
+                  <div class="empty-state">{{ L("لا توجد أسعار جنسية مسجّلة", "No nationality pricing registered") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {# ===== BLACKOUT DATES TAB ===== #}
+      <div class="tab-pane {{ '' if active_tab == 'blackout' else 'hidden' }}" id="tab-blackout">
+        {% if has_permission(current_user, "hotels.manage") %}
+        <div class="detail-form-panel">
+          <h3><i class="bi bi-plus-circle"></i>{{ L("إضافة تواريخ محظورة", "Add Blackout Dates") }}</h3>
+          {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/blackout-dates/add" class="detail-form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+              <span class="detail-label">{{ L("من", "Start Date") }}</span>
+              <input name="start_date" type="date" required class="hotel-input">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("إلى", "End Date") }}</span>
+              <input name="end_date" type="date" required class="hotel-input">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("السبب", "Reason") }}</span>
+              <input name="reason" class="hotel-input" placeholder="{{ L("سبب الحظر", "Reason for blackout") }}">
+            </div>
+            <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+          </form>
+{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>S/N</th>
+                <th>{{ L("من", "Start") }}</th>
+                <th>{{ L("إلى", "End") }}</th>
+                <th>{{ L("السبب", "Reason") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for bd in h.blackout_dates %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ bd.start_date.strftime('%Y-%m-%d') if bd.start_date else '-' }}</td>
+                <td>{{ bd.end_date.strftime('%Y-%m-%d') if bd.end_date else '-' }}</td>
+                <td>{{ bd.reason or '-' }}</td>
+                <td>
+                  <div class="action-row">
+                    {% if has_permission(current_user, "hotels.manage") %}
+                    {% if has_permission(current_user, "hotels.manage") %}<button type="button" onclick="toggle('edit-bd-{{ bd.id }}')" class="icon-btn icon-edit" title="{{ L("تعديل", "Edit") }}">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>{% endif %}
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/blackout-dates/{{ bd.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="icon-btn icon-delete" title="{{ L("حذف", "Delete") }}">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+{% endif %}
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% if has_permission(current_user, "hotels.manage") %}
+              <tr id="edit-bd-{{ bd.id }}" class="hidden detail-edit-row">
+                <td colspan="5">
+                  <div class="edit-panel">
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/blackout-dates/{{ bd.id }}/edit" class="detail-edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <div>
+                        <span class="detail-label">{{ L("من", "Start") }}</span>
+                        <input name="start_date" type="date" value="{{ bd.start_date.strftime('%Y-%m-%d') if bd.start_date else '' }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("إلى", "End") }}</span>
+                        <input name="end_date" type="date" value="{{ bd.end_date.strftime('%Y-%m-%d') if bd.end_date else '' }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("السبب", "Reason") }}</span>
+                        <input name="reason" value="{{ bd.reason or '' }}" class="hotel-input">
+                      </div>
+                      <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+                    </form>
+{% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+
+              {% if not h.blackout_dates %}
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">{{ L("لا توجد تواريخ محظورة مسجّلة", "No blackout dates registered") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {# ===== MINIMUM STAYS TAB ===== #}
+      <div class="tab-pane {{ '' if active_tab == 'minimum_stays' else 'hidden' }}" id="tab-minimum_stays">
+        {% if has_permission(current_user, "hotels.manage") %}
+        <div class="detail-form-panel">
+          <h3><i class="bi bi-plus-circle"></i>{{ L("إضافة قاعدة الحد الأدنى", "Add Minimum Stay Rule") }}</h3>
+          {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/minimum-stays/add" class="detail-form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+              <span class="detail-label">{{ L("من", "Start Date") }}</span>
+              <input name="start_date" type="date" required class="hotel-input">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("إلى", "End Date") }}</span>
+              <input name="end_date" type="date" required class="hotel-input">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("الحد الأدنى من الليالي", "Min Nights") }}</span>
+              <input name="min_nights" type="number" min="1" required class="hotel-input" placeholder="1">
+            </div>
+            <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+          </form>
+{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>S/N</th>
+                <th>{{ L("من", "Start") }}</th>
+                <th>{{ L("إلى", "End") }}</th>
+                <th>{{ L("الحد الأدنى من الليالي", "Min Nights") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for ms in h.minimum_stays %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td>{{ ms.start_date.strftime('%Y-%m-%d') if ms.start_date else '-' }}</td>
+                <td>{{ ms.end_date.strftime('%Y-%m-%d') if ms.end_date else '-' }}</td>
+                <td>{{ ms.min_nights or '-' }}</td>
+                <td>
+                  <div class="action-row">
+                    {% if has_permission(current_user, "hotels.manage") %}
+                    {% if has_permission(current_user, "hotels.manage") %}<button type="button" onclick="toggle('edit-ms-{{ ms.id }}')" class="icon-btn icon-edit" title="{{ L("تعديل", "Edit") }}">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>{% endif %}
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/minimum-stays/{{ ms.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="icon-btn icon-delete" title="{{ L("حذف", "Delete") }}">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+{% endif %}
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% if has_permission(current_user, "hotels.manage") %}
+              <tr id="edit-ms-{{ ms.id }}" class="hidden detail-edit-row">
+                <td colspan="5">
+                  <div class="edit-panel">
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/minimum-stays/{{ ms.id }}/edit" class="detail-edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <div>
+                        <span class="detail-label">{{ L("من", "Start") }}</span>
+                        <input name="start_date" type="date" value="{{ ms.start_date.strftime('%Y-%m-%d') if ms.start_date else '' }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("إلى", "End") }}</span>
+                        <input name="end_date" type="date" value="{{ ms.end_date.strftime('%Y-%m-%d') if ms.end_date else '' }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("الحد الأدنى", "Min Nights") }}</span>
+                        <input name="min_nights" type="number" min="1" value="{{ ms.min_nights or 1 }}" class="hotel-input">
+                      </div>
+                      <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+                    </form>
+{% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+
+              {% if not h.minimum_stays %}
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">{{ L("لا توجد قواعد حد أدنى مسجّلة", "No minimum stay rules registered") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {# ===== CANCELLATION POLICIES TAB ===== #}
+      <div class="tab-pane {{ '' if active_tab == 'cancellation' else 'hidden' }}" id="tab-cancellation">
+        {% if has_permission(current_user, "hotels.manage") %}
+        <div class="detail-form-panel">
+          <h3><i class="bi bi-plus-circle"></i>{{ L("إضافة سياسة إلغاء", "Add Cancellation Policy") }}</h3>
+          {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/cancellation-policies/add" class="detail-form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+              <span class="detail-label">{{ L("أيام قبل الوصول", "Days Before Check-in") }}</span>
+              <input name="days_before_checkin" type="number" min="0" required class="hotel-input" placeholder="7">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("نسبة الاسترداد %", "Refund %") }}</span>
+              <input name="refund_percent" type="number" step="0.01" min="0" max="100" class="hotel-input" placeholder="100">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("نسبة الرسوم %", "Fee %") }}</span>
+              <input name="fee_percent" type="number" step="0.01" min="0" max="100" class="hotel-input" placeholder="0">
+            </div>
+            <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+          </form>
+{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>S/N</th>
+                <th>{{ L("أيام قبل الوصول", "Days Before") }}</th>
+                <th>{{ L("نسبة الاسترداد", "Refund %") }}</th>
+                <th>{{ L("نسبة الرسوم", "Fee %") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for cp in h.cancellation_policies %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><span class="hotel-name">{{ cp.days_before_checkin }}</span></td>
+                <td>{{ cp.refund_percent or 0 }}%</td>
+                <td>{{ cp.fee_percent or 0 }}%</td>
+                <td>
+                  <div class="action-row">
+                    {% if has_permission(current_user, "hotels.manage") %}
+                    {% if has_permission(current_user, "hotels.manage") %}<button type="button" onclick="toggle('edit-cp-{{ cp.id }}')" class="icon-btn icon-edit" title="{{ L("تعديل", "Edit") }}">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>{% endif %}
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/cancellation-policies/{{ cp.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="icon-btn icon-delete" title="{{ L("حذف", "Delete") }}">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+{% endif %}
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% if has_permission(current_user, "hotels.manage") %}
+              <tr id="edit-cp-{{ cp.id }}" class="hidden detail-edit-row">
+                <td colspan="5">
+                  <div class="edit-panel">
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/cancellation-policies/{{ cp.id }}/edit" class="detail-edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <div>
+                        <span class="detail-label">{{ L("أيام قبل الوصول", "Days Before") }}</span>
+                        <input name="days_before_checkin" type="number" min="0" value="{{ cp.days_before_checkin or 0 }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("نسبة الاسترداد %", "Refund %") }}</span>
+                        <input name="refund_percent" type="number" step="0.01" min="0" max="100" value="{{ cp.refund_percent or 0 }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("نسبة الرسوم %", "Fee %") }}</span>
+                        <input name="fee_percent" type="number" step="0.01" min="0" max="100" value="{{ cp.fee_percent or 0 }}" class="hotel-input">
+                      </div>
+                      <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+                    </form>
+{% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+
+              {% if not h.cancellation_policies %}
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">{{ L("لا توجد سياسات إلغاء مسجّلة", "No cancellation policies registered") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      {# ===== TAXES TAB ===== #}
+      <div class="tab-pane {{ '' if active_tab == 'taxes' else 'hidden' }}" id="tab-taxes">
+        {% if has_permission(current_user, "hotels.manage") %}
+        <div class="detail-form-panel">
+          <h3><i class="bi bi-plus-circle"></i>{{ L("إضافة ضريبة/رس", "Add Tax / Fee") }}</h3>
+          {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/taxes/add" class="detail-form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div>
+              <span class="detail-label">{{ L("الاسم (عربي)", "Name (Ar)") }}</span>
+              <input name="name_ar" required class="hotel-input" placeholder="{{ L("مثال: ضريبة القيمة المضافة", "e.g. VAT") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("الاسم (إنجليزي)", "Name (En)") }}</span>
+              <input name="name_en" required class="hotel-input" placeholder="{{ L("e.g. VAT", "e.g. VAT") }}">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("النوع", "Type") }}</span>
+              <select name="tax_type" class="hotel-select">
+                <option value="percentage">{{ L("نسبة مئوية (%)", "Percentage (%)") }}</option>
+                <option value="fixed">{{ L("مبلغ ثابت", "Fixed Amount") }}</option>
+              </select>
+            </div>
+            <div>
+              <span class="detail-label">{{ L("القيمة", "Value") }}</span>
+              <input name="value" type="number" step="0.01" min="0" required class="hotel-input" placeholder="0.00">
+            </div>
+            <div>
+              <span class="detail-label">{{ L("تطبق على", "Applies To") }}</span>
+              <select name="applies_to" class="hotel-select">
+                <option value="sale">{{ L("سعر البيع", "Sale") }}</option>
+                <option value="cost">{{ L("سعر التكلفة", "Cost") }}</option>
+                <option value="both">{{ L("الاثنين", "Both") }}</option>
+              </select>
+            </div>
+            <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+          </form>
+{% endif %}
+        </div>
+        {% endif %}
+
+        <div class="detail-table-wrap">
+          <table class="detail-table">
+            <thead>
+              <tr>
+                <th>S/N</th>
+                <th>{{ L("الاسم (عربي)", "Name (Ar)") }}</th>
+                <th>{{ L("الاسم (إنجليزي)", "Name (En)") }}</th>
+                <th>{{ L("النوع", "Type") }}</th>
+                <th>{{ L("القيمة", "Value") }}</th>
+                <th>{{ L("تطبق على", "Applies To") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in h.taxes %}
+              <tr>
+                <td>{{ loop.index }}</td>
+                <td><span class="hotel-name">{{ t.name_ar }}</span></td>
+                <td>{{ t.name_en }}</td>
+                <td>
+                  {% if t.tax_type == 'percentage' %}
+                  <span class="soft-badge badge-blue">%</span>
+                  {% else %}
+                  <span class="soft-badge badge-gray">{{ L("ثابت", "Fixed") }}</span>
+                  {% endif %}
+                </td>
+                <td class="money">{{ "%.2f"|format(t.value or 0) }}</td>
+                <td>{{ t.applies_to }}</td>
+                <td>
+                  <div class="action-row">
+                    {% if has_permission(current_user, "hotels.manage") %}
+                    {% if has_permission(current_user, "hotels.manage") %}<button type="button" onclick="toggle('edit-tax-{{ t.id }}')" class="icon-btn icon-edit" title="{{ L("تعديل", "Edit") }}">
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>{% endif %}
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/taxes/{{ t.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="icon-btn icon-delete" title="{{ L("حذف", "Delete") }}">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+{% endif %}
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% if has_permission(current_user, "hotels.manage") %}
+              <tr id="edit-tax-{{ t.id }}" class="hidden detail-edit-row">
+                <td colspan="7">
+                  <div class="edit-panel">
+                    {% if has_permission(current_user, "hotels.manage") %}
+<form method="post" action="/hotels/{{ h.id }}/taxes/{{ t.id }}/edit" class="detail-edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <div>
+                        <span class="detail-label">{{ L("الاسم (عربي)", "Name (Ar)") }}</span>
+                        <input name="name_ar" value="{{ t.name_ar }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("الاسم (إنجليزي)", "Name (En)") }}</span>
+                        <input name="name_en" value="{{ t.name_en }}" required class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("النوع", "Type") }}</span>
+                        <select name="tax_type" class="hotel-select">
+                          <option value="percentage" {{ 'selected' if t.tax_type == 'percentage' }}>{{ L("نسبة مئوية (%)", "Percentage (%)") }}</option>
+                          <option value="fixed" {{ 'selected' if t.tax_type == 'fixed' }}>{{ L("مبلغ ثابت", "Fixed Amount") }}</option>
+                        </select>
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("القيمة", "Value") }}</span>
+                        <input name="value" type="number" step="0.01" min="0" value="{{ t.value or 0 }}" class="hotel-input">
+                      </div>
+                      <div>
+                        <span class="detail-label">{{ L("تطبق على", "Applies To") }}</span>
+                        <select name="applies_to" class="hotel-select">
+                          <option value="sale" {{ 'selected' if t.applies_to == 'sale' }}>{{ L("سعر البيع", "Sale") }}</option>
+                          <option value="cost" {{ 'selected' if t.applies_to == 'cost' }}>{{ L("سعر التكلفة", "Cost") }}</option>
+                          <option value="both" {{ 'selected' if t.applies_to == 'both' }}>{{ L("الاثنين", "Both") }}</option>
+                        </select>
+                      </div>
+                      <button class="btn-soft"><i class="bi bi-check-lg"></i>{{ L("حفظ", "Save") }}</button>
+                    </form>
+{% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+
+              {% if not h.taxes %}
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">{{ L("لا توجد ضرائب مسجّلة", "No taxes registered") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+  </div>
+  </div> {# /hotel-detail-body #}
+
+  {% endfor %}
+  {% endif %}
+
+</div>
+
+<script>
+// Auto-scroll to hotel detail panel when selected
+(function() {
+  var params = new URLSearchParams(window.location.search);
+  if (params.get('selected')) {
+    var el = document.querySelector('.hotel-detail-card');
+    if (el) {
+      setTimeout(function() {
+        var top = el.getBoundingClientRect().top + window.scrollY - 70;
+        window.scrollTo({ top: top, behavior: 'smooth' });
+      }, 100);
+    }
+  }
+})();
+</script>
+<script>
+function filterTable(input, tableId) {
+  const filter = input.value.toLowerCase();
+  const rows = document.getElementById(tableId).getElementsByTagName('tr');
+
+  for (let i = 1; i < rows.length; i++) {
+    const text = rows[i].textContent.toLowerCase();
+    rows[i].style.display = text.includes(filter) ? '' : 'none';
+  }
+}
+
+function toggle(id) {
+  var el = document.getElementById(id);
+  if (el) el.classList.toggle('hidden');
+}
+</script>
+
+{% endblock %}

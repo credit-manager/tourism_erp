@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .services-page {
+    --green: #20b874;
+    --green-dark: #11885a;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f5c84c;
+    --yellow-soft: #fff7df;
+    --red: #ef5b6c;
+    --red-soft: #fff0f2;
+    --purple: #8b7cf6;
+    --purple-soft: #f3f0ff;
+    --text: #172033;
+    --muted: #6f7d90;
+    --border: #e3ebe5;
+    --card: #ffffff;
+    direction: inherit;
+  }
+
+  .services-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .services-head h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .services-head p {
+    margin-top: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .services-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .service-kpi,
+  .service-card-box {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.045);
+  }
+
+  .service-kpi {
+    padding: 18px;
+    min-height: 124px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .service-kpi::after {
+    content: "";
+    position: absolute;
+    left: -45px;
+    bottom: -50px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+  }
+
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-icon.green {
+    background: var(--green-soft);
+    color: var(--green);
+  }
+
+  .kpi-icon.blue {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+
+  .kpi-icon.purple {
+    background: var(--purple-soft);
+    color: var(--purple);
+  }
+
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 850;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .services-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .card-head {
+    padding: 19px 22px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .card-head span {
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-size: 12px;
+    font-weight: 850;
+    white-space: nowrap;
+  }
+
+  .card-body {
+    padding: 18px 22px 22px;
+  }
+
+  .services-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+  }
+
+  .service-item {
+    border: 1px solid var(--border);
+    border-radius: 22px;
+    background: #ffffff;
+    overflow: hidden;
+    transition: 0.18s ease;
+  }
+
+  .service-item:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 14px 28px rgba(15, 23, 42, 0.065);
+  }
+
+  .service-image-wrap {
+    height: 118px;
+    background: #f1f5f9;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .service-image-wrap img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .service-placeholder {
+    width: 100%;
+    height: 100%;
+    color: #a7b3c4;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 30px;
+    background:
+      radial-gradient(circle at top right, rgba(26, 86, 219, 0.08), transparent 35%),
+      #f5f8fa;
+  }
+
+  .service-content {
+    padding: 14px;
+    text-align: center;
+  }
+
+  .service-name {
+    font-size: 14px;
+    font-weight: 950;
+    color: var(--text);
+    margin-bottom: 6px;
+  }
+
+  .service-price {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    background: var(--green-soft);
+    color: var(--green-dark);
+    font-size: 12px;
+    font-weight: 950;
+    direction: ltr;
+    margin-bottom: 12px;
+  }
+
+  .service-actions {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-bottom: 10px;
+  }
+
+  .mini-action {
+    min-height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: #fff;
+    padding: 7px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: 0.15s ease;
+  }
+
+  .mini-action.edit {
+    color: #11885a;
+  }
+
+  .mini-action.delete {
+    color: var(--red);
+  }
+
+  .mini-action:hover {
+    background: #fbfdfc;
+    transform: translateY(-1px);
+  }
+
+  .edit-panel {
+    margin-top: 12px;
+    padding: 12px;
+    border-radius: 16px;
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    text-align: right;
+  }
+
+  .edit-panel form,
+  .add-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form-hint {
+    padding: 14px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--green-soft), #ffffff);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+
+  .field-block label {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+
+  .service-input {
+    width: 100%;
+    height: 43px;
+    border: 1px solid #dde7e1;
+    border-radius: 14px;
+    padding: 0 13px;
+    background: #fff;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .service-input[type="file"] {
+    padding: 9px 13px;
+    height: auto;
+    min-height: 43px;
+    font-size: 12px;
+  }
+
+  .service-input:focus {
+    outline: none;
+    border-color: var(--green);
+    box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.10);
+  }
+
+  .save-btn {
+    min-height: 42px;
+    border: 0;
+    border-radius: 15px;
+    background: linear-gradient(135deg, var(--lime), #b8c96a);
+    color: #172033;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 15px;
+    font-size: 13px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 8px 16px rgba(103, 197, 80, 0.24);
+    transition: 0.16s ease;
+  }
+
+  .save-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.98);
+  }
+
+  .empty-state {
+    grid-column: 1 / -1;
+    padding: 40px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+    border: 1px dashed var(--border);
+    border-radius: 22px;
+    background: #fbfdfc;
+  }
+
+  .empty-state i {
+    display: block;
+    font-size: 32px;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+  }
+
+  @media (max-width: 1200px) {
+    .services-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .services-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .services-kpis {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 700px) {
+    .services-head,
+    .card-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .services-grid,
+    .services-kpis {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+{% set ns = namespace(total_price=0, with_images=0) %}
+{% for s in services %}
+  {% set ns.total_price = ns.total_price + (s.price or 0) %}
+  {% if s.image_path %}
+    {% set ns.with_images = ns.with_images + 1 %}
+  {% endif %}
+{% endfor %}
+
+<div class="services-page">
+
+  <div class="services-head">
+    <div>
+      <h1>{{ L("الخدمات", "Services") }}</h1>
+      <p>{{ L("إدارة الخدمات الإضافية التي يمكن ربطها بالحجوزات، مع السعر والصورة الخاصة بكل خدمة.", "Manage additional services that can be linked to bookings, with price and image for each service.") }}</p>
+    </div>
+  </div>
+
+  <div class="services-kpis">
+    <div class="service-kpi">
+      <div class="kpi-icon green">
+        <i class="bi bi-stars"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي الخدمات", "Total Services") }}</div>
+      <div class="kpi-value">{{ services|length }}</div>
+    </div>
+
+    <div class="service-kpi">
+      <div class="kpi-icon blue">
+        <i class="bi bi-image"></i>
+      </div>
+      <div class="kpi-label">{{ L("خدمات بها صور", "Services with Images") }}</div>
+      <div class="kpi-value">{{ ns.with_images }}</div>
+    </div>
+
+    <div class="service-kpi">
+      <div class="kpi-icon purple">
+        <i class="bi bi-cash-coin"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي أسعار الخدمات", "Total Services Prices") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.total_price or 0) }}</div>
+    </div>
+  </div>
+
+  <div class="services-layout">
+
+    <div class="service-card-box">
+      <div class="card-head">
+        <h2>{{ L("الخدمات المتاحة", "Available Services") }}</h2>
+        <span>{{ services|length }} {{ L("خدمة", "Service") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="services-grid">
+          {% for s in services %}
+          <div class="service-item">
+            <div class="service-image-wrap">
+              {% if s.image_path %}
+                <img src="{{ s.image_path }}" alt="{{ s.name }}">
+              {% else %}
+                <div class="service-placeholder">
+                  <i class="bi bi-image"></i>
+                </div>
+              {% endif %}
+            </div>
+
+            <div class="service-content">
+              <div class="service-name">{{ s.name }}</div>
+
+              <div class="service-price">
+                {{ "%.2f"|format(s.price or 0) }}
+              </div>
+
+              <div class="service-actions">
+                {% if has_permission(current_user, "services.manage") %}
+                <button
+                  type="button"
+                  onclick="document.getElementById('edit-{{ s.id }}').classList.toggle('hidden')"
+                  class="mini-action edit"
+                >
+                  <i class="bi bi-pencil-square"></i>
+                  {{ L("تعديل", "Edit") }}
+                </button>
+
+                <form method="post" action="/services/{{ s.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="mini-action delete" type="submit">
+                    <i class="bi bi-trash"></i>
+                    {{ L("حذف", "Delete") }}
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+
+              <div id="edit-{{ s.id }}" class="hidden edit-panel">
+                <form method="post" action="/services/{{ s.id }}/edit" enctype="multipart/form-data">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <div class="field-block">
+                    <label>{{ L("اسم الخدمة", "Service Name") }}</label>
+                    <input name="name" value="{{ s.name }}" required class="service-input">
+                  </div>
+
+                  <div class="field-block">
+                    <label>{{ L("السعر", "Price") }}</label>
+                    <input name="price" type="number" step="0.01" value="{{ s.price }}" class="service-input">
+                  </div>
+
+                  <div class="field-block">
+                    <label>{{ L("الصورة", "Image") }}</label>
+                    <input name="image" type="file" accept="image/*" class="service-input">
+                  </div>
+
+                  <button class="save-btn w-full" type="submit">
+                    {{ L("حفظ التعديل", "Save Edit") }}
+                  </button>
+                </form>
+              </div>
+            </div>
+          </div>
+          {% endfor %}
+
+          {% if not services %}
+          <div class="empty-state">
+            <i class="bi bi-stars"></i>
+            {{ L("لا توجد خدمات بعد", "No services yet") }}
+          </div>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+
+    {% if has_permission(current_user, "services.manage") %}
+    <div class="service-card-box">
+      <div class="card-head">
+        <h2>{{ L("إضافة خدمة جديدة", "Add New Service") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="form-hint">
+          {{ L("أضف اسم الخدمة وسعرها وصورة اختيارية. الخدمة ستظهر بعد ذلك عند إنشاء الحجز في قسم الخدمات الإضافية.", "Add service name, price, and optional image. The service will appear when creating a booking in the additional services section.") }}
+        </div>
+
+        <form method="post" action="/services/add" enctype="multipart/form-data" class="add-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field-block">
+            <label>{{ L("اسم الخدمة", "Service Name") }}</label>
+            <input name="name" placeholder="{{ L("اسم الخدمة", "Service Name") }}" required class="service-input">
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("السعر", "Price") }}</label>
+            <input name="price" type="number" step="0.01" placeholder="{{ L("السعر", "Price") }}" class="service-input">
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("الصورة", "Image") }}</label>
+            <input name="image" type="file" accept="image/*" class="service-input">
+          </div>
+
+          <button class="save-btn w-full" type="submit">
+            {{ L("حفظ الخدمة", "Save Service") }}
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

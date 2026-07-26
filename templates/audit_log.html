@@ -1,0 +1,478 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .audit-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --blue:#bfd175;
+    --blue-soft:#f4fce8;
+    --yellow:#f4c44d;
+    --yellow-soft:#fff8de;
+    --purple:#8a7cf7;
+    --purple-soft:#f4f1ff;
+    --red:#eb5d6c;
+    --red-soft:#fff1f3;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --card:#ffffff;
+    direction: inherit;
+  }
+
+  .audit-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:20px;
+  }
+
+  .audit-header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .audit-header p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .audit-stats{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+
+  .stat-card,
+  .main-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);
+  }
+
+  .stat-card{
+    padding:18px;
+    min-height:118px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    left:-40px;
+    bottom:-45px;
+    width:110px;
+    height:110px;
+    border-radius:999px;
+    background:rgba(26,86,219,.06);
+  }
+
+  .stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    margin-bottom:12px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-icon.green{ background:var(--primary-soft); color:var(--primary); }
+  .stat-icon.blue{ background:var(--blue-soft); color:var(--blue); }
+  .stat-icon.red{ background:var(--red-soft); color:var(--red); }
+  .stat-icon.purple{ background:var(--purple-soft); color:var(--purple); }
+
+  .stat-label{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:850;
+    margin-bottom:5px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-value{
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+    direction:ltr;
+    text-align:right;
+    position:relative;
+    z-index:1;
+  }
+
+  .card-head{
+    padding:18px 20px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+
+  .card-head h2{
+    margin:0;
+    font-size:16px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .card-chip{
+    padding:7px 11px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:#fbfdfc;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:850;
+    white-space:nowrap;
+  }
+
+  .card-actions{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+
+  .audit-search{
+    width:290px;
+    max-width:100%;
+    height:43px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:#fbfdfc;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:0 14px;
+  }
+
+  .audit-search i{
+    color:var(--muted);
+  }
+
+  .audit-search input{
+    width:100%;
+    border:0 !important;
+    outline:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    font-size:13px !important;
+    font-weight:700;
+    color:var(--text);
+  }
+
+  .card-body{
+    padding:16px 20px 20px;
+  }
+
+  .table-wrap{
+    overflow-x:auto;
+    padding-bottom:6px;
+  }
+
+  .table-wrap::-webkit-scrollbar{
+    height:10px;
+  }
+
+  .table-wrap::-webkit-scrollbar-thumb{
+    background:#d4ddd7;
+    border-radius:999px;
+  }
+
+  .table-wrap::-webkit-scrollbar-track{
+    background:#f3f7f5;
+    border-radius:999px;
+  }
+
+  .audit-table{
+    width:100%;
+    min-width:1150px;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13px;
+  }
+
+  .audit-table th{
+    background:#f8fcfa;
+    color:var(--muted);
+    padding:14px 10px;
+    font-size:12px;
+    font-weight:950;
+    border-bottom:1px solid var(--border);
+    text-align:center;
+    white-space:nowrap;
+  }
+
+  .audit-table td{
+    padding:14px 10px;
+    border-bottom:1px solid #edf2ef;
+    text-align:center;
+    white-space:nowrap;
+    color:var(--text);
+    vertical-align:middle;
+  }
+
+  .audit-table tr:hover td{
+    background:#fbfefc;
+  }
+
+  .time-cell{
+    direction:ltr;
+    font-weight:850;
+    color:var(--muted);
+  }
+
+  .username{
+    font-weight:950;
+    color:var(--primary-dark);
+  }
+
+  .role-badge,
+  .action-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .role-badge{
+    background:var(--purple-soft);
+    color:var(--purple);
+  }
+
+  .action-create{
+    background:#eafff4;
+    color:var(--primary-dark);
+  }
+
+  .action-update{
+    background:var(--blue-soft);
+    color:#11885a;
+  }
+
+  .action-delete{
+    background:var(--red-soft);
+    color:#c7384c;
+  }
+
+  .table-name{
+    font-weight:900;
+    color:var(--text);
+  }
+
+  .record-id{
+    direction:ltr;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:34px;
+    height:28px;
+    padding:0 10px;
+    border-radius:999px;
+    background:#f1f5f9;
+    color:#64748b;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .summary-cell{
+    max-width:420px;
+    white-space:normal !important;
+    text-align:right !important;
+    color:var(--muted) !important;
+    line-height:1.8;
+  }
+
+  .empty-state{
+    padding:34px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  @media (max-width:1250px){
+    .audit-stats{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+  }
+
+  @media (max-width:700px){
+    .audit-header,
+    .card-head,
+    .card-actions{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .audit-stats{
+      grid-template-columns:1fr;
+    }
+
+    .audit-search{
+      width:100%;
+    }
+  }
+</style>
+
+{% set ns = namespace(created=0, updated=0, deleted=0) %}
+{% for l in logs %}
+  {% if l.action == 'create' %}
+    {% set ns.created = ns.created + 1 %}
+  {% elif l.action == 'update' %}
+    {% set ns.updated = ns.updated + 1 %}
+  {% else %}
+    {% set ns.deleted = ns.deleted + 1 %}
+  {% endif %}
+{% endfor %}
+
+<div class="audit-page">
+
+  <div class="audit-header">
+    <div>
+      <h1>{{ L("سجل العمليات", "Operations Log") }}</h1>
+      <p>{{ L("آخر 300 عملية تمت داخل النظام: إضافة، تعديل، حذف، المستخدم، القسم، ورقم السجل.", "Last 300 operations in system: add, edit, delete, user, section, and record number.") }}</p>
+    </div>
+  </div>
+
+  <div class="audit-stats">
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="bi bi-clock-history"></i></div>
+      <div class="stat-label">{{ L("إجمالي العمليات المعروضة", "Total Displayed Operations") }}</div>
+      <div class="stat-value">{{ logs|length }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="bi bi-plus-circle"></i></div>
+      <div class="stat-label">{{ L("عمليات إضافة", "Add Operations") }}</div>
+      <div class="stat-value">{{ ns.created }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="bi bi-pencil-square"></i></div>
+      <div class="stat-label">{{ L("عمليات تعديل", "Edit Operations") }}</div>
+      <div class="stat-value">{{ ns.updated }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="bi bi-trash"></i></div>
+      <div class="stat-label">{{ L("عمليات حذف", "Delete Operations") }}</div>
+      <div class="stat-value">{{ ns.deleted }}</div>
+    </div>
+  </div>
+
+  <div class="main-card">
+    <div class="card-head">
+      <div>
+        <h2>{{ L("آخر 300 عملية تمت في النظام", "Last 300 Operations in System") }}</h2>
+      </div>
+
+      <div class="card-actions">
+        <span class="card-chip">{{ logs|length }} {{ L("عملية", "Operation") }}</span>
+
+        <div class="audit-search">
+          <i class="bi bi-search"></i>
+          <input placeholder="{{ L("بحث باسم مستخدم / جدول / عملية...", "Search by username / table / operation...") }}" onkeyup="filterTable(this,'auditTable')">
+        </div>
+      </div>
+    </div>
+
+    <div class="card-body">
+      <div class="table-wrap">
+        <table class="audit-table" id="auditTable">
+          <thead>
+            <tr>
+              <th>{{ L("الوقت", "Time") }}</th>
+              <th>{{ L("المستخدم", "User") }}</th>
+              <th>{{ L("الدور", "Role") }}</th>
+              <th>{{ L("العملية", "Operation") }}</th>
+              <th>{{ L("القسم / الجدول", "Section / Table") }}</th>
+              <th>{{ L("رقم السجل", "Record No.") }}</th>
+              <th>{{ L("التفاصيل", "Details") }}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for l in logs %}
+            <tr>
+              <td class="time-cell">
+                {{ l.timestamp.strftime('%Y-%m-%d %H:%M:%S') if l.timestamp else '-' }}
+              </td>
+
+              <td>
+                <span class="username">{{ l.username }}</span>
+              </td>
+
+              <td>
+                <span class="role-badge">{{ ROLE_LABELS.get(l.role, l.role) }}</span>
+              </td>
+
+              <td>
+                {% if l.action == 'create' %}
+                  <span class="action-badge action-create">{{ L("إضافة", "Add") }}</span>
+                {% elif l.action == 'update' %}
+                  <span class="action-badge action-update">{{ L("تعديل", "Edit") }}</span>
+                {% else %}
+                  <span class="action-badge action-delete">{{ L("حذف", "Delete") }}</span>
+                {% endif %}
+              </td>
+
+              <td>
+                <span class="table-name">{{ l.table_name }}</span>
+              </td>
+
+              <td>
+                <span class="record-id">{{ l.record_id or '-' }}</span>
+              </td>
+
+              <td class="summary-cell">
+                {{ l.summary or '-' }}
+              </td>
+            </tr>
+            {% endfor %}
+
+            {% if not logs %}
+            <tr>
+              <td colspan="7">
+                <div class="empty-state">{{ L("لا توجد عمليات مسجّلة بعد", "No operations registered yet") }}</div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+function filterTable(input, tableId) {
+  const filter = input.value.toLowerCase();
+  const rows = document.getElementById(tableId).getElementsByTagName('tr');
+
+  for (let i = 1; i < rows.length; i++) {
+    const text = rows[i].textContent.toLowerCase();
+    rows[i].style.display = text.includes(filter) ? '' : 'none';
+  }
+}
+</script>
+
+{% endblock %}

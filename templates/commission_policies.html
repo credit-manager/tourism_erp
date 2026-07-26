@@ -1,0 +1,127 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .cp-tabs{display:flex;gap:0;margin-bottom:22px;border-bottom:2px solid #e8eee9}
+  .cp-tabs a{padding:12px 22px;font-size:14px;font-weight:900;text-decoration:none;color:#7b8798;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s}
+  .cp-tabs a:hover{color:#11885a}
+  .cp-tabs a.active{color:#11885a;border-bottom-color:#11885a}
+</style>
+{% if request.query_params.get('success') %}
+<div style="background:#edf9f3;border:1px solid #b8e6d0;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#11885a;font-size:14px;font-weight:700;">
+  {% if request.query_params.get('success') == 'added' %}{{ L("تم إضافة السياسة", "Policy added") }}
+  {% elif request.query_params.get('success') == 'edited' %}{{ L("تم تعديل السياسة", "Policy updated") }}
+  {% elif request.query_params.get('success') == 'deleted' %}{{ L("تم حذف السياسة", "Policy deleted") }}
+  {% else %}{{ L("تمت العملية بنجاح", "Operation completed") }}{% endif %}
+</div>
+{% endif %}
+<div class="cp-tabs">
+  <a href="/settings/commission-policies" class="active">{{ L("السياسات", "Policies") }}</a>
+  <a href="/settings/commission-policies/entries">{{ L("سجلات العمولات", "Commission Entries") }}</a>
+</div>
+<style>
+  .cp-page{--text:#172033;--muted:#7b8798;--card:#fff;--border:#e8eee9;direction:inherit}
+  .cp-page .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px}
+  .cp-page .page-head h1{margin:0;font-size:28px;font-weight:950;color:var(--text)}
+  .cp-page .page-head p{margin-top:7px;font-size:13px;color:var(--muted)}
+  .cp-page .card{border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);margin-bottom:18px;overflow:hidden}
+  .cp-page .card-head{padding:19px 22px 0;display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .cp-page .card-head h2{margin:0;font-size:16px;font-weight:950;color:var(--text)}
+  .cp-page .card-body{padding:18px 22px 22px}
+  .cp-page table{width:100%;border-collapse:collapse;font-size:13px}
+  .cp-page th{background:#fbfdfc;color:var(--muted);padding:13px 8px;font-size:12px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+  .cp-page td{padding:14px 8px;border-bottom:1px solid #edf2ef;color:var(--text);text-align:center;vertical-align:middle}
+  .cp-page tr:hover td{background:#fbfdfc}
+  .cp-page .soft-badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap}
+  .cp-page .badge-green{background:#eafff4;color:#11885a}
+  .cp-page .badge-yellow{background:#fff7df;color:#986a00}
+  .cp-page .badge-red{background:#fff0f2;color:#c7384c}
+  .cp-page .badge-blue{background:#eef3ff;color:#1a56db}
+  .cp-page .badge-gray{background:#f1f5f9;color:#64748b}
+  .cp-page .badge-purple{background:#f3eeff;color:#7c3aed}
+  .cp-page .action-group{display:flex;gap:4px;justify-content:center;align-items:center;flex-wrap:nowrap}
+  .cp-page .btn-primary-custom{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-size:14px;font-weight:900;border-radius:14px;border:none;cursor:pointer;text-decoration:none;background:linear-gradient(135deg,#11885a,#0d6e49);color:#fff;box-shadow:0 8px 20px rgba(17,136,90,0.25);transition:all .2s;min-height:42px}
+  .cp-page .btn-primary-custom:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(17,136,90,0.35)}
+  .cp-page .action-btn{display:inline-flex;align-items:center;gap:3px;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:800;border:none;cursor:pointer;text-decoration:none;white-space:nowrap;line-height:1}
+  .cp-page .empty-state{padding:32px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+<div class="cp-page">
+  <div class="page-head">
+    <div>
+      <h1>{{ L("سياسات العمولات", "Commission Policies") }}</h1>
+      <p>{{ L("إدارة سياسات العمولات للموظفين والوكلاء والموردين", "Manage commission policies for employees, agents and suppliers") }}</p>
+    </div>
+    <a href="/settings/commission-policies/add" class="btn-primary-custom">
+      <i class="bi bi-plus-lg"></i>{{ L("إضافة سياسة", "Add Policy") }}
+    </a>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <h2>{{ L("قائمة السياسات", "Policies List") }}</h2>
+      <span>{{ policies|length }} {{ L("سياسة", "Policy") }}</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ L("الاسم", "Name") }}</th>
+            <th>{{ L("الدور", "Role") }}</th>
+            <th>{{ L("الأساس", "Base") }}</th>
+            <th>{{ L("النوع", "Type") }}</th>
+            <th>{{ L("القيمة", "Value") }}</th>
+            <th>{{ L("الاستحقاق", "Eligibility") }}</th>
+            <th>{{ L("ساري من", "From") }}</th>
+            <th>{{ L("ساري إلى", "To") }}</th>
+            <th>{{ L("نشط", "Active") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in policies %}
+          <tr>
+            <td style="font-weight:700;color:#11885a">{{ p.name }}</td>
+            <td>
+              {% set role_map = {"reservation_rep":"مندوب حجز","travel_agent":"وكيل سفر","sales_rep":"مندوب مبيعات","marketing_rep":"مندوب تسويق","ops_supplier":"مورد منفذ"} %}
+              <span class="soft-badge badge-blue">{{ role_map.get(p.role, p.role) }}</span>
+            </td>
+            <td>
+              {% set base_map = {"sale_price":"سعر البيع","profit":"الربح","net_profit":"صافي الربح","collected_amount":"المبلغ المحصل"} %}
+              {{ base_map.get(p.commission_base, p.commission_base) }}
+            </td>
+            <td>{{ "نسبة" if p.rate_type == 'percentage' else 'قيمة ثابتة' }}</td>
+            <td style="font-weight:900">{{ p.rate_value }}{{ '%' if p.rate_type == 'percentage' else '' }}</td>
+            <td>
+              {% set elig_map = {"on_booking":"عند الحجز","on_check_in":"عند الدخول","on_full_payment":"عند السداد","on_collection":"عند التحصيل"} %}
+              <span class="soft-badge badge-purple">{{ elig_map.get(p.eligibility, p.eligibility) }}</span>
+            </td>
+            <td>{{ p.valid_from or '—' }}</td>
+            <td>{{ p.valid_until or '—' }}</td>
+            <td>
+              <form method="post" action="/settings/commission-policies/{{ p.id }}/toggle" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="soft-badge {{ 'badge-green' if p.is_active else 'badge-red' }}" style="border:none;cursor:pointer">
+                  {{ L("نشط", "Active") if p.is_active else L("متوقف", "Inactive") }}
+                </button>
+              </form>
+            </td>
+            <td>
+              <div class="action-group">
+                <a href="/settings/commission-policies/{{ p.id }}/edit" class="action-btn badge-blue">
+                  <i class="bi bi-pencil"></i> {{ L("تعديل", "Edit") }}
+                </a>
+                <form method="post" action="/settings/commission-policies/{{ p.id }}/delete" style="display:inline" onsubmit="return confirm('{{ L("حذف السياسة؟", "Delete policy?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="action-btn badge-red"><i class="bi bi-trash"></i></button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not policies %}
+          <tr><td colspan="10"><div class="empty-state">{{ L("لا توجد سياسات عمولات بعد", "No commission policies yet") }}</div></td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

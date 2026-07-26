@@ -1,0 +1,161 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.stmt-page{max-width:1200px;margin:0 auto;--primary:#20b874;--text:#182033;--muted:#708093;--border:#e2e8f0;--danger:#dc2626;--warning:#d97706}
+.stmt-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:20px}
+.stmt-header h1{font-size:26px;font-weight:950;margin:0;letter-spacing:-.3px}
+.stmt-header .sub{color:var(--muted);font-size:13px;margin:4px 0 0}
+.stmt-actions{display:flex;gap:8px;flex-wrap:wrap}
+.stmt-actions .btn{height:38px;padding:0 18px;border-radius:12px;font-size:12px;font-weight:900;border:1.5px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:.14s}
+.stmt-actions .btn:hover{color:var(--text);border-color:#cbd5e1}
+.stmt-actions .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.stmt-actions .btn-primary:hover{background:#11885a;border-color:#11885a;color:#fff}
+.stmt-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+.stmt-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:20px 24px;box-shadow:0 4px 16px rgba(0,0,0,.03)}
+.stmt-card h3{font-size:15px;font-weight:950;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.stmt-card h3 i{color:var(--primary);font-size:18px}
+.stmt-summary{display:flex;gap:20px;flex-wrap:wrap}
+.stmt-summary .item{flex:1;min-width:120px}
+.stmt-summary .item .lbl{font-size:11px;font-weight:900;color:var(--muted)}
+.stmt-summary .item .val{font-size:18px;font-weight:950;color:var(--text);margin-top:2px}
+.stmt-summary .item .val.danger{color:var(--danger)}
+.stmt-summary .item .val.success{color:var(--primary)}
+.stmt-table{width:100%;border-collapse:collapse;font-size:13px}
+.stmt-table th{background:#f8fafc;padding:11px 14px;font-size:11px;font-weight:950;color:#475569;text-align:center;border-bottom:1px solid var(--border);letter-spacing:.3px}
+.stmt-table td{padding:10px 14px;text-align:center;border-bottom:1px solid #f1f5f9}
+.stmt-table tbody tr:hover td{background:#f8fcf9}
+.stmt-table .type-badge{display:inline-block;padding:2px 12px;border-radius:999px;font-size:10px;font-weight:950}
+.stmt-table .type-invoice{background:#dbeafe;color:#1e40af}
+.stmt-table .type-payment{background:#d1fae5;color:#065f46}
+.stmt-table .type-on_account{background:#fef3c7;color:#92400e}
+.aging-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.aging-box{border-radius:16px;padding:16px 18px;border:1px solid var(--border);text-align:center}
+.aging-box .lbl{font-size:11px;font-weight:900;color:var(--muted)}
+.aging-box .val{font-size:20px;font-weight:950;margin-top:4px}
+.aging-box .count{font-size:12px;color:var(--muted);margin-top:2px}
+.aging-box.level-0{border-color:#d1fae5;background:#f0fdf4}
+.aging-box.level-0 .val{color:#059669}
+.aging-box.level-1{border-color:#fef3c7;background:#fffbeb}
+.aging-box.level-1 .val{color:#d97706}
+.aging-box.level-2{border-color:#fed7aa;background:#fff7ed}
+.aging-box.level-2 .val{color:#c2410c}
+.aging-box.level-3{border-color:#fecaca;background:#fef2f2}
+.aging-box.level-3 .val{color:#dc2626}
+.aging-table-wrap{border-radius:16px;border:1px solid var(--border);overflow:hidden;margin-top:16px}
+.aging-table{width:100%;border-collapse:collapse;font-size:13px}
+.aging-table th{background:#f8fafc;padding:10px 12px;font-size:11px;font-weight:950;color:#475569;text-align:center;border-bottom:1px solid var(--border)}
+.aging-table td{padding:9px 12px;text-align:center;border-bottom:1px solid #f1f5f9}
+@media(max-width:768px){.stmt-grid{grid-template-columns:1fr}.aging-grid{grid-template-columns:1fr 1fr}}
+</style>
+<div class="stmt-page">
+<div class="stmt-header">
+  <div>
+    <h1><i class="bi bi-journal-text" style="color:var(--primary)"></i> {{ L("كشف حساب", "Account Statement") }}</h1>
+    <p class="sub"><strong>{{ customer.name }}</strong> — {{ L("آخر تحديث", "Last updated") }}: {{ as_of.strftime('%Y-%m-%d') }}</p>
+  </div>
+  <div class="stmt-actions">
+    <a href="/customers/{{ customer.id }}/statement/pdf" class="btn" target="_blank"><i class="bi bi-filetype-pdf"></i> PDF</a>
+    <a href="/customers/{{ customer.id }}/statement/excel" class="btn"><i class="bi bi-file-earmark-excel"></i> Excel</a>
+    <a href="/customers/{{ customer.id }}/statement/send" class="btn btn-primary"><i class="bi bi-envelope-fill"></i> {{ L("إرسال", "Send") }}</a>
+  </div>
+</div>
+
+<div class="stmt-grid">
+  <div class="stmt-card">
+    <h3><i class="bi bi-pie-chart"></i> {{ L("ملخص الحساب", "Account Summary") }}</h3>
+    <div class="stmt-summary">
+      <div class="item">
+        <div class="lbl">{{ L("إجمالي المدين", "Total Debit") }}</div>
+        <div class="val">{{ "%.2f"|format(totals.total_debit) }}</div>
+      </div>
+      <div class="item">
+        <div class="lbl">{{ L("إجمالي الدائن", "Total Credit") }}</div>
+        <div class="val success">{{ "%.2f"|format(totals.total_credit) }}</div>
+      </div>
+      <div class="item">
+        <div class="lbl">{{ L("الرصيد الحالي", "Current Balance") }}</div>
+        <div class="val {{ 'danger' if totals.balance > 0 else 'success' }}">{{ "%.2f"|format(totals.balance) }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="stmt-card">
+    <h3><i class="bi bi-clock-history"></i> {{ L("التقادم الزمني", "Aging") }}</h3>
+    <div class="aging-grid">
+      {% set age_colors = {'0_30': 'level-0', '31_60': 'level-1', '61_90': 'level-2', '90_plus': 'level-3'} %}
+      {% for key in ['0_30', '31_60', '61_90', '90_plus'] %}
+      <div class="aging-box {{ age_colors.get(key, '') }}">
+        <div class="lbl">{{ aging[key].label }}</div>
+        <div class="val">{{ "%.0f"|format(aging[key].total) }}</div>
+        <div class="count">{{ aging[key].count }} {{ L("حجز", "booking(s)") }}</div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+
+<div class="stmt-card" style="margin-bottom:20px">
+  <h3><i class="bi bi-list-ul"></i> {{ L("حركة الحساب", "Account Movements") }} <span style="font-size:12px;font-weight:700;color:var(--muted)">({{ entries|length }} {{ L("حركة", "entries") }})</span></h3>
+  {% if entries %}
+  <div style="overflow-x:auto">
+  <table class="stmt-table">
+    <thead><tr>
+      <th>#</th><th>{{ L("التاريخ", "Date") }}</th><th>{{ L("المرجع", "Reference") }}</th><th>{{ L("الوصف", "Description") }}</th><th>{{ L("النوع", "Type") }}</th><th>{{ L("مدين", "Debit") }}</th><th>{{ L("دائن", "Credit") }}</th><th>{{ L("الرصيد", "Balance") }}</th>
+    </tr></thead>
+    <tbody>
+    {% for e in entries %}
+    {% set type_labels = {'invoice': L('فاتورة','Invoice'), 'payment': L('دفع','Payment'), 'on_account': L('تحت الحساب','On-Account'), 'credit_note': L('إشعار دائن','Credit Note'), 'debit_note': L('إشعار مدين','Debit Note')} %}
+    <tr>
+      <td style="font-weight:900;color:var(--muted)">{{ loop.index }}</td>
+      <td>{{ e.date.strftime('%Y-%m-%d') if e.date else '—' }}</td>
+      <td style="font-weight:700;direction:ltr">{{ e.reference }}</td>
+      <td style="text-align:start">{{ e.description }}</td>
+      <td><span class="type-badge type-{{ e.entry_type }}">{{ type_labels.get(e.entry_type, e.entry_type) }}</span></td>
+      <td dir="ltr" style="{% if e.debit > 0 %}font-weight:800;color:var(--danger){% endif %}">{{ "%.2f"|format(e.debit) if e.debit > 0 else '—' }}</td>
+      <td dir="ltr" style="{% if e.credit > 0 %}font-weight:800;color:var(--primary){% endif %}">{{ "%.2f"|format(e.credit) if e.credit > 0 else '—' }}</td>
+      <td dir="ltr" style="font-weight:950;{% if e.balance > 0 %}color:var(--danger){% else %}color:var(--primary){% endif %}">{{ "%.2f"|format(e.balance) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div style="padding:32px;text-align:center;color:var(--muted);font-weight:700;background:#f8fafc;border-radius:12px">
+    <i class="bi bi-inbox" style="font-size:28px;display:block;margin-bottom:8px"></i>
+    {{ L("لا توجد حركات حساب لهذا العميل", "No account movements for this customer") }}
+  </div>
+  {% endif %}
+</div>
+
+<div class="stmt-card">
+  <h3><i class="bi bi-clock"></i> {{ L("تفاصيل التقادم الزمني", "Aging Details") }}</h3>
+  {% for key in ['0_30', '31_60', '61_90', '90_plus'] %}
+  {% if aging[key]['items'] %}
+  <h4 style="font-size:14px;font-weight:950;margin:14px 0 8px;color:var(--text)">{{ aging[key].label }} ({{ "%.2f"|format(aging[key].total) }})</h4>
+  <div class="aging-table-wrap">
+  <table class="aging-table">
+    <thead><tr><th>{{ L("التاريخ", "Date") }}</th><th>{{ L("رقم الحجز", "Booking #") }}</th><th>{{ L("العميل", "Customer") }}</th><th>{{ L("المبلغ", "Amount") }}</th><th>{{ L("الأيام", "Days") }}</th></tr></thead>
+    <tbody>
+    {% for item in aging[key]['items'] %}
+    <tr>
+      <td>{{ item.date.strftime('%Y-%m-%d') if item.date else '—' }}</td>
+      <td style="font-weight:700;direction:ltr"><a href="/reservations/{{ item.reservation_id }}/edit" style="color:var(--text);text-decoration:none">{{ item.reference }}</a></td>
+      <td>{{ item.description }}</td>
+      <td dir="ltr" style="font-weight:800;color:var(--danger)">{{ "%.2f"|format(item.amount) }}</td>
+      <td style="font-weight:700;color:var(--muted)">{{ item.days }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% endif %}
+  {% endfor %}
+  {% if aging_total <= 0 %}
+  <div style="padding:32px;text-align:center;color:var(--muted);font-weight:700;background:#f0fdf4;border-radius:12px">
+    <i class="bi bi-check-circle" style="color:#059669;font-size:28px;display:block;margin-bottom:8px"></i>
+    {{ L("لا توجد مبالغ مستحقة", "No outstanding amounts") }}
+  </div>
+  {% endif %}
+</div>
+</div>
+{% endblock %}

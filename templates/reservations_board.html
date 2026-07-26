@@ -1,0 +1,859 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .reservation-board-page {
+    --green: #20b874;
+    --green-dark: #11885a;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f5c84c;
+    --yellow-soft: #fff7df;
+    --red: #ef5b6c;
+    --red-soft: #fff0f2;
+    --purple: #8b7cf6;
+    --purple-soft: #f3f0ff;
+    --text: #172033;
+    --muted: #6f7d90;
+    --border: #e3ebe5;
+    --card: #ffffff;
+    direction: inherit;
+  }
+
+  .board-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .board-head h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .board-head p {
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .board-shell {
+    display: grid;
+    grid-template-columns: 380px 1fr;
+    gap: 18px;
+    min-height: calc(100vh - 170px);
+  }
+
+  .board-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.045);
+  }
+
+  .board-sidebar {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    min-height: calc(100vh - 170px);
+    max-height: calc(100vh - 170px);
+  }
+
+  .sidebar-head {
+    padding: 18px;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .sidebar-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 12px;
+  }
+
+  .sidebar-title h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 16px;
+    font-weight: 950;
+  }
+
+  .sidebar-title span {
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 6px 10px;
+    font-size: 11px;
+    font-weight: 900;
+  }
+
+  .board-search {
+    height: 44px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0 14px;
+  }
+
+  .board-search i {
+    color: var(--muted);
+  }
+
+  .board-search input {
+    width: 100%;
+    border: 0 !important;
+    outline: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    font-size: 13px !important;
+    font-weight: 700;
+    color: var(--text);
+  }
+
+  .reservations-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 10px;
+  }
+
+  .reservations-list::-webkit-scrollbar,
+  .detail-scroll::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  .reservations-list::-webkit-scrollbar-thumb,
+  .detail-scroll::-webkit-scrollbar-thumb {
+    background: #d7e2dc;
+    border-radius: 999px;
+  }
+
+  .reservation-list-item {
+    display: block;
+    padding: 14px;
+    border: 1px solid transparent;
+    border-radius: 20px;
+    color: var(--text);
+    transition: 0.16s ease;
+    margin-bottom: 8px;
+  }
+
+  .reservation-list-item:hover {
+    background: #fbfdfc;
+    border-color: var(--border);
+    transform: translateY(-1px);
+  }
+
+  .reservation-list-item.active {
+    background: linear-gradient(135deg, #ecffd2, #effaf4);
+    border-color: #dcefc7;
+    box-shadow: 0 10px 22px rgba(26, 86, 219, 0.10);
+  }
+
+  .list-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    margin-bottom: 8px;
+  }
+
+  .booking-no {
+    color: var(--green-dark);
+    font-weight: 950;
+    font-size: 13px;
+  }
+
+  .guest-name {
+    font-size: 14px;
+    font-weight: 950;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .list-sub {
+    color: var(--muted);
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    min-width: 0;
+  }
+
+  .list-sub span {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .soft-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .badge-success {
+    background: #eafff4;
+    color: var(--green-dark);
+  }
+
+  .badge-warning {
+    background: var(--yellow-soft);
+    color: #986a00;
+  }
+
+  .badge-danger {
+    background: var(--red-soft);
+    color: #c7384c;
+  }
+
+  .badge-info {
+    background: var(--blue-soft);
+    color: #11885a;
+  }
+
+  .badge-purple {
+    background: var(--purple-soft);
+    color: var(--purple);
+  }
+
+  .detail-scroll {
+    overflow-y: auto;
+    max-height: calc(100vh - 170px);
+    padding-left: 2px;
+  }
+
+  .detail-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.045);
+    margin-bottom: 18px;
+  }
+
+  .detail-main-card {
+    padding: 22px;
+  }
+
+  .detail-hero {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+
+  .detail-hero h2 {
+    margin: 0;
+    color: var(--text);
+    font-size: 24px;
+    font-weight: 950;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  .detail-hero p {
+    margin-top: 7px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+  }
+
+  .edit-btn {
+    min-height: 42px;
+    border-radius: 15px;
+    background: linear-gradient(135deg, var(--lime), #b8c96a);
+    color: #172033;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 15px;
+    font-size: 13px;
+    font-weight: 950;
+    box-shadow: 0 8px 16px rgba(103, 197, 80, 0.24);
+    transition: 0.16s ease;
+    white-space: nowrap;
+  }
+
+  .edit-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.98);
+  }
+
+  .info-grid {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .info-box {
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    padding: 14px;
+  }
+
+  .info-label {
+    color: var(--muted);
+    font-size: 11px;
+    font-weight: 900;
+    margin-bottom: 5px;
+  }
+
+  .info-value {
+    color: var(--text);
+    font-size: 14px;
+    font-weight: 950;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .section-separator {
+    border-top: 1px solid var(--border);
+    padding-top: 16px;
+    margin-top: 16px;
+  }
+
+  .timeline-title {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 950;
+    margin-bottom: 14px;
+  }
+
+  .trip-line {
+    display: grid;
+    grid-template-columns: 120px 1fr 120px 90px;
+    gap: 14px;
+    align-items: center;
+  }
+
+  .trip-point {
+    text-align: center;
+  }
+
+  .trip-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 999px;
+    background: var(--green);
+    margin: 0 auto 7px;
+    box-shadow: 0 0 0 6px rgba(26, 86, 219, 0.12);
+  }
+
+  .trip-dot.end {
+    background: #cbd5e1;
+    box-shadow: 0 0 0 6px rgba(203, 213, 225, 0.22);
+  }
+
+  .trip-date {
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 950;
+  }
+
+  .trip-label {
+    color: var(--muted);
+    font-size: 11px;
+    margin-top: 2px;
+  }
+
+  .trip-dashed {
+    border-top: 2px dashed #dbe5df;
+  }
+
+  .hotel-line {
+    margin-top: 14px;
+    padding: 13px 14px;
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 850;
+  }
+
+  .two-col-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .mini-card {
+    padding: 18px;
+  }
+
+  .mini-card h3 {
+    margin: 0 0 14px;
+    color: var(--text);
+    font-size: 15px;
+    font-weight: 950;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .line-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 9px 0;
+    border-bottom: 1px solid #edf2ef;
+    font-size: 13px;
+  }
+
+  .line-row:last-child {
+    border-bottom: 0;
+  }
+
+  .line-row span:first-child {
+    color: var(--muted);
+    font-weight: 850;
+  }
+
+  .line-row span:last-child {
+    color: var(--text);
+    font-weight: 950;
+    direction: ltr;
+  }
+
+  .money-green {
+    color: var(--green-dark) !important;
+  }
+
+  .money-red {
+    color: var(--red) !important;
+  }
+
+  .money-purple {
+    color: var(--purple) !important;
+  }
+
+  .quick-pay-form {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 10px;
+    margin-top: 14px;
+  }
+
+  .quick-pay-form input {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #dde7e1;
+    border-radius: 14px;
+    padding: 0 13px;
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .quick-pay-form input:focus {
+    outline: none;
+    border-color: var(--green);
+    box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.10);
+  }
+
+  .pay-btn {
+    min-height: 42px;
+    border: 0;
+    border-radius: 14px;
+    background: var(--green);
+    color: #fff;
+    padding: 0 16px;
+    font-size: 13px;
+    font-weight: 950;
+    cursor: pointer;
+  }
+
+  .docs-card {
+    padding: 18px;
+  }
+
+  .services-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .note-box {
+    margin-top: 14px;
+    padding-top: 14px;
+    border-top: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .empty-state {
+    padding: 36px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .empty-state i {
+    display: block;
+    font-size: 32px;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+  }
+
+  .empty-full {
+    min-height: calc(100vh - 170px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  @media (max-width: 1200px) {
+    .board-shell {
+      grid-template-columns: 1fr;
+      min-height: auto;
+    }
+
+    .board-sidebar,
+    .detail-scroll {
+      min-height: auto;
+      max-height: none;
+    }
+
+    .board-sidebar {
+      max-height: 420px;
+    }
+
+    .two-col-grid,
+    .info-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .trip-line {
+      grid-template-columns: 1fr;
+    }
+
+    .trip-dashed {
+      height: 34px;
+      border-top: 0;
+      border-right: 2px dashed #dbe5df;
+      margin: 0 auto;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .board-head,
+    .detail-hero {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .quick-pay-form {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<div class="reservation-board-page">
+
+  <div class="board-head">
+    <div>
+      <h1>{{ L("لوحة الحجز", "Booking Board") }}</h1>
+      <p>{{ L("استعراض سريع لتفاصيل كل حجز، المدفوعات، خط السير، والخدمات المرتبطة.", "Quick overview of each booking's details, payments, itinerary, and linked services.") }}</p>
+    </div>
+  </div>
+
+  <div class="board-shell">
+
+    <aside class="board-card board-sidebar">
+      <div class="sidebar-head">
+        <div class="sidebar-title">
+          <h2>{{ L("قائمة الحجوزات", "Bookings List") }}</h2>
+          <span>{{ reservations|length }} {{ L("حجز", "Booking") }}</span>
+        </div>
+
+        <div class="board-search">
+          <i class="bi bi-search"></i>
+          <input id="boardSearchInput" placeholder="{{ L("بحث في الحجوزات...", "Search bookings...") }}">
+        </div>
+      </div>
+
+      <div class="reservations-list" id="reservationsList">
+        {% for r in reservations %}
+        <a
+          href="/reservations/board?selected={{ r.id }}"
+          class="reservation-list-item {{ 'active' if active_res and active_res.id == r.id }}"
+          data-search="{{ ((r.customer.name if r.customer else r.guest_name) ~ ' ' ~ r.booking_number ~ ' ' ~ (r.hotel.name if r.hotel else ''))|lower }}"
+        >
+          <div class="list-top">
+            <span class="booking-no">{{ r.booking_number }}</span>
+
+            {% if r.is_paid_in_full %}
+              <span class="soft-badge badge-success">{{ L("مسدد", "Paid") }}</span>
+            {% else %}
+              <span class="soft-badge badge-warning">{{ L("مفتوح", "Open") }}</span>
+            {% endif %}
+          </div>
+
+          <div class="guest-name">{{ r.customer.name if r.customer else r.guest_name }}</div>
+
+          <div class="list-sub">
+            <i class="bi bi-building"></i>
+            <span>{{ r.hotel.name if r.hotel else '-' }}</span>
+          </div>
+
+          <div class="list-sub mt-1">
+            <i class="bi bi-calendar3"></i>
+            <span>{{ r.checkin_date or '-' }}</span>
+          </div>
+        </a>
+        {% endfor %}
+
+        {% if not reservations %}
+        <div class="empty-state">
+          <i class="bi bi-inbox"></i>
+          <p>{{ L("لا توجد حجوزات بعد", "No bookings yet") }}</p>
+        </div>
+        {% endif %}
+      </div>
+    </aside>
+
+    <main class="detail-scroll">
+      {% if active_res %}
+      {% set r = active_res %}
+
+      <div class="detail-card detail-main-card">
+        <div class="detail-hero">
+          <div>
+            <h2>
+              {{ r.booking_number }}
+
+              {% if r.is_paid_in_full %}
+                <span class="soft-badge badge-success">{{ L("مسدد بالكامل", "Fully Paid") }}</span>
+              {% else %}
+                <span class="soft-badge badge-warning">{{ L("مفتوح", "Open") }}</span>
+              {% endif %}
+            </h2>
+
+            <p>
+              <i class="bi bi-calendar3"></i>
+              {{ L("تاريخ الحجز:", "Booking Date:") }} {{ r.created_date }}
+            </p>
+          </div>
+
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <a href="/reservations/{{ r.id }}/edit" class="edit-btn">
+            <i class="bi bi-pencil"></i>
+            {{ L("تعديل", "Edit") }}
+          </a>
+          <a href="/reservations/{{ r.id }}/statement" class="edit-btn" style="background:linear-gradient(135deg,#8b7cf6,#7c6cf0);color:#fff">
+            <i class="bi bi-journal-text"></i>
+            {{ L("كشف حساب", "Statement") }}
+          </a>
+          </div>
+        </div>
+
+        <div class="info-grid">
+          <div class="info-box">
+            <div class="info-label">{{ L("العميل", "Customer") }}</div>
+            <div class="info-value">{{ r.customer.name if r.customer else r.guest_name }}</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-label">{{ L("تواصل", "Contact") }}</div>
+            <div class="info-value">{{ r.phone or '-' }}</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-label">{{ L("الجنسية", "Nationality") }}</div>
+            <div class="info-value">{{ r.nationality or '-' }}</div>
+          </div>
+        </div>
+
+        <div class="info-grid section-separator">
+          <div class="info-box">
+            <div class="info-label">{{ L("البالغين", "Adults") }}</div>
+            <div class="info-value">{{ r.adults }}</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-label">{{ L("الأطفال", "Children") }}</div>
+            <div class="info-value">{{ r.children }}</div>
+          </div>
+
+          <div class="info-box">
+            <div class="info-label">{{ L("أعمار الأطفال", "Children Ages") }}</div>
+            <div class="info-value">{{ r.children_ages or '-' }}</div>
+          </div>
+        </div>
+
+        <div class="section-separator">
+          <div class="timeline-title">{{ L("خط سير الرحلة", "Trip Itinerary") }}</div>
+
+          <div class="trip-line">
+            <div class="trip-point">
+              <div class="trip-dot"></div>
+              <div class="trip-date">{{ r.checkin_date or '-' }}</div>
+              <div class="trip-label">{{ L("وصول", "Arrival") }}</div>
+            </div>
+
+            <div class="trip-dashed"></div>
+
+            <div class="trip-point">
+              <div class="trip-dot end"></div>
+              <div class="trip-date">{{ r.checkout_date or '-' }}</div>
+              <div class="trip-label">{{ L("مغادرة", "Departure") }}</div>
+            </div>
+
+            <span class="soft-badge badge-info">{{ r.nights }} {{ L("ليالي", "Nights") }}</span>
+          </div>
+
+          <div class="hotel-line">
+            <i class="bi bi-building"></i>
+            {{ r.hotel.name if r.hotel else '-' }}
+            —
+            {{ r.room_type or '-' }}
+            —
+            {{ r.room_count }} {{ L("غرف", "Rooms") }}
+          </div>
+        </div>
+      </div>
+
+      <div class="two-col-grid">
+        <div class="detail-card mini-card">
+          <h3>
+            <i class="bi bi-receipt"></i>
+            {{ L("الفاتورة", "Invoice") }}
+          </h3>
+
+          <div class="line-row">
+            <span>{{ L("سعر البيع", "Sale Price") }}</span>
+            <span>{{ "%.2f"|format(r.company_cost or 0) }}</span>
+          </div>
+
+          <div class="line-row">
+            <span>{{ L("سعر التكلفة", "Cost Price") }}</span>
+            <span>{{ "%.2f"|format(r.stay_cost or 0) }}</span>
+          </div>
+
+          <div class="line-row">
+            <span>{{ L("الربح المبدئي", "Initial Profit") }}</span>
+            <span class="money-purple">{{ "%.2f"|format(r.initial_profit or 0) }}</span>
+          </div>
+        </div>
+
+        <div class="detail-card mini-card">
+          <h3>
+            <i class="bi bi-cash-coin"></i>
+            {{ L("المدفوعات", "Payments") }}
+          </h3>
+
+          <div class="line-row">
+            <span>{{ L("التحصيل", "Collection") }}</span>
+            <span class="money-green">{{ "%.2f"|format(r.paid_to_office or 0) }}</span>
+          </div>
+
+          <div class="line-row">
+            <span>{{ L("المتبقي", "Remaining") }}</span>
+            <span class="money-red">{{ "%.2f"|format(r.remaining_to_office or 0) }}</span>
+          </div>
+
+          {% if not r.is_paid_in_full %}
+          <form method="post" action="/reservations/{{ r.id }}/quick-pay" class="quick-pay-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input
+              name="amount"
+              type="number"
+              step="0.01"
+              max="{{ r.remaining_to_office }}"
+              placeholder="{{ L("مبلغ التسديد", "Settlement Amount") }}"
+              required
+            >
+
+            <button class="pay-btn">
+              {{ L("تسديد", "Settlement") }}
+            </button>
+          </form>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="detail-card docs-card">
+        <h3>
+          <i class="bi bi-folder2-open"></i>
+          {{ L("المستندات والخدمات", "Documents & Services") }}
+        </h3>
+
+        {% if r.services %}
+        <div class="services-list">
+          {% for s in r.services %}
+          <span class="soft-badge badge-info">
+            {{ s.name }} ({{ "%.0f"|format(s.price or 0) }})
+          </span>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="empty-state">
+          <i class="bi bi-file-earmark"></i>
+          <p>{{ L("لا توجد خدمات إضافية أو مستندات مرفقة لهذا الحجز", "No additional services or attached documents for this booking") }}</p>
+        </div>
+        {% endif %}
+
+        {% if r.notes %}
+        <div class="note-box">
+          <i class="bi bi-chat-left-text"></i>
+          {{ r.notes }}
+        </div>
+        {% endif %}
+      </div>
+
+      {% else %}
+      <div class="detail-card empty-full">
+        <div class="empty-state">
+          <i class="bi bi-calendar2-week"></i>
+          <p>{{ L("اختر حجزاً من القائمة لعرض تفاصيله", "Select a booking from the list to view details") }}</p>
+        </div>
+      </div>
+      {% endif %}
+    </main>
+
+  </div>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    const input = document.getElementById('boardSearchInput');
+    const items = document.querySelectorAll('.reservation-list-item');
+
+    if (!input) return;
+
+    input.addEventListener('input', function () {
+      const q = this.value.trim().toLowerCase();
+
+      items.forEach(function (item) {
+        const text = item.dataset.search || '';
+        item.style.display = text.includes(q) ? '' : 'none';
+      });
+    });
+  });
+</script>
+
+{% endblock %}
