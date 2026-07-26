@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# Environment files
+.env
+.env.*
+
+# Databases
+*.db
+*.db.bak
+*.sqlite
+*.sqlite3
+
+# Backups
+backups/
+*.bak
+
+# Uploads & storage
+uploads/
+storage/
+
+# Cloudflared
+cloudflared/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
