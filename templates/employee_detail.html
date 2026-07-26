@@ -1,0 +1,566 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .employee-detail-page {
+    --green: #20b874;
+    --green-dark: #11885a;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f5c84c;
+    --yellow-soft: #fff7df;
+    --red: #ef5b6c;
+    --red-soft: #fff0f2;
+    --purple: #8b7cf6;
+    --purple-soft: #f3f0ff;
+    --text: #172033;
+    --muted: #7b8798;
+    --border: #e8eee9;
+    direction: inherit;
+  }
+
+  .employee-hero,
+  .employee-kpi,
+  .employee-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.045);
+  }
+
+  .employee-hero {
+    padding: 22px;
+    margin-bottom: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 18px;
+  }
+
+  .employee-main {
+    display: flex;
+    align-items: center;
+    gap: 15px;
+    min-width: 0;
+  }
+
+  .employee-avatar {
+    width: 70px;
+    height: 70px;
+    border-radius: 24px;
+    background: linear-gradient(135deg, var(--green-soft), var(--lime));
+    color: var(--green-dark);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 28px;
+    font-weight: 950;
+    flex-shrink: 0;
+  }
+
+  .employee-name {
+    margin: 0;
+    font-size: 25px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .employee-meta {
+    margin-top: 8px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 800;
+  }
+
+  .back-link {
+    min-height: 42px;
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 15px;
+    border-radius: 15px;
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 950;
+    white-space: nowrap;
+    transition: 0.15s ease;
+  }
+
+  .back-link:hover {
+    background: var(--green-soft);
+    color: var(--green-dark);
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .employee-kpi {
+    padding: 18px;
+    min-height: 126px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .employee-kpi::after {
+    content: "";
+    position: absolute;
+    left: -45px;
+    bottom: -50px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+  }
+
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-icon.green {
+    background: var(--green-soft);
+    color: var(--green);
+  }
+
+  .kpi-icon.blue {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+
+  .kpi-icon.yellow {
+    background: var(--yellow-soft);
+    color: #b17a00;
+  }
+
+  .kpi-icon.red {
+    background: var(--red-soft);
+    color: var(--red);
+  }
+
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    color: var(--text);
+    font-size: 29px;
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .employee-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 18px;
+  }
+
+  .card-head {
+    padding: 19px 22px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .card-head span {
+    font-size: 12px;
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 7px 11px;
+    font-weight: 800;
+  }
+
+  .card-body {
+    padding: 18px 22px 22px;
+  }
+
+  .reservations-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .reservations-table th {
+    background: #fbfdfc;
+    color: var(--muted);
+    padding: 13px 10px;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .reservations-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .reservations-table tr:hover td {
+    background: #fbfdfc;
+  }
+
+  .booking-number {
+    color: var(--green-dark);
+    font-weight: 950;
+  }
+
+  .soft-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .badge-green {
+    background: #eafff4;
+    color: var(--green-dark);
+  }
+
+  .badge-yellow {
+    background: var(--yellow-soft);
+    color: #986a00;
+  }
+
+  .badge-blue {
+    background: var(--blue-soft);
+    color: #11885a;
+  }
+
+  .badge-red {
+    background: var(--red-soft);
+    color: #c7384c;
+  }
+
+  .badge-gray {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .attendance-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .attendance-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+    padding: 13px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: #fff;
+  }
+
+  .attendance-left {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+  }
+
+  .attendance-icon {
+    width: 42px;
+    height: 42px;
+    border-radius: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 18px;
+  }
+
+  .attendance-icon.green {
+    background: var(--green-soft);
+    color: var(--green);
+  }
+
+  .attendance-icon.red {
+    background: var(--red-soft);
+    color: var(--red);
+  }
+
+  .attendance-icon.yellow {
+    background: var(--yellow-soft);
+    color: #b17a00;
+  }
+
+  .attendance-title {
+    font-size: 13px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .attendance-sub {
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  .empty-state {
+    padding: 32px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1100px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .employee-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .employee-hero {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .kpi-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .employee-name {
+      font-size: 21px;
+    }
+  }
+</style>
+
+<div class="employee-detail-page">
+
+  <div class="employee-hero">
+    <div class="employee-main">
+      <div class="employee-avatar">
+        {{ (employee.name or '?')[:1] if employee else '?' }}
+      </div>
+
+      <div>
+        <h1 class="employee-name">
+          {{ employee.name if employee else 'الموظف' }}
+        </h1>
+
+        <div class="employee-meta">
+          <span>
+            <i class="bi bi-wallet2"></i>
+            {{ L("الراتب:", "Salary:") }} {{ "%.2f"|format(employee.salary or 0) if employee else "0.00" }}
+          </span>
+
+          <span>
+            <i class="bi bi-percent"></i>
+            {{ L("نسبة العمولة:", "Commission Rate:") }} {{ employee.commission_rate or 0 if employee else 0 }}%
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <a href="/employees" class="back-link">
+      <i class="bi bi-arrow-right"></i>
+      {{ L("رجوع للموظفين", "Back to Employees") }}
+    </a>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="employee-kpi">
+      <div class="kpi-icon green">
+        <i class="bi bi-calendar-check"></i>
+      </div>
+      <div class="kpi-label">{{ L("عدد الحجوزات", "Booking Count") }}</div>
+      <div class="kpi-value">{{ reservations|length }}</div>
+    </div>
+
+    <div class="employee-kpi">
+      <div class="kpi-icon blue">
+        <i class="bi bi-cash-coin"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي العمولة", "Total Commission") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(total_commission or 0) }}</div>
+    </div>
+
+    <div class="employee-kpi">
+      <div class="kpi-icon yellow">
+        <i class="bi bi-calendar2-check"></i>
+      </div>
+      <div class="kpi-label">{{ L("أيام الحضور", "Attendance Days") }}</div>
+      <div class="kpi-value">{{ present_days }}</div>
+    </div>
+
+    <div class="employee-kpi">
+      <div class="kpi-icon red">
+        <i class="bi bi-calendar-x"></i>
+      </div>
+      <div class="kpi-label">{{ L("أيام الغياب", "Absence Days") }}</div>
+      <div class="kpi-value">{{ absent_days }}</div>
+    </div>
+  </div>
+
+  <div class="employee-layout">
+
+    <div class="employee-card">
+      <div class="card-head">
+        <h2>{{ L("حجوزات الموظف", "Employee Bookings") }}</h2>
+        <span>{{ reservations|length }} {{ L("حجز", "Booking") }}</span>
+      </div>
+
+      <div class="card-body overflow-x-auto">
+        <table class="reservations-table">
+          <thead>
+            <tr>
+              <th>{{ L("رقم الحجز", "Booking No.") }}</th>
+              <th>{{ L("العميل", "Customer") }}</th>
+              <th>{{ L("الفندق", "Hotel") }}</th>
+              <th>{{ L("الوصول", "Arrival") }}</th>
+              <th>{{ L("المغادرة", "Departure") }}</th>
+              <th>{{ L("سعر البيع", "Sale Price") }}</th>
+              <th>{{ L("العمولة", "Commission") }}</th>
+              <th>{{ L("الدفع", "Payment") }}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for r in reservations %}
+            <tr>
+              <td>
+                <span class="booking-number">{{ r.booking_number }}</span>
+              </td>
+
+              <td>{{ r.customer.name if r.customer else r.guest_name }}</td>
+
+              <td>{{ r.hotel.name if r.hotel else '-' }}</td>
+
+              <td>{{ r.checkin_date or '-' }}</td>
+
+              <td>{{ r.checkout_date or '-' }}</td>
+
+              <td class="font-bold">
+                {{ "%.2f"|format(r.company_cost or 0) }}
+              </td>
+
+              <td class="font-bold" style="color: var(--green-dark);">
+                {{ "%.2f"|format(r.employee_commission or 0) }}
+              </td>
+
+              <td>
+                <span class="soft-badge {{ 'badge-green' if r.is_paid_in_full else 'badge-yellow' }}">
+                  {{ 'مسدد' if r.is_paid_in_full else 'مفتوح' }}
+                </span>
+              </td>
+            </tr>
+            {% endfor %}
+
+            {% if not reservations %}
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">{{ L("لا توجد حجوزات مرتبطة بهذا الموظف", "No bookings linked to this employee") }}</div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="employee-card">
+      <div class="card-head">
+        <h2>{{ L("ملخص الحضور", "Attendance Summary") }}</h2>
+        <span>{{ L("الشهر الحالي", "Current Month") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="attendance-list">
+
+          <div class="attendance-row">
+            <div class="attendance-left">
+              <div class="attendance-icon green">
+                <i class="bi bi-check2-circle"></i>
+              </div>
+              <div>
+                <div class="attendance-title">{{ L("حضور", "Attendance") }}</div>
+                <div class="attendance-sub">{{ L("عدد أيام الحضور المسجلة", "Registered Attendance Days") }}</div>
+              </div>
+            </div>
+
+            <span class="soft-badge badge-green">{{ present_days }}</span>
+          </div>
+
+          <div class="attendance-row">
+            <div class="attendance-left">
+              <div class="attendance-icon red">
+                <i class="bi bi-x-circle"></i>
+              </div>
+              <div>
+                <div class="attendance-title">{{ L("غياب", "Absence") }}</div>
+                <div class="attendance-sub">{{ L("عدد أيام الغياب المسجلة", "Registered Absence Days") }}</div>
+              </div>
+            </div>
+
+            <span class="soft-badge badge-red">{{ absent_days }}</span>
+          </div>
+
+          <div class="attendance-row">
+            <div class="attendance-left">
+              <div class="attendance-icon yellow">
+                <i class="bi bi-clock-history"></i>
+              </div>
+              <div>
+                <div class="attendance-title">{{ L("إجازة", "Leave") }}</div>
+                <div class="attendance-sub">{{ L("عدد أيام الإجازة المسجلة", "Registered Leave Days") }}</div>
+              </div>
+            </div>
+
+            <span class="soft-badge badge-yellow">{{ leave_days }}</span>
+          </div>
+
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}

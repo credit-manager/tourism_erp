@@ -1,0 +1,146 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .ap-page{
+    --primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --red:#eb5d6c;--red-soft:#fff1f3;
+    --yellow:#f4c44d;--yellow-soft:#fff8de;
+    --purple:#8a7cf7;--purple-soft:#f4f1ff;
+    --text:#182033;--muted:#708093;--border:#e4ebe6;
+    direction:inherit;
+  }
+  .ap-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:6px;flex-wrap:wrap;}
+  .ap-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);}
+  .ap-header p{margin:6px 0 0;color:var(--muted);font-size:13px;font-weight:700;}
+  .back-link{min-height:42px;border-radius:14px;border:1px solid var(--border);background:#fff;color:var(--muted);display:inline-flex;align-items:center;gap:8px;padding:0 18px;font-size:13px;font-weight:950;text-decoration:none;transition:.12s;}
+  .back-link:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary);}
+
+  .nav-strip{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0;}
+  .nav-strip a{font-size:12px;font-weight:800;color:var(--primary-dark);text-decoration:none;padding:6px 13px;border:1px solid var(--border);border-radius:10px;background:#fbfdfc;transition:.12s;}
+  .nav-strip a:hover{background:var(--primary-soft);border-color:var(--primary);}
+
+  .btn-lime{height:40px;border-radius:12px;background:linear-gradient(135deg,var(--lime),#b8c96a);color:#172033;font-weight:900;font-size:13px;display:inline-flex;align-items:center;gap:7px;padding:0 16px;border:0;cursor:pointer;box-shadow:0 6px 14px rgba(216,240,106,.25);transition:.12s;text-decoration:none;}
+  .btn-lime:hover{filter:brightness(.97);transform:translateY(-1px);}
+  .btn-green{height:34px;border-radius:9px;background:linear-gradient(135deg,#2ec182,#11885a);color:#fff;font-weight:900;font-size:11px;display:inline-flex;align-items:center;gap:5px;padding:0 12px;border:0;cursor:pointer;box-shadow:0 5px 12px rgba(32,184,116,.22);transition:.12s;}
+  .btn-green:hover{filter:brightness(.97);transform:translateY(-1px);}
+
+  .filter-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:10px 14px;margin-bottom:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .filter-card label{font-size:11px;font-weight:900;color:var(--muted);margin-left:2px;white-space:nowrap;}
+  .filter-card input{height:38px;border:1.5px solid #dde7e1;border-radius:10px;padding:0 10px;font-size:13px;background:#fafefc;}
+  .filter-card input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.1);}
+
+  .main-card{background:#fff;border:1px solid var(--border);border-radius:22px;overflow:hidden;margin-bottom:18px;}
+  .card-head{padding:16px 20px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .card-head h2{margin:0;font-size:15px;font-weight:950;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .card-head h2 i{color:var(--primary);}
+  .card-chip{padding:5px 11px;border:1px solid var(--border);border-radius:999px;background:#fbfdfc;color:var(--muted);font-size:11px;font-weight:850;white-space:nowrap;}
+  .card-body{padding:16px 20px 20px;}
+
+  .tbl-scroll{overflow-x:auto;padding-bottom:4px;}
+  .tbl-scroll::-webkit-scrollbar{height:8px;}
+  .tbl-scroll::-webkit-scrollbar-thumb{background:#d4ddd7;border-radius:999px;}
+  .tbl-scroll::-webkit-scrollbar-track{background:#f3f7f5;border-radius:999px;}
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
+  .tbl th{background:#f8fcfa;color:var(--muted);padding:12px 10px;font-size:12px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;}
+  .tbl td{padding:12px 10px;border-bottom:1px solid #edf2ef;text-align:center;color:var(--text);vertical-align:middle;}
+  .tbl tr:hover td{background:#fbfefc;}
+
+  .emp-name{color:var(--primary-dark);font-weight:900;}
+  .soft-badge{display:inline-flex;align-items:center;justify-content:center;padding:4px 8px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap;}
+  .badge-green{background:#eafff4;color:var(--primary-dark);}
+  .badge-red{background:var(--red-soft);color:#c7384c;}
+  .badge-yellow{background:var(--yellow-soft);color:#986a00;}
+  .badge-gray{background:#f1f5f9;color:#64748b;}
+  .money{font-weight:900;direction:ltr;text-align:right;}
+  .empty-msg{text-align:center;color:var(--muted);padding:40px 20px;font-size:14px;font-weight:800;}
+
+  @media(max-width:700px){.ap-header,.filter-card,.nav-strip{flex-direction:column;align-items:stretch;}}
+</style>
+
+<div class="ap-page">
+
+<div class="ap-header">
+  <div>
+    <h1>{{ L("اعتماد الحضور", "Approve Attendance") }}</h1>
+    <p>{{ L("مراجعة واعتماد سجلات الحضور المعلقة", "Review and approve pending attendance records") }}</p>
+  </div>
+  <a href="/attendance" class="back-link"><i class="bi bi-arrow-right"></i> {{ L("العودة", "Back") }}</a>
+</div>
+
+<div class="nav-strip">
+  <a href="/attendance"><i class="bi bi-calendar-check"></i> {{ L("لوحة الحضور", "Board") }}</a>
+  <a href="/attendance/log"><i class="bi bi-list-ul"></i> {{ L("سجل الحضور", "Log") }}</a>
+  {% if has_permission(current_user, "leaves.manage") %}
+  <a href="/leave-balance"><i class="bi bi-pie-chart"></i> {{ L("رصيد الإجازات", "Balance") }}</a>
+  {% endif %}
+</div>
+
+<form method="get" action="/attendance/approve" class="filter-card">
+  <label>{{ L("الشهر", "Month") }}</label>
+  <input type="month" name="month" value="{{ selected_month }}">
+  <button class="btn-lime"><i class="bi bi-eye"></i> {{ L("عرض", "View") }}</button>
+</form>
+
+<form method="post" action="/attendance/approve-bulk" style="margin-bottom:16px">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+  <input type="hidden" name="month" value="{{ selected_month }}">
+  <button class="btn-lime" onclick="return confirm('{{ L("اعتماد كل الحضور المعلق لهذا الشهر؟", "Approve all pending for this month?") }}')"><i class="bi bi-check2-all"></i> {{ L("اعتماد الكل", "Approve All") }}</button>
+</form>
+
+<div class="main-card">
+  <div class="card-head">
+    <h2><i class="bi bi-hourglass-split"></i> {{ L("السجلات المعلقة", "Pending Records") }}</h2>
+    <span class="card-chip">{{ pending|length }} {{ L("سجل", "Record") }}</span>
+  </div>
+  <div class="card-body">
+    <div class="tbl-scroll">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>{{ L("التاريخ", "Date") }}</th>
+            <th>{{ L("الموظف", "Employee") }}</th>
+            <th>{{ L("الوردية", "Shift") }}</th>
+            <th>{{ L("دخول", "In") }}</th>
+            <th>{{ L("خروج", "Out") }}</th>
+            <th>{{ L("ساعات", "Hours") }}</th>
+            <th>{{ L("تأخير", "Late") }}</th>
+            <th>{{ L("الحالة", "Status") }}</th>
+            <th>{{ L("إجراء", "Action") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for a in pending %}
+          <tr>
+            <td>{{ a.date }}</td>
+            <td><span class="emp-name">{{ a.employee.name }}</span></td>
+            <td>{{ a.shift.name if a.shift else '—' }}</td>
+            <td>{{ a.check_in.strftime("%H:%M") if a.check_in else '—' }}</td>
+            <td>{{ a.check_out.strftime("%H:%M") if a.check_out else '—' }}</td>
+            <td class="money">{{ "%.2f"|format(a.work_hours) if a.work_hours else '—' }}</td>
+            <td>{% if a.late_minutes %}<span class="soft-badge badge-red">{{ a.late_minutes }} د{% else %}0{% endif %}</td>
+            <td>
+              {% if a.status == 'present' %}<span class="soft-badge badge-green">{{ L("حاضر", "Present") }}</span>
+              {% elif a.status == 'absent' %}<span class="soft-badge badge-red">{{ L("غائب", "Absent") }}</span>
+              {% elif a.status == 'leave' %}<span class="soft-badge badge-yellow">{{ L("إجازة", "Leave") }}</span>
+              {% else %}<span class="soft-badge badge-gray">{{ a.status }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <form method="post" action="/attendance/approve/{{ a.id }}">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button class="btn-green"><i class="bi bi-check2"></i> {{ L("اعتماد", "Approve") }}</button>
+              </form>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9" class="empty-msg">{{ L("لا توجد سجلات معلقة للاعتماد", "No pending records for approval") }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

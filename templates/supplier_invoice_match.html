@@ -1,0 +1,99 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .m-page{max-width:1100px;margin:0 auto}
+  .m-page .card{background:#fff;border:1px solid #e8eee9;border-radius:26px;padding:24px;margin-bottom:18px;box-shadow:0 18px 45px rgba(15,23,42,0.045)}
+  .m-page .card h3{margin:0 0 16px;font-size:15px;font-weight:950;color:#172033}
+  .m-page table{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+  .m-page th{background:#fbfdfc;color:#7b8798;padding:12px 8px;font-size:12px;font-weight:950;border-bottom:1px solid #e8eee9;text-align:center;white-space:nowrap}
+  .m-page td{padding:13px 8px;border-bottom:1px solid #edf2ef;color:#172033;text-align:center;vertical-align:middle}
+  .m-page tr:hover td{background:#fbfdfc}
+  .m-page .money{font-weight:950;direction:ltr}
+  .m-page .tag{display:inline-flex;align-items:center;justify-content:center;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:800}
+  .m-page .tag-ok{background:#eafff4;color:#11885a}
+  .m-page .tag-minor{background:#fff7df;color:#986a00}
+  .m-page .tag-major{background:#fff0f2;color:#c7384c}
+  .v-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;font-size:14px;font-weight:800;border-radius:13px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+  .v-btn-outline{background:#fff;color:#64748b;border:2px solid #e2e8f0}
+  .v-btn-outline:hover{background:#f8fafc;color:#172033;border-color:#cbd5e1}
+  .v-btn-info{background:#eef3ff;color:#1a56db}
+  .v-btn-info:hover{background:#dde6ff}
+  .m-page .col-book{width:22%}
+  .m-page .col-num{width:10%}
+  .m-page .col-result{width:12%}
+</style>
+<div class="m-page">
+  <div style="display:flex;justify-content:flex-end">
+    <a href="/suppliers/invoices/{{ inv.id }}" class="v-btn v-btn-outline" style="margin-bottom:14px;padding:7px 16px;font-size:12px">
+      <i class="bi bi-arrow-right"></i> {{ L("العودة", "Back") }}
+    </a>
+  </div>
+  <h1 style="font-size:26px;font-weight:950;color:#172033;margin:0 0 4px">{{ L("المطابقة الثلاثية", "3-Way Matching") }}</h1>
+  <p style="color:#7b8798;font-size:13px;margin:0 0 18px">
+    {{ L("الفاتورة", "Invoice") }}: <strong style="color:#11885a">{{ inv.invoice_number }}</strong>
+    — {{ L("المورد", "Supplier") }}: <strong>{{ inv.supplier.name if inv.supplier else '' }}</strong>
+  </p>
+  <div class="card">
+    <h3><i class="bi bi-diagram-3"></i> {{ L("مقارنة التكاليف", "Cost Comparison") }}</h3>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th class="col-book">{{ L("الحجز", "Booking") }}</th>
+            <th class="col-num">{{ L("متوقع", "Expected") }}</th>
+            <th class="col-num">{{ L("مؤكد", "Confirmed") }}</th>
+            <th class="col-num">{{ L("فاتورة", "Invoiced") }}</th>
+            <th class="col-num">{{ L("تأكيد vs متوقع", "Conf vs Exp") }}</th>
+            <th class="col-num">{{ L("فاتورة vs تأكيد", "Inv vs Conf") }}</th>
+            <th class="col-num">{{ L("فاتورة vs متوقع", "Inv vs Exp") }}</th>
+            <th class="col-result">{{ L("النتيجة", "Result") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for item in match_data %}
+          <tr>
+            <td style="font-weight:600;text-align:right">
+              {% if item.reservation %}
+                #{{ item.reservation.id }} - {{ item.reservation.guest_name }}
+              {% else %}
+                {{ L("حجز غير معروف", "Unknown booking") }}
+              {% endif %}
+            </td>
+            <td class="money">{{ item.expected|c }}</td>
+            <td class="money">{{ item.confirmed|c }}</td>
+            <td class="money">{{ item.invoiced|c }}</td>
+            <td class="money" style="color:{% if item.conf_vs_exp > 0 %}#d14454{% elif item.conf_vs_exp < 0 %}#11885a{% else %}inherit{% endif %}">
+              {{ item.conf_vs_exp|c }}
+            </td>
+            <td class="money" style="color:{% if item.inv_vs_conf > 0 %}#d14454{% elif item.inv_vs_conf < 0 %}#11885a{% else %}inherit{% endif %}">
+              {{ item.inv_vs_conf|c }}
+            </td>
+            <td class="money" style="color:{% if item.inv_vs_exp > 0 %}#d14454{% elif item.inv_vs_exp < 0 %}#11885a{% else %}inherit{% endif %}">
+              {{ item.inv_vs_exp|c }}
+            </td>
+            <td>
+              <span class="tag {{ 'tag-ok' if item.status == 'match' else 'tag-minor' if item.status == 'minor_diff' else 'tag-major' }}">
+                {% if item.status == 'match' %}{{ L("مطابق", "Match") }}
+                {% elif item.status == 'minor_diff' %}{{ L("فرق طفيف", "Minor") }}
+                {% else %}{{ L("فرق كبير", "Major Diff") }}{% endif %}
+              </span>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not match_data %}
+          <tr><td colspan="8" style="text-align:center;padding:32px;color:#7b8798">{{ L("لا توجد بيانات للمطابقة", "No matching data") }}</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+    <a href="/suppliers/invoices" class="v-btn v-btn-outline">
+      <i class="bi bi-arrow-right"></i> {{ L("العودة للقائمة", "Back to List") }}
+    </a>
+    <a href="/suppliers/invoices/{{ inv.id }}" class="v-btn v-btn-info">
+      <i class="bi bi-eye"></i> {{ L("عرض الفاتورة", "View Invoice") }}
+    </a>
+  </div>
+</div>
+{% endblock %}

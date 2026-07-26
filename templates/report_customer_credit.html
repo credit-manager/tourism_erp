@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.credit-page{max-width:1200px;margin:0 auto;--text:#182033;--muted:#708093;--border:#e2e8f0}
+.credit-page h1{font-size:26px;font-weight:950;margin:0;letter-spacing:-.3px}
+.credit-page .sub{color:var(--muted);font-size:14px;margin:4px 0 20px}
+.credit-table{width:100%;border-collapse:collapse;font-size:13px;background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,.04)}
+.credit-table th{background:#f8fafc;padding:13px 14px;font-size:11px;font-weight:950;color:#475569;text-align:center;border-bottom:1px solid var(--border);letter-spacing:.3px}
+.credit-table td{padding:12px 14px;text-align:center;border-bottom:1px solid #f1f5f9}
+.credit-table tbody tr:hover td{background:#f8fcf9}
+.credit-table tbody tr:last-child td{border-bottom:0}
+.badge-exceeded{display:inline-block;padding:4px 14px;border-radius:999px;font-size:11px;font-weight:950;background:#fee2e2;color:#991b1b}
+.badge-ok{display:inline-block;padding:4px 14px;border-radius:999px;font-size:11px;font-weight:950;background:#d1fae5;color:#065f46}
+.badge-overdue{display:inline-block;padding:4px 14px;border-radius:999px;font-size:11px;font-weight:950;background:#fef3c7;color:#92400e}
+.stats-bar{display:flex;gap:16px;margin-bottom:20px;flex-wrap:wrap}
+.stats-bar .stat{background:#fff;border:1px solid var(--border);border-radius:16px;padding:16px 22px;flex:1;min-width:160px;box-shadow:0 4px 12px rgba(0,0,0,.02)}
+.stats-bar .stat .num{font-size:22px;font-weight:950;color:var(--text);margin-top:4px}
+.stats-bar .stat .lbl{font-size:12px;font-weight:900;color:var(--muted)}
+.stats-bar .stat.danger .num{color:#dc2626}
+.stats-bar .stat.success .num{color:#059669}
+</style>
+<div class="credit-page">
+<h1>{{ L("تقرير الائتمان", "Credit Report") }}</h1>
+<p class="sub">{{ L("مراقبة الحدود الائتمانية للعملاء والشركات", "Monitor credit limits for customers and companies") }}</p>
+
+{% set total_exceeded = rows|selectattr('exceeded')|list|length %}
+{% set total_overdue = rows|selectattr('overdue_count', 'gt', 0)|list|length %}
+{% set total_outstanding = rows|sum(attribute='outstanding') %}
+<div class="stats-bar">
+  <div class="stat {{ 'danger' if total_exceeded > 0 else 'success' }}">
+    <div class="lbl">{{ L("عملاء متجاوزين للحد", "Exceeded Limit") }}</div>
+    <div class="num">{{ total_exceeded }}</div>
+  </div>
+  <div class="stat {{ 'danger' if total_overdue > 0 else '' }}">
+    <div class="lbl">{{ L("عملاء متأخرين", "Overdue") }}</div>
+    <div class="num">{{ total_overdue }}</div>
+  </div>
+  <div class="stat">
+    <div class="lbl">{{ L("إجمالي المستحق", "Total Outstanding") }}</div>
+    <div class="num">{{ "%.2f"|format(total_outstanding) }}</div>
+  </div>
+  <div class="stat success">
+    <div class="lbl">{{ L("إجمالي العملاء", "Total Customers") }}</div>
+    <div class="num">{{ rows|length }}</div>
+  </div>
+</div>
+
+<table class="credit-table">
+<thead><tr>
+  <th>{{ L("العميل", "Customer") }}</th>
+  <th>{{ L("النوع", "Type") }}</th>
+  <th>{{ L("حد الائتمان", "Credit Limit") }}</th>
+  <th>{{ L("المستحق الحالي", "Outstanding") }}</th>
+  <th>{{ L("المتاح", "Available") }}</th>
+  <th>{{ L("الحجوزات المفتوحة", "Open Bookings") }}</th>
+  <th>{{ L("الحالة", "Status") }}</th>
+  <th>{{ L("متأخرات السداد", "Overdue") }}</th>
+  <th>{{ L("شروط الدفع", "Payment Terms") }}</th>
+</tr></thead>
+<tbody>
+{% for r in rows %}
+<tr>
+  <td style="font-weight:800;text-align:start">
+    <a href="/customers/{{ r.customer.id }}" style="color:var(--text);text-decoration:none">{{ r.customer.name }}</a>
+  </td>
+  <td><span style="font-size:11px;font-weight:900;color:var(--muted)">{{ r.customer.type or '—' }}</span></td>
+  <td dir="ltr" style="font-weight:700">{{ "%.2f"|format(r.credit_limit) }}</td>
+  <td dir="ltr" style="font-weight:800;color:#dc2626">{{ "%.2f"|format(r.outstanding) }}</td>
+  <td dir="ltr" style="font-weight:700;color:{{ '#059669' if r.available > 0 else '#dc2626' }}">{{ "%.2f"|format(r.available) }}</td>
+  <td>{{ r.open_count }}</td>
+  <td>{% if r.exceeded %}<span class="badge-exceeded">{{ L("متجاوز", "Exceeded") }}</span>{% else %}<span class="badge-ok">{{ L("ضمن الحد", "Within Limit") }}</span>{% endif %}</td>
+  <td>{% if r.overdue_count > 0 %}<span class="badge-overdue">{{ r.overdue_count }} ({{ "%.2f"|format(r.overdue_total) }})</span>{% else %}—{% endif %}</td>
+  <td style="font-size:12px;font-weight:700;color:var(--muted)">{{ r.payment_terms_label }}</td>
+</tr>
+{% endfor %}
+{% if not rows %}
+<tr><td colspan="9" style="padding:40px;color:var(--muted);font-weight:700">{{ L("لا توجد بيانات", "No data available") }}</td></tr>
+{% endif %}
+</tbody>
+</table>
+</div>
+{% endblock %}

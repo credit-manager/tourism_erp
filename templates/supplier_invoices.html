@@ -1,0 +1,171 @@
+{% extends "base.html" %}
+{% block content %}
+{% if request.query_params.get('error') %}
+<div style="background:#fff0f2;border:1px solid #ffd7dd;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#d14454;font-size:14px;font-weight:700;">
+  {{ request.query_params.get('error') }}
+</div>
+{% endif %}
+{% if request.query_params.get('success') %}
+<div style="background:#edf9f3;border:1px solid #b8e6d0;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#11885a;font-size:14px;font-weight:700;">
+  {% if request.query_params.get('success') == 'added' %}{{ L("تم إضافة الفاتورة", "Invoice added") }}
+  {% elif request.query_params.get('success') == 'approved' %}{{ L("تم اعتماد الفاتورة", "Invoice approved") }}
+  {% elif request.query_params.get('success') == 'cancelled' %}{{ L("تم إلغاء الفاتورة", "Invoice cancelled") }}
+  {% else %}{{ L("تمت العملية بنجاح", "Operation completed") }}{% endif %}
+</div>
+{% endif %}
+<style>
+  .i-page{--text:#172033;--muted:#7b8798;--card:#fff;--border:#e8eee9;direction:inherit}
+  .i-page .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px}
+  .i-page .page-head h1{margin:0;font-size:28px;font-weight:950;color:var(--text)}
+  .i-page .page-head p{margin-top:7px;font-size:13px;color:var(--muted)}
+  .i-page .kpi-grid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;margin-bottom:18px}
+  .i-page .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);padding:18px;min-height:124px;position:relative;overflow:hidden}
+  .i-page .kpi-card::after{content:"";position:absolute;left:-45px;bottom:-50px;width:120px;height:120px;border-radius:999px;background:rgba(26,86,219,0.06)}
+  .i-page .kpi-icon{width:46px;height:46px;border-radius:17px;display:inline-flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px;position:relative;z-index:1}
+  .i-page .kpi-icon.green{background:#edf9f3;color:#20b874}
+  .i-page .kpi-icon.blue{background:#eef3ff;color:#1a56db}
+  .i-page .kpi-icon.yellow{background:#fff7df;color:#b17a00}
+  .i-page .kpi-icon.red{background:#fff0f2;color:#ef5b6c}
+  .i-page .kpi-label{color:var(--muted);font-size:12px;font-weight:800;margin-bottom:5px;position:relative;z-index:1}
+  .i-page .kpi-value{color:var(--text);font-size:28px;font-weight:950;direction:ltr;text-align:right;position:relative;z-index:1}
+  .i-page .card{border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);margin-bottom:18px;overflow:hidden}
+  .i-page .card-head{padding:19px 22px 0;display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .i-page .card-head h2{margin:0;font-size:16px;font-weight:950;color:var(--text)}
+  .i-page .card-head span{font-size:12px;color:var(--muted);background:#fbfdfc;border:1px solid var(--border);border-radius:13px;padding:7px 11px;font-weight:800}
+  .i-page .card-body{padding:18px 22px 22px}
+  .i-page .ctable{width:100%;border-collapse:collapse;font-size:13px;table-layout:fixed}
+  .i-page .ctable th{background:#fbfdfc;color:var(--muted);padding:13px 8px;font-size:12px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+  .i-page .ctable td{padding:14px 8px;border-bottom:1px solid #edf2ef;color:var(--text);text-align:center;vertical-align:middle}
+  .i-page .ctable tr:hover td{background:#fbfdfc}
+  .i-page .col-num{width:18%}
+  .i-page .col-supp{width:16%}
+  .i-page .col-date{width:10%}
+  .i-page .col-total{width:12%}
+  .i-page .col-status{width:12%}
+  .i-page .col-actions{width:32%}
+  .i-page .soft-badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap}
+  .i-page .badge-green{background:#eafff4;color:#11885a}
+  .i-page .badge-yellow{background:#fff7df;color:#986a00}
+  .i-page .badge-red{background:#fff0f2;color:#c7384c}
+  .i-page .badge-blue{background:#eef3ff;color:#1a56db}
+  .i-page .badge-gray{background:#f1f5f9;color:#64748b}
+  .i-page .badge-purple{background:#f3eeff;color:#7c3aed}
+  .i-page .empty-state{padding:32px;text-align:center;color:var(--muted);font-size:13px}
+  .i-page .action-group{display:flex;gap:4px;justify-content:center;align-items:center;flex-wrap:nowrap}
+  .i-page .btn-primary-custom{display:inline-flex;align-items:center;gap:8px;padding:12px 24px;font-size:14px;font-weight:900;border-radius:14px;border:none;cursor:pointer;text-decoration:none;background:linear-gradient(135deg,#11885a,#0d6e49);color:#fff;box-shadow:0 8px 20px rgba(17,136,90,0.25);transition:all .2s;min-height:42px}
+  .i-page .btn-primary-custom:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(17,136,90,0.35)}
+  .i-page .action-btn{display:inline-flex;align-items:center;gap:3px;padding:4px 8px;border-radius:8px;font-size:11px;font-weight:800;border:none;cursor:pointer;text-decoration:none;white-space:nowrap;line-height:1}
+  .i-page .money{font-weight:950;direction:ltr}
+</style>
+{% set ns = namespace(total=0, draft=0, approved=0, total_amt=0) %}
+{% for inv in invoices %}
+  {% set ns.total = ns.total + 1 %}
+  {% if inv.status == 'draft' %}{% set ns.draft = ns.draft + 1 %}{% endif %}
+  {% if inv.status == 'approved' %}{% set ns.approved = ns.approved + 1 %}{% endif %}
+  {% set ns.total_amt = ns.total_amt + (inv.total_amount or 0) %}
+{% endfor %}
+<div class="i-page">
+  <div class="page-head">
+    <div>
+      <h1>{{ L("فواتير الموردين", "Supplier Invoices") }}</h1>
+      <p>{{ L("تسجيل فواتير الموردين ومطابقتها مع الحجوزات والتأكيدات", "Record supplier invoices and match with bookings and confirmations") }}</p>
+    </div>
+    {% if has_permission(current_user, "supplier_invoices.manage") %}
+    <a href="/suppliers/invoices/add" class="btn-primary-custom">
+      <i class="bi bi-plus-lg"></i>{{ L("إضافة فاتورة", "Add Invoice") }}
+    </a>
+    {% endif %}
+  </div>
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon blue"><i class="bi bi-receipt"></i></div>
+      <div class="kpi-label">{{ L("إجمالي الفواتير", "Total Invoices") }}</div>
+      <div class="kpi-value">{{ ns.total }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon green"><i class="bi bi-check2-all"></i></div>
+      <div class="kpi-label">{{ L("معتمدة", "Approved") }}</div>
+      <div class="kpi-value">{{ ns.approved }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon yellow"><i class="bi bi-pencil-square"></i></div>
+      <div class="kpi-label">{{ L("مسودة", "Draft") }}</div>
+      <div class="kpi-value">{{ ns.draft }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon red"><i class="bi bi-cash-stack"></i></div>
+      <div class="kpi-label">{{ L("الإجمالي", "Total Amount") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.total_amt) }}</div>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <h2>{{ L("قائمة الفواتير", "Invoices List") }}</h2>
+      <span>{{ invoices|length }} {{ L("فاتورة", "Invoice") }}</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+      <table class="ctable">
+        <thead>
+          <tr>
+            <th class="col-num">{{ L("رقم الفاتورة", "Invoice #") }}</th>
+            <th class="col-supp">{{ L("المورد", "Supplier") }}</th>
+            <th class="col-date">{{ L("التاريخ", "Date") }}</th>
+            <th class="col-total">{{ L("الإجمالي", "Total") }}</th>
+            <th class="col-curr">{{ L("العملة", "Curr.") }}</th>
+            <th class="col-status">{{ L("الحالة", "Status") }}</th>
+            <th class="col-actions">{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for inv in invoices %}
+          <tr>
+            <td style="font-weight:950;color:#11885a">{{ inv.invoice_number }}</td>
+            <td style="font-weight:700">{{ inv.supplier.name if inv.supplier else '' }}</td>
+            <td>{{ inv.invoice_date }}</td>
+            <td class="money">{{ inv.total_amount|c }}</td>
+            <td style="font-size:12px;">{{ inv.currency.code if inv.currency else '-' }}</td>
+            <td>
+              <span class="soft-badge {{ 'badge-green' if inv.status == 'approved' else 'badge-yellow' if inv.status == 'draft' else 'badge-red' }}">
+                {% if inv.status == 'approved' %}{{ L("معتمدة", "Approved") }}
+                {% elif inv.status == 'draft' %}{{ L("مسودة", "Draft") }}
+                {% elif inv.status == 'cancelled' %}{{ L("ملغية", "Cancelled") }}
+                {% else %}{{ inv.status }}{% endif %}
+              </span>
+            </td>
+            <td>
+              <div class="action-group">
+                <a href="/suppliers/invoices/{{ inv.id }}" class="action-btn badge-blue">
+                  <i class="bi bi-eye"></i> {{ L("عرض", "View") }}
+                </a>
+                <a href="/suppliers/invoices/{{ inv.id }}/match" class="action-btn badge-purple">
+                  <i class="bi bi-diagram-3"></i> {{ L("مطابقة", "Match") }}
+                </a>
+                {% if has_permission(current_user, "supplier_invoices.approve") and inv.status == 'draft' %}
+                <form method="post" action="/suppliers/invoices/{{ inv.id }}/approve" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="action-btn badge-green">
+                    <i class="bi bi-check-lg"></i> {{ L("اعتماد", "Approve") }}
+                  </button>
+                </form>
+                {% endif %}
+                {% if has_permission(current_user, "supplier_invoices.manage") and inv.status == 'draft' %}
+                <form method="post" action="/suppliers/invoices/{{ inv.id }}/cancel" style="display:inline" onsubmit="return confirm('{{ L("إلغاء الفاتورة؟", "Cancel invoice?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="action-btn badge-red">
+                    <i class="bi bi-x-lg"></i> {{ L("إلغاء", "Cancel") }}
+                  </button>
+                </form>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not invoices %}
+          <tr><td colspan="6"><div class="empty-state">{{ L("لا توجد فواتير بعد", "No invoices yet") }}</div></td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

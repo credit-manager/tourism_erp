@@ -1,0 +1,574 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .bookings-page {
+    --green: #20b874;
+    --green-dark: #11885a;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f5c84c;
+    --yellow-soft: #fff7df;
+    --purple: #8b7cf6;
+    --purple-soft: #f3f0ff;
+    --red: #ef5b6c;
+    --red-soft: #fff0f2;
+    --text: #172033;
+    --muted: #6f7d90;
+    --border: #e3ebe5;
+    --card: #ffffff;
+    direction: inherit;
+  }
+
+  .bookings-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .bookings-head h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .bookings-head p {
+    margin-top: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .kpi-card,
+  .booking-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.045);
+  }
+
+  .kpi-card {
+    padding: 18px;
+    min-height: 124px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::after {
+    content: "";
+    position: absolute;
+    left: -45px;
+    bottom: -50px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+  }
+
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-icon.green { background: var(--green-soft); color: var(--green); }
+  .kpi-icon.blue { background: var(--blue-soft); color: var(--blue); }
+  .kpi-icon.yellow { background: var(--yellow-soft); color: #b17a00; }
+  .kpi-icon.purple { background: var(--purple-soft); color: var(--purple); }
+
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .booking-card {
+    margin-bottom: 18px;
+  }
+
+  .card-head {
+    padding: 19px 22px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .card-head span {
+    font-size: 12px;
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 7px 11px;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .card-body {
+    padding: 18px 22px 22px;
+  }
+
+  .form-hint {
+    padding: 14px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--green-soft), #ffffff);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+
+  .booking-form {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 12px;
+  }
+
+  .field-block label {
+    display: block;
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .field-block input,
+  .field-block select {
+    width: 100%;
+    height: 44px;
+    border: 1px solid #dde7e1;
+    border-radius: 14px;
+    padding: 0 13px;
+    background: #ffffff;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .field-block input:focus,
+  .field-block select:focus {
+    outline: none;
+    border-color: var(--green);
+    box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.10);
+  }
+
+  .submit-row {
+    grid-column: 1 / -1;
+  }
+
+  .create-booking-btn {
+    width: 100%;
+    min-height: 46px;
+    border: 0;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--lime), #b8c96a);
+    color: #172033;
+    font-size: 13px;
+    font-weight: 950;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    cursor: pointer;
+    box-shadow: 0 10px 20px rgba(103, 197, 80, 0.24);
+    transition: 0.16s ease;
+  }
+
+  .create-booking-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.98);
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  .bookings-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .bookings-table th {
+    background: #f8fcfa;
+    color: var(--muted);
+    padding: 14px 10px;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .bookings-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .bookings-table tr:hover td {
+    background: #fbfefc;
+  }
+
+  .booking-id {
+    color: var(--green-dark);
+    font-weight: 950;
+  }
+
+  .money {
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+  }
+
+  .money-green {
+    color: var(--green-dark);
+  }
+
+  .money-purple {
+    color: var(--purple);
+  }
+
+  .soft-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .badge-internal {
+    background: var(--green-soft);
+    color: var(--green-dark);
+  }
+
+  .badge-external {
+    background: var(--blue-soft);
+    color: #11885a;
+  }
+
+  .badge-flight {
+    background: var(--yellow-soft);
+    color: #986a00;
+  }
+
+  .badge-other {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .empty-state {
+    padding: 34px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1200px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .booking-form {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 700px) {
+    .bookings-head,
+    .card-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .kpi-grid,
+    .booking-form {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+{% set ns = namespace(total_price=0, supplier_cost=0, company_commission=0, employee_commission=0) %}
+{% for b in bookings %}
+  {% set ns.total_price = ns.total_price + (b.total_price or 0) %}
+  {% set ns.supplier_cost = ns.supplier_cost + (b.supplier_cost or 0) %}
+  {% set ns.company_commission = ns.company_commission + (b.company_commission or 0) %}
+  {% set ns.employee_commission = ns.employee_commission + (b.employee_commission or 0) %}
+{% endfor %}
+
+<div class="bookings-page">
+
+  <div class="bookings-head">
+    <div>
+      <h1>{{ L("كل الحجوزات", "All Bookings") }}</h1>
+      <p>{{ L("إنشاء ومتابعة الحجوزات العامة مع حساب تكلفة المورد وعمولات الشركة والموظف تلقائيًا.", "Create and track general bookings with automatic calculation of supplier cost and commissions.") }}</p>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon green">
+        <i class="bi bi-bookmark-check-fill"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي الحجوزات", "Total Bookings") }}</div>
+      <div class="kpi-value">{{ bookings|length }}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon blue">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي البيع", "Total Sales") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.total_price or 0) }}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon yellow">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <div class="kpi-label">{{ L("تكلفة الموردين", "Supplier Costs") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.supplier_cost or 0) }}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon purple">
+        <i class="bi bi-percent"></i>
+      </div>
+      <div class="kpi-label">{{ L("عمولات الموظفين", "Employee Commissions") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.employee_commission or 0) }}</div>
+    </div>
+  </div>
+
+  {% if has_permission(current_user, "bookings.manage") %}
+  <div class="booking-card">
+    <div class="card-head">
+      <h2>{{ L("إنشاء حجز جديد", "Create New Booking") }}</h2>
+      <span>{{ L("يحدّث الخزنة والعمولات تلقائيًا", "Updates treasury and commissions automatically") }}</span>
+    </div>
+
+    <div class="card-body">
+      <div class="form-hint">
+        {{ L("اختار العميل والموظف والمورد، ثم أدخل سعر البيع وتكلفة المورد. النظام سيحسب عمولة الشركة وعمولة الموظف حسب الموجود في السيستم.", "Select the customer, employee, and supplier, then enter the sale price and supplier cost. The system will calculate company and employee commissions based on system settings.") }}
+      </div>
+
+      <form method="post" action="/bookings/add" class="booking-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field-block">
+          <label>{{ L("العميل", "Customer") }}</label>
+          <select name="customer_id" required>
+            <option value="">{{ L("العميل...", "Customer...") }}</option>
+            {% for c in customers %}
+              <option value="{{ c.id }}">{{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field-block">
+          <label>{{ L("الموظف المسؤول", "Responsible Employee") }}</label>
+          <select name="employee_id">
+            <option value="">{{ L("الموظف المسؤول...", "Responsible Employee...") }}</option>
+            {% for e in employees %}
+              <option value="{{ e.id }}">{{ e.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field-block">
+          <label>{{ L("المنفّذ / المورد", "Executor / Supplier") }}</label>
+          <select name="supplier_id">
+            <option value="">{{ L("المنفّذ / المورد...", "Executor / Supplier...") }}</option>
+            {% for s in suppliers %}
+              <option value="{{ s.id }}">{{ s.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field-block">
+          <label>{{ L("نوع الحجز", "Booking Type") }}</label>
+          <select name="booking_type">
+            <option value="internal">{{ L("رحلة داخلية", "Domestic Trip") }}</option>
+            <option value="external">{{ L("رحلة خارجية", "International Trip") }}</option>
+            <option value="flight">{{ L("تذكرة طيران", "Flight Ticket") }}</option>
+          </select>
+        </div>
+
+        <div class="field-block">
+          <label>{{ L("السعر الإجمالي للعميل", "Total Price for Customer") }}</label>
+          <input name="total_price" type="number" step="0.01" placeholder="{{ L("السعر الإجمالي للعميل", "Total Price for Customer") }}" required>
+        </div>
+
+        <div class="field-block">
+          <label>{{ L("تكلفة المنفّذ", "Executor Cost") }}</label>
+          <input name="supplier_cost" type="number" step="0.01" placeholder="{{ L("تكلفة المنفّذ", "Executor Cost") }}">
+        </div>
+
+        <div class="field-block">
+          <label>{{ L("العملة", "Currency") }}</label>
+          <select name="currency_id" onchange="autoFillExchangeRate('currency_id','exchange_rate')">
+            <option value="">{{ L("الأساسية", "Base") }}</option>
+            {% for c in currencies %}
+            <option value="{{ c.id }}" data-rate="{{ c.exchange_rate }}">{{ c.code }} - {{ c.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="field-block">
+          <label>{{ L("سعر الصرف", "Exchange Rate") }}</label>
+          <input name="exchange_rate" id="exchange_rate" type="number" step="0.000001" value="1.0">
+        </div>
+
+        <div class="field-block">
+          <label>{{ L("حساب الإيداع", "Account") }}</label>
+          <select name="account_id">
+            <option value="">{{ L("اختياري", "Optional") }}</option>
+            {% for a in accounts %}
+            {% set t = a.type or 'treasury' %}
+            {% set label = 'خزنة' if t == 'treasury' else ('بنك' if t == 'bank' else 'محفظة') %}
+            <option value="{{ a.id }}">{{ a.name }} ({{ label }})</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="submit-row">
+          <button class="create-booking-btn">
+            <i class="bi bi-plus-circle"></i>
+            {{ L("إنشاء الحجز", "Create Booking") }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="booking-card">
+    <div class="card-head">
+      <h2>{{ L("سجل الحجوزات", "Bookings Log") }}</h2>
+      <span>{{ bookings|length }} {{ L("حجز", "Booking") }}</span>
+    </div>
+
+    <div class="card-body table-wrap">
+      <table class="bookings-table">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ L("العميل", "Customer") }}</th>
+            <th>{{ L("الموظف", "Employee") }}</th>
+            <th>{{ L("المورد", "Supplier") }}</th>
+            <th>{{ L("النوع", "Type") }}</th>
+            <th>{{ L("الإجمالي", "Total") }}</th>
+            <th>{{ L("العملة", "Curr.") }}</th>
+            <th>{{ L("تكلفة المورد", "Supplier Cost") }}</th>
+            <th>{{ L("عمولة الشركة", "Company Commission") }}</th>
+            <th>{{ L("عمولة الموظف", "Employee Commission") }}</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for b in bookings %}
+          <tr>
+            <td>
+              <span class="booking-id">#{{ b.id }}</span>
+            </td>
+
+            <td class="font-bold">
+              {{ b.customer.name if b.customer else '-' }}
+            </td>
+
+            <td>
+              {{ b.employee.name if b.employee else '-' }}
+            </td>
+
+            <td>
+              {{ b.supplier.name if b.supplier else '-' }}
+            </td>
+
+            <td>
+              {% if b.booking_type == 'internal' %}
+                <span class="soft-badge badge-internal">{{ L("رحلة داخلية", "Domestic Trip") }}</span>
+              {% elif b.booking_type == 'external' %}
+                <span class="soft-badge badge-external">{{ L("رحلة خارجية", "International Trip") }}</span>
+              {% elif b.booking_type == 'flight' %}
+                <span class="soft-badge badge-flight">{{ L("تذكرة طيران", "Flight Ticket") }}</span>
+              {% else %}
+                <span class="soft-badge badge-other">{{ b.booking_type }}</span>
+              {% endif %}
+            </td>
+
+            <td class="money">
+              {{ "%.2f"|format(b.total_price or 0) }}
+            </td>
+
+            <td style="font-size:12px;">{{ b.currency.code if b.currency else '-' }}<br><span style="font-size:10px;color:var(--muted);">{{ "%.2f"|format(b.amount_currency or 0) }}</span></td>
+
+            <td class="money">
+              {{ "%.2f"|format(b.supplier_cost or 0) }}
+            </td>
+
+            <td class="money money-green">
+              {{ "%.2f"|format(b.company_commission or 0) }}
+            </td>
+
+            <td class="money money-purple">
+              {{ "%.2f"|format(b.employee_commission or 0) }}
+            </td>
+          </tr>
+          {% endfor %}
+
+          {% if not bookings %}
+          <tr>
+            <td colspan="9">
+              <div class="empty-state">{{ L("لا توجد حجوزات بعد", "No bookings yet") }}</div>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

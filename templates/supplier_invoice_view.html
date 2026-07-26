@@ -1,0 +1,184 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .v-page{max-width:1000px;margin:0 auto}
+  .v-page .card{background:#fff;border:1px solid #e8eee9;border-radius:26px;padding:24px;margin-bottom:18px;box-shadow:0 18px 45px rgba(15,23,42,0.045)}
+  .v-page .card h3{margin:0 0 16px;font-size:15px;font-weight:950;color:#172033}
+  .v-page .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+  .v-page .info-item .label{color:#7b8798;font-size:11px;font-weight:800;margin-bottom:4px;text-transform:uppercase;letter-spacing:.3px}
+  .v-page .info-item .value{font-size:16px;font-weight:700;color:#172033}
+  .v-page table{width:100%;border-collapse:collapse;font-size:13px}
+  .v-page th{background:#fbfdfc;color:#7b8798;padding:12px 10px;font-size:12px;font-weight:950;border-bottom:1px solid #e8eee9;white-space:nowrap;text-align:center}
+  .v-page td{padding:13px 10px;border-bottom:1px solid #edf2ef;color:#172033;text-align:center;vertical-align:middle}
+  .v-page tr:hover td{background:#fbfdfc}
+  .v-page .sb{display:inline-flex;align-items:center;justify-content:center;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:950}
+  .v-page .bg-green{background:#eafff4;color:#11885a}
+  .v-page .bg-yellow{background:#fff7df;color:#986a00}
+  .v-page .bg-red{background:#fff0f2;color:#c7384c}
+  .v-page .money{font-weight:950;direction:ltr}
+  .v-page .sum-row{display:flex;gap:30px;flex-wrap:wrap;padding-top:16px;border-top:2px solid #e8eee9;margin-top:16px}
+  .v-page .sum-item{text-align:center;min-width:120px}
+  .v-page .sum-item .l{color:#7b8798;font-size:11px;font-weight:800;margin-bottom:4px}
+  .v-page .sum-item .v{font-size:20px;font-weight:950;color:#172033}
+  .v-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;font-size:14px;font-weight:800;border-radius:13px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+  .v-btn-outline{background:#fff;color:#64748b;border:2px solid #e2e8f0}
+  .v-btn-outline:hover{background:#f8fafc;color:#172033;border-color:#cbd5e1}
+  .v-btn-primary{background:#11885a;color:#fff}
+  .v-btn-primary:hover{background:#0d6e49}
+  .v-btn-danger{background:#ef5b6c;color:#fff}
+  .v-btn-danger:hover{background:#d14454}
+  .v-btn-info{background:#eef3ff;color:#1a56db}
+  .v-btn-info:hover{background:#dde6ff}
+  .action-bar{display:flex;flex-wrap:wrap;justify-content:flex-end}
+</style>
+
+{% set status_class = '' %}
+{% set status_text = '' %}
+{% if inv.status == 'approved' %}
+  {% set status_class = 'bg-green' %}
+  {% set status_text = L('معتمدة', 'Approved') %}
+{% elif inv.status == 'draft' %}
+  {% set status_class = 'bg-yellow' %}
+  {% set status_text = L('مسودة', 'Draft') %}
+{% elif inv.status == 'cancelled' %}
+  {% set status_class = 'bg-red' %}
+  {% set status_text = L('ملغية', 'Cancelled') %}
+{% else %}
+  {% set status_class = 'bg-yellow' %}
+  {% set status_text = inv.status %}
+{% endif %}
+
+<div class="v-page">
+  <div class="action-bar">
+    <a href="/suppliers/invoices" class="v-btn v-btn-outline" style="margin-bottom:14px;padding:7px 16px;font-size:12px">
+      <i class="bi bi-arrow-right"></i> {{ L("العودة", "Back") }}
+    </a>
+  </div>
+  <h1 style="font-size:26px;font-weight:950;color:#172033;margin:0 0 4px">{{ L("فاتورة مورد", "Supplier Invoice") }}</h1>
+  <p style="color:#7b8798;font-size:13px;margin:0 0 18px">{{ inv.invoice_number }}</p>
+
+  <div class="card">
+    <h3><i class="bi bi-info-circle"></i> {{ L("معلومات الفاتورة", "Invoice Info") }}</h3>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="label">{{ L("المورد", "Supplier") }}</div>
+        <div class="value">{{ inv.supplier.name if inv.supplier else '—' }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("التاريخ", "Date") }}</div>
+        <div class="value">{{ inv.invoice_date }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("تاريخ الاستحقاق", "Due Date") }}</div>
+        <div class="value">{{ inv.due_date or '—' }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("المرجع", "Reference #") }}</div>
+        <div class="value">{{ inv.reference_number or '—' }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("العملة", "Currency") }}</div>
+        <div class="value">{{ inv.currency.code if inv.currency else L("الأساسية", "Base") }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("الحالة", "Status") }}</div>
+        <div class="value"><span class="sb {{ status_class }}">{{ status_text }}</span></div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("بواسطة", "Created by") }}</div>
+        <div class="value">{{ inv.created_by or '—' }}</div>
+      </div>
+    </div>
+    <hr style="margin:16px 0;border-color:#e8eee9">
+    <div class="sum-row" style="border-top:none;padding-top:0;margin-top:0">
+      <div class="sum-item">
+        <div class="l">{{ L("قبل الضريبة", "Before Tax") }}</div>
+        <div class="v" style="color:#7b8798">{{ inv.total_before_tax|c }}</div>
+      </div>
+      <div class="sum-item">
+        <div class="l">{{ L("الضريبة", "Tax") }}</div>
+        <div class="v" style="color:#d14454">{{ inv.tax_amount|c }}</div>
+      </div>
+      <div class="sum-item">
+        <div class="l">{{ L("الخصم", "Discount") }}</div>
+        <div class="v" style="color:#11885a">-{{ inv.discount_amount|c }}</div>
+      </div>
+      <div class="sum-item">
+        <div class="l">{{ L("الإجمالي النهائي", "Net Total") }}</div>
+        <div class="v" style="color:#1a56db">{{ inv.total_amount|c }}</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h3><i class="bi bi-list-check"></i> {{ L("بنود الفاتورة", "Invoice Lines") }} <span style="font-weight:400;color:#7b8798;font-size:13px">({{ inv.lines|length }})</span></h3>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ L("الوصف", "Description") }}</th>
+            <th>{{ L("متوقع", "Expected") }}</th>
+            <th>{{ L("مؤكد", "Confirmed") }}</th>
+            <th>{{ L("فاتورة", "Invoiced") }}</th>
+            <th>{{ L("الفرق", "Diff") }}</th>
+            <th>{{ L("الضريبة", "Tax") }}</th>
+            <th>{{ L("الخصم", "Disc.") }}</th>
+            <th>{{ L("الصافي", "Net") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in inv.lines %}
+          <tr>
+            <td style="text-align:right;font-weight:600">{{ line.description or '#' ~ line.reservation_id }}</td>
+            <td class="money">{{ line.expected_cost|c }}</td>
+            <td class="money">{{ line.confirmed_cost|c }}</td>
+            <td class="money">{{ line.invoiced_cost|c }}</td>
+            <td class="money" style="color:{% if line.cost_difference > 0 %}#d14454{% elif line.cost_difference < 0 %}#11885a{% else %}inherit{% endif %}">
+              {{ line.cost_difference|c }}
+            </td>
+            <td class="money">{{ line.tax_amount|c }}</td>
+            <td class="money">{{ line.discount_amount|c }}</td>
+            <td class="money" style="font-weight:950;color:#1a56db">{{ line.net_amount|c }}</td>
+          </tr>
+          {% endfor %}
+          {% if not inv.lines %}
+          <tr><td colspan="8" style="text-align:center;padding:32px;color:#7b8798">{{ L("لا توجد بنود", "No lines") }}</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% if inv.notes %}
+  <div class="card">
+    <h3><i class="bi bi-chat-text"></i> {{ L("ملاحظات", "Notes") }}</h3>
+    <p style="color:#172033;margin:0">{{ inv.notes }}</p>
+  </div>
+  {% endif %}
+
+  <div class="action-bar" style="gap:10px">
+    <a href="/suppliers/invoices" class="v-btn v-btn-outline">
+      <i class="bi bi-arrow-right"></i> {{ L("العودة للقائمة", "Back to List") }}
+    </a>
+    <a href="/suppliers/invoices/{{ inv.id }}/match" class="v-btn v-btn-info">
+      <i class="bi bi-diagram-3"></i> {{ L("المطابقة الثلاثية", "3-Way Match") }}
+    </a>
+    {% if has_permission(current_user, "supplier_invoices.approve") and inv.status == 'draft' %}
+    <form method="post" action="/suppliers/invoices/{{ inv.id }}/approve" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="v-btn v-btn-primary">
+        <i class="bi bi-check-lg"></i> {{ L("اعتماد الفاتورة", "Approve") }}
+      </button>
+    </form>
+    {% endif %}
+    {% if has_permission(current_user, "supplier_invoices.manage") and inv.status == 'draft' %}
+    <form method="post" action="/suppliers/invoices/{{ inv.id }}/cancel" style="display:inline" onsubmit="return confirm('{{ L("إلغاء الفاتورة؟", "Cancel invoice?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="v-btn v-btn-danger">
+        <i class="bi bi-x-lg"></i> {{ L("إلغاء", "Cancel") }}
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,218 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if request.query_params.get('error') %}
+<div id="top-error" style="background:#fff0f2;border:1px solid #ffd7dd;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#d14454;font-size:14px;font-weight:700;">
+  {{ request.query_params.get('error') }}
+</div>
+{% endif %}
+
+<style>
+  .hs-page{
+    --primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --red:#eb5d6c;--red-soft:#fff1f3;
+    --text:#182033;--muted:#708093;--border:#e4ebe6;
+    direction:inherit;
+  }
+  .hs-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:18px;flex-wrap:wrap;}
+  .hs-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);}
+  .hs-header .sub{display:flex;gap:14px;flex-wrap:wrap;margin-top:6px;}
+  .hs-header .sub span{font-size:13px;color:var(--muted);font-weight:700;display:inline-flex;align-items:center;gap:6px;}
+  .hs-header .sub i{color:var(--primary);}
+  .back-link{min-height:42px;border-radius:14px;border:1px solid var(--border);background:#fff;color:var(--muted);display:inline-flex;align-items:center;gap:8px;padding:0 18px;font-size:13px;font-weight:950;text-decoration:none;transition:.12s;}
+  .back-link:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary);}
+
+  .stats-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:18px;}
+  .stat-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:16px 18px;display:flex;align-items:center;gap:14px;}
+  .stat-icon{width:44px;height:44px;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0;}
+  .stat-icon.blue{background:#f0f5ff;color:#2563eb;}
+  .stat-icon.green{background:var(--primary-soft);color:var(--primary);}
+  .stat-icon.red{background:var(--red-soft);color:var(--red);}
+  .stat-info{flex:1;min-width:0;}
+  .stat-info .lbl{font-size:11px;font-weight:850;color:var(--muted);margin-bottom:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .stat-info .val{font-size:22px;font-weight:950;color:var(--text);direction:ltr;text-align:right;}
+  .stat-info .val.red{color:var(--red);}
+
+  .main-card{background:#fff;border:1px solid var(--border);border-radius:22px;overflow:hidden;margin-bottom:18px;}
+  .card-head{padding:16px 20px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .card-head h2{margin:0;font-size:15px;font-weight:950;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .card-head h2 i{color:var(--primary);}
+  .card-chip{padding:5px 11px;border:1px solid var(--border);border-radius:999px;background:#fbfdfc;color:var(--muted);font-size:11px;font-weight:850;white-space:nowrap;}
+  .card-body{padding:16px 20px 20px;}
+
+  .pay-grid{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  .pay-grid .fi{height:42px;border:1.5px solid #dde7e1;border-radius:12px;padding:0 12px;font-size:13px;font-weight:700;background:#fafefc;transition:.15s;flex:1;min-width:140px;}
+  .pay-grid .fi:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.1);}
+  .pay-grid select.fi{flex:2;min-width:200px;}
+  .btn-lime{height:42px;border-radius:12px;background:linear-gradient(135deg,var(--lime),#b8c96a);color:#172033;font-size:13px;font-weight:950;display:inline-flex;align-items:center;gap:7px;padding:0 18px;border:0;cursor:pointer;box-shadow:0 6px 14px rgba(216,240,106,.25);transition:.12s;white-space:nowrap;}
+  .btn-lime:hover{transform:translateY(-1px);filter:brightness(.97);}
+  .helper-box{margin-top:10px;padding:10px 14px;border-radius:14px;border:1px solid var(--border);background:linear-gradient(135deg,var(--primary-soft),#fff);color:var(--muted);font-size:12px;line-height:1.7;}
+
+  .table-scroll{overflow-x:auto;padding-bottom:4px;}
+  .table-scroll::-webkit-scrollbar{height:8px;}
+  .table-scroll::-webkit-scrollbar-thumb{background:#d4ddd7;border-radius:999px;}
+  .table-scroll::-webkit-scrollbar-track{background:#f3f7f5;border-radius:999px;}
+
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
+  .tbl th{background:#f8fcfa;color:var(--muted);padding:12px 10px;font-size:12px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;}
+  .tbl td{padding:12px 10px;border-bottom:1px solid #edf2ef;text-align:center;color:var(--text);vertical-align:middle;}
+  .tbl tr:hover td{background:#fbfefc;}
+  .tbl .right{text-align:right !important;}
+  .tbl .left{direction:ltr;text-align:right !important;}
+
+  .bk-link{color:var(--primary-dark);font-weight:950;text-decoration:none;}
+  .bk-link:hover{text-decoration:underline;}
+  .guest{font-weight:900;}
+  .badge-room{display:inline-flex;align-items:center;padding:4px 9px;border-radius:999px;font-size:11px;font-weight:950;background:#f0f5ff;color:#2563eb;white-space:nowrap;}
+  .money{font-weight:900;direction:ltr;text-align:right;}
+  .money-green{color:var(--primary-dark);font-weight:950;direction:ltr;text-align:right;}
+  .money-red{color:var(--red);font-weight:950;direction:ltr;text-align:right;}
+  .desc-cell{max-width:300px;white-space:normal !important;text-align:right !important;color:var(--muted) !important;line-height:1.7;font-size:12px;}
+  .empty-msg{padding:34px 20px;text-align:center;color:var(--muted);font-size:13px;font-weight:800;}
+
+  @media(max-width:900px){.stats-grid{grid-template-columns:1fr;}.pay-grid{flex-direction:column;}.pay-grid .fi{width:100%;}}
+  @media(max-width:700px){.hs-header,.card-head{flex-direction:column;align-items:stretch;}}
+</style>
+
+<div class="hs-page">
+
+<div class="hs-header">
+  <div>
+    <h1>{{ hotel.name if hotel else '-' }}</h1>
+    <div class="sub">
+      {% if hotel and hotel.city %}<span><i class="bi bi-geo-alt"></i> {{ hotel.city }}</span>{% endif %}
+      {% if hotel and hotel.supplier %}<span><i class="bi bi-building"></i> {{ L("المورد:", "Supplier:") }} {{ hotel.supplier.name }}</span>{% endif %}
+    </div>
+  </div>
+  <a href="/hotels" class="back-link"><i class="bi bi-arrow-right"></i> {{ L("رجوع", "Back") }}</a>
+</div>
+
+<div class="stats-grid">
+  <div class="stat-card">
+    <div class="stat-icon blue"><i class="bi bi-buildings"></i></div>
+    <div class="stat-info">
+      <div class="lbl">{{ L("إجمالي تكلفة الإقامة", "Total Stay Cost") }}</div>
+      <div class="val">{{ "%.2f"|format(total_stay_cost or 0) }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon green"><i class="bi bi-cash-coin"></i></div>
+    <div class="stat-info">
+      <div class="lbl">{{ L("إجمالي المسدد", "Total Paid") }}</div>
+      <div class="val">{{ "%.2f"|format(total_paid or 0) }}</div>
+    </div>
+  </div>
+  <div class="stat-card">
+    <div class="stat-icon red"><i class="bi bi-hourglass-split"></i></div>
+    <div class="stat-info">
+      <div class="lbl">{{ L("المتبقي المستحق", "Remaining Balance") }}</div>
+      <div class="val red">{{ "%.2f"|format(total_remaining or 0) }}</div>
+    </div>
+  </div>
+</div>
+
+{% if has_permission(request.state.user, 'treasury.manage') %}
+<div class="main-card">
+  <div class="card-head">
+    <h2><i class="bi bi-wallet2"></i> {{ L("تسجيل دفعة للفندق", "Log Hotel Payment") }}</h2>
+    <span class="card-chip">{{ L("خصم من الخزنة", "Deduct from Treasury") }}</span>
+  </div>
+  <div class="card-body">
+    <form method="post" action="/hotels/{{ hotel.id }}/pay">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <div class="pay-grid">
+        <input name="amount" type="number" step="0.01" placeholder="{{ L("المبلغ", "Amount") }}" required class="fi">
+        <select name="account_id" required class="fi">
+          <option value="">{{ L("اختر حساب", "Select account...") }}</option>
+          {% for a in accounts %}
+          <option value="{{ a.id }}">{{ a.name }}</option>
+          {% endfor %}
+        </select>
+        <input name="notes" placeholder="{{ L("ملاحظات (اختياري)", "Notes (Optional)") }}" class="fi">
+        <button class="btn-lime" type="submit"><i class="bi bi-check2"></i> {{ L("تسجيل", "Log Payment") }}</button>
+      </div>
+    </form>
+    <div class="helper-box">
+      <i class="bi bi-info-circle"></i> {{ L("الدفعة بتخصم من الحساب المختار وتتوزع على أقدم الحجوزات المستحقة لهذا الفندق.", "Payment is deducted from the selected account and allocated to oldest due bookings for this hotel.") }}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<div class="main-card">
+  <div class="card-head">
+    <h2><i class="bi bi-journal-text"></i> {{ L("حجوزات الفندق", "Hotel Bookings") }}</h2>
+    <span class="card-chip">{{ reservations|length }} {{ L("حجز", "Booking") }}</span>
+  </div>
+  <div class="card-body">
+    <div class="table-scroll">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>{{ L("رقم الحجز", "Booking No.") }}</th>
+            <th>{{ L("التاريخ", "Date") }}</th>
+            <th>{{ L("النزيل", "Guest") }}</th>
+            <th>{{ L("الغرفة", "Room") }}</th>
+            <th>{{ L("تكلفة الإقامة", "Cost") }}</th>
+            <th>{{ L("المسدد", "Paid") }}</th>
+            <th>{{ L("المتبقي", "Due") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in reservations %}
+          <tr>
+            <td><a href="/reservations/{{ r.id }}/edit" class="bk-link">{{ r.booking_number }}</a></td>
+            <td>{{ r.created_date }}</td>
+            <td><span class="guest">{{ r.customer.name if r.customer else r.guest_name }}</span></td>
+            <td><span class="badge-room">{{ r.room_type or '-' }}</span></td>
+            <td class="money">{{ "%.2f"|format(r.stay_cost or 0) }}</td>
+            <td class="money-green">{{ "%.2f"|format(r.paid_to_hotel or 0) }}</td>
+            <td class="{{ 'money-red' if (r.remaining_to_hotel or 0) > 0 else 'money-green' }}">{{ "%.2f"|format(r.remaining_to_hotel or 0) }}</td>
+          </tr>
+          {% endfor %}
+          {% if not reservations %}
+          <tr><td colspan="7"><div class="empty-msg">{{ L("لا توجد حجوزات لهذا الفندق", "No bookings for this hotel") }}</div></td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+{% if has_permission(request.state.user, 'treasury.manage') %}
+<div class="main-card">
+  <div class="card-head">
+    <h2><i class="bi bi-receipt"></i> {{ L("سجل الدفعات المباشرة", "Direct Payments Log") }}</h2>
+    <span class="card-chip">{{ payments|length }} {{ L("دفعة", "Payment") }}</span>
+  </div>
+  <div class="card-body">
+    <div class="table-scroll">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>{{ L("التاريخ", "Date") }}</th>
+            <th>{{ L("المبلغ", "Amount") }}</th>
+            <th style="text-align:right">{{ L("الوصف", "Description") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for p in payments %}
+          <tr>
+            <td>{{ p.date }}</td>
+            <td class="money-red">{{ "%.2f"|format(p.amount or 0) }}</td>
+            <td class="desc-cell">{{ p.description or '-' }}</td>
+          </tr>
+          {% endfor %}
+          {% if not payments %}
+          <tr><td colspan="3"><div class="empty-msg">{{ L("لا توجد دفعات مباشرة", "No direct payments") }}</div></td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+</div>
+{% endblock %}

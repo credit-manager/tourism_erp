@@ -1,0 +1,134 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.stmt-page{max-width:1100px;margin:0 auto;--primary:#20b874;--text:#182033;--muted:#708093;--border:#e2e8f0;--danger:#dc2626;--warning:#d97706}
+.stmt-header{display:flex;justify-content:space-between;align-items:flex-start;flex-wrap:wrap;gap:14px;margin-bottom:20px}
+.stmt-header h1{font-size:26px;font-weight:950;margin:0;letter-spacing:-.3px}
+.stmt-header .sub{color:var(--muted);font-size:13px;margin:4px 0 0}
+.stmt-actions{display:flex;gap:8px;flex-wrap:wrap}
+.stmt-actions .btn{height:38px;padding:0 18px;border-radius:12px;font-size:12px;font-weight:900;border:1.5px solid var(--border);background:#fff;color:var(--muted);cursor:pointer;display:inline-flex;align-items:center;gap:6px;text-decoration:none;transition:.14s}
+.stmt-actions .btn:hover{color:var(--text);border-color:#cbd5e1}
+.stmt-actions .btn-primary{background:var(--primary);color:#fff;border-color:var(--primary)}
+.stmt-actions .btn-primary:hover{background:#11885a;border-color:#11885a;color:#fff}
+.stmt-grid{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-bottom:22px}
+.stmt-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:20px 24px;box-shadow:0 4px 16px rgba(0,0,0,.03)}
+.stmt-card h3{font-size:15px;font-weight:950;margin:0 0 12px;display:flex;align-items:center;gap:8px}
+.stmt-card h3 i{color:var(--primary);font-size:18px}
+.stmt-summary{display:flex;gap:20px;flex-wrap:wrap}
+.stmt-summary .item{flex:1;min-width:120px}
+.stmt-summary .item .lbl{font-size:11px;font-weight:900;color:var(--muted)}
+.stmt-summary .item .val{font-size:18px;font-weight:950;color:var(--text);margin-top:2px}
+.stmt-summary .item .val.danger{color:var(--danger)}
+.stmt-summary .item .val.success{color:var(--primary)}
+.stmt-table{width:100%;border-collapse:collapse;font-size:13px}
+.stmt-table th{background:#f8fafc;padding:11px 14px;font-size:11px;font-weight:950;color:#475569;text-align:center;border-bottom:1px solid var(--border);letter-spacing:.3px}
+.stmt-table td{padding:10px 14px;text-align:center;border-bottom:1px solid #f1f5f9}
+.stmt-table tbody tr:hover td{background:#f8fcf9}
+.stmt-table .type-badge{display:inline-block;padding:2px 12px;border-radius:999px;font-size:10px;font-weight:950}
+.stmt-table .type-invoice{background:#dbeafe;color:#1e40af}
+.stmt-table .type-payment{background:#d1fae5;color:#065f46}
+.stmt-table .type-supplier_payment{background:#fef3c7;color:#92400e}
+.stmt-table .type-refund{background:#f3e8ff;color:#6b21a8}
+.info-tag{display:inline-flex;align-items:center;gap:8px;padding:6px 14px;background:#f8fafc;border-radius:10px;font-size:12px;font-weight:800;color:var(--muted);border:1px solid var(--border)}
+.info-tag strong{color:var(--text);direction:ltr}
+@media(max-width:768px){.stmt-grid{grid-template-columns:1fr}}
+</style>
+<div class="stmt-page">
+<div class="stmt-header">
+  <div>
+    <h1><i class="bi bi-journal-text" style="color:var(--primary)"></i> {{ t(request, "booking_statement") }}</h1>
+    <p class="sub">
+      <strong>{{ reservation.booking_number }}</strong> —
+      {{ reservation.guest_name or (reservation.customer.name if reservation.customer else '') }} —
+      <span dir="ltr">{{ as_of.strftime('%Y-%m-%d') }}</span>
+    </p>
+  </div>
+  <div class="stmt-actions">
+    <a href="/reservations/{{ reservation.id }}/edit" class="btn"><i class="bi bi-pencil"></i> {{ L("تعديل", "Edit") }}</a>
+    <a href="/reservations/board?selected={{ reservation.id }}" class="btn btn-primary"><i class="bi bi-arrow-left"></i> {{ L("لوحة الحجز", "Booking Board") }}</a>
+  </div>
+</div>
+
+<div class="info-tag" style="margin-bottom:18px;gap:18px;flex-wrap:wrap">
+  <span><i class="bi bi-building"></i> {{ reservation.hotel.name if reservation.hotel else '-' }}</span>
+  <span><i class="bi bi-calendar3"></i> {{ reservation.checkin_date }} → {{ reservation.checkout_date }}</span>
+  <span><i class="bi bi-person"></i> {{ reservation.adults }}{% if reservation.children %}+{{ reservation.children }}{% endif %}</span>
+  <span><i class="bi bi-tag"></i> {{ reservation.status }}</span>
+</div>
+
+<div class="stmt-grid">
+  <div class="stmt-card">
+    <h3><i class="bi bi-pie-chart"></i> {{ L("ملخص الحساب", "Account Summary") }}</h3>
+    <div class="stmt-summary">
+      <div class="item">
+        <div class="lbl">{{ L("قيمة الفاتورة", "Invoice Amount") }}</div>
+        <div class="val">{{ "%.2f"|format(totals.net_sale) }}</div>
+      </div>
+      <div class="item">
+        <div class="lbl">{{ L("إجمالي المسدد", "Total Paid") }}</div>
+        <div class="val success">{{ "%.2f"|format(totals.total_paid) }}</div>
+      </div>
+      <div class="item">
+        <div class="lbl">{{ L("المتبقي", "Remaining") }}</div>
+        <div class="val {{ 'danger' if totals.remaining > 0 else 'success' }}">{{ "%.2f"|format(totals.remaining) }}</div>
+      </div>
+    </div>
+  </div>
+  <div class="stmt-card">
+    <h3><i class="bi bi-info-circle"></i> {{ L("التكلفة والربح", "Cost & Profit") }}</h3>
+    <div class="stmt-summary">
+      <div class="item">
+        <div class="lbl">{{ L("سعر التكلفة", "Cost Price") }}</div>
+        <div class="val">{{ "%.2f"|format(reservation.stay_cost or 0) }}</div>
+      </div>
+      <div class="item">
+        <div class="lbl">{{ L("الربح المبدئي", "Initial Profit") }}</div>
+        <div class="val money-purple">{{ "%.2f"|format(reservation.initial_profit or 0) }}</div>
+      </div>
+      <div class="item">
+        <div class="lbl">{{ L("صافي الربح", "Net Profit") }}</div>
+        <div class="val money-purple">{{ "%.2f"|format(reservation.final_company_profit or 0) }}</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="stmt-card" style="margin-bottom:20px">
+  <h3><i class="bi bi-list-ul"></i> {{ L("حركة الحساب", "Account Movements") }} <span style="font-size:12px;font-weight:700;color:var(--muted)">({{ entries|length }} {{ L("حركة", "entries") }})</span></h3>
+  {% if entries %}
+  <div style="overflow-x:auto">
+  <table class="stmt-table">
+    <thead><tr>
+      <th>#</th><th>{{ L("التاريخ", "Date") }}</th><th>{{ L("المرجع", "Reference") }}</th><th>{{ L("الوصف", "Description") }}</th><th>{{ L("النوع", "Type") }}</th><th>{{ L("مدين", "Debit") }}</th><th>{{ L("دائن", "Credit") }}</th><th>{{ L("الرصيد", "Balance") }}</th>
+    </tr></thead>
+    <tbody>
+    {% set type_labels = {
+      'invoice': L('فاتورة','Invoice'),
+      'payment': L('دفع','Payment'),
+      'supplier_payment': L('دفعة مورد','Supplier Payment'),
+      'refund': L('مرتجع','Refund')
+    } %}
+    {% for e in entries %}
+    <tr>
+      <td style="font-weight:900;color:var(--muted)">{{ loop.index }}</td>
+      <td>{{ e.date.strftime('%Y-%m-%d') if e.date else '—' }}</td>
+      <td style="font-weight:700;direction:ltr">{{ e.reference }}</td>
+      <td style="text-align:start">{{ e.description }}</td>
+      <td><span class="type-badge type-{{ e.entry_type }}">{{ type_labels.get(e.entry_type, e.entry_type) }}</span></td>
+      <td dir="ltr" style="{% if e.debit > 0 %}font-weight:800;color:var(--danger){% endif %}">{{ "%.2f"|format(e.debit) if e.debit > 0 else '—' }}</td>
+      <td dir="ltr" style="{% if e.credit > 0 %}font-weight:800;color:var(--primary){% endif %}">{{ "%.2f"|format(e.credit) if e.credit > 0 else '—' }}</td>
+      <td dir="ltr" style="font-weight:950;{% if e.balance > 0 %}color:var(--danger){% else %}color:var(--primary){% endif %}">{{ "%.2f"|format(e.balance) }}</td>
+    </tr>
+    {% endfor %}
+    </tbody>
+  </table>
+  </div>
+  {% else %}
+  <div style="padding:32px;text-align:center;color:var(--muted);font-weight:700;background:#f8fafc;border-radius:12px">
+    <i class="bi bi-inbox" style="font-size:28px;display:block;margin-bottom:8px"></i>
+    {{ L("لا توجد حركات لهذا الحجز", "No movements for this booking") }}
+  </div>
+  {% endif %}
+</div>
+</div>
+{% endblock %}

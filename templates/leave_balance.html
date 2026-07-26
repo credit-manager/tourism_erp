@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .bal-page{
+    --primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --red:#eb5d6c;--red-soft:#fff1f3;
+    --yellow:#f4c44d;--yellow-soft:#fff8de;
+    --purple:#8a7cf7;--purple-soft:#f4f1ff;
+    --text:#182033;--muted:#708093;--border:#e4ebe6;
+    direction:inherit;
+  }
+  .bal-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:6px;flex-wrap:wrap;}
+  .bal-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);}
+  .bal-header p{margin:6px 0 0;color:var(--muted);font-size:13px;font-weight:700;}
+  .bal-actions{display:flex;gap:8px;flex-wrap:wrap;}
+
+  .nav-strip{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0;}
+  .nav-strip a{font-size:12px;font-weight:800;color:var(--primary-dark);text-decoration:none;padding:6px 13px;border:1px solid var(--border);border-radius:10px;background:#fbfdfc;transition:.12s;}
+  .nav-strip a:hover{background:var(--primary-soft);border-color:var(--primary);}
+
+  .btn-lime{height:40px;border-radius:12px;background:linear-gradient(135deg,var(--lime),#b8c96a);color:#172033;font-weight:900;font-size:13px;display:inline-flex;align-items:center;gap:7px;padding:0 16px;border:0;cursor:pointer;box-shadow:0 6px 14px rgba(216,240,106,.25);transition:.12s;text-decoration:none;}
+  .btn-lime:hover{filter:brightness(.97);transform:translateY(-1px);}
+  .btn-green{height:36px;border-radius:10px;background:linear-gradient(135deg,#2ec182,#11885a);color:#fff;font-weight:900;font-size:12px;display:inline-flex;align-items:center;gap:6px;padding:0 14px;border:0;cursor:pointer;box-shadow:0 6px 14px rgba(32,184,116,.22);transition:.12s;}
+  .btn-green:hover{filter:brightness(.97);transform:translateY(-1px);}
+  .back-link{min-height:42px;border-radius:14px;border:1px solid var(--border);background:#fff;color:var(--muted);display:inline-flex;align-items:center;gap:8px;padding:0 18px;font-size:13px;font-weight:950;text-decoration:none;transition:.12s;}
+  .back-link:hover{background:var(--primary-soft);color:var(--primary-dark);border-color:var(--primary);}
+
+  .filter-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:10px 14px;margin-bottom:16px;display:flex;gap:8px;align-items:center;flex-wrap:wrap;}
+  .filter-card label{font-size:11px;font-weight:900;color:var(--muted);margin-left:2px;white-space:nowrap;}
+  .filter-card input{height:38px;border:1.5px solid #dde7e1;border-radius:10px;padding:0 10px;font-size:13px;background:#fafefc;}
+  .filter-card input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.1);}
+
+  .main-card{background:#fff;border:1px solid var(--border);border-radius:22px;overflow:hidden;margin-bottom:18px;}
+  .card-head{padding:16px 20px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .card-head h2{margin:0;font-size:15px;font-weight:950;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .card-head h2 i{color:var(--primary);}
+  .card-chip{padding:5px 11px;border:1px solid var(--border);border-radius:999px;background:#fbfdfc;color:var(--muted);font-size:11px;font-weight:850;white-space:nowrap;}
+  .card-body{padding:16px 20px 20px;}
+
+  .tbl-scroll{overflow-x:auto;padding-bottom:4px;}
+  .tbl-scroll::-webkit-scrollbar{height:8px;}
+  .tbl-scroll::-webkit-scrollbar-thumb{background:#d4ddd7;border-radius:999px;}
+  .tbl-scroll::-webkit-scrollbar-track{background:#f3f7f5;border-radius:999px;}
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
+  .tbl th{background:#f8fcfa;color:var(--muted);padding:12px 10px;font-size:12px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;}
+  .tbl td{padding:12px 10px;border-bottom:1px solid #edf2ef;text-align:center;color:var(--text);vertical-align:middle;}
+  .tbl tr:hover td{background:#fbfefc;}
+
+  .emp-name{color:var(--primary-dark);font-weight:900;}
+  .inline-input{width:64px;border:1.5px solid #dde7e1;border-radius:10px;padding:7px 8px;text-align:center;font-size:13px;font-weight:800;background:#fafefc;box-sizing:border-box;}
+  .inline-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.12);}
+  .rem-low{color:var(--red);}
+  .rem-ok{color:var(--primary-dark);}
+  .empty-msg{text-align:center;color:var(--muted);padding:40px 20px;font-size:14px;font-weight:800;}
+
+  @media(max-width:700px){.bal-header,.filter-card,.nav-strip{flex-direction:column;align-items:stretch;}}
+</style>
+
+<div class="bal-page">
+
+<div class="bal-header">
+  <div>
+    <h1>{{ L("رصيد الإجازات السنوية", "Annual Leave Balance") }}</h1>
+    <p>{{ L("متابعة رصيد إجازات الموظفين المستحق والمستخدم والمتبقي", "Track employee leave entitlements, used and remaining") }}</p>
+  </div>
+  <div class="bal-actions">
+    <form method="post" action="/leave-balance/recalculate">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <input type="hidden" name="year" value="{{ selected_year }}">
+      <button class="btn-lime"><i class="bi bi-arrow-counterclockwise"></i> {{ L("إعادة حساب", "Recalculate") }}</button>
+    </form>
+  </div>
+</div>
+
+<div class="nav-strip">
+  <a href="/leave-requests"><i class="bi bi-file-text"></i> {{ L("طلبات الإجازة", "Leave Requests") }}</a>
+  <a href="/attendance"><i class="bi bi-calendar-check"></i> {{ L("الحضور", "Attendance") }}</a>
+</div>
+
+<form method="get" action="/leave-balance" class="filter-card">
+  <label>{{ L("السنة", "Year") }}</label>
+  <input type="number" name="year" value="{{ selected_year }}" min="2020" max="2050">
+  <button class="btn-lime"><i class="bi bi-eye"></i> {{ L("عرض", "View") }}</button>
+</form>
+
+<div class="main-card">
+  <div class="card-head">
+    <h2><i class="bi bi-pie-chart"></i> {{ L("أرصدة الإجازات", "Leave Balances") }}</h2>
+    <span class="card-chip">{{ selected_year }}</span>
+  </div>
+  <div class="card-body">
+    <div class="tbl-scroll">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>{{ L("الموظف", "Employee") }}</th>
+            <th>{{ L("المستحق", "Entitlement") }}</th>
+            <th>{{ L("مستخدم", "Used") }}</th>
+            <th>{{ L("المتبقي", "Remaining") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for b in balances %}
+          <tr>
+            <td><span class="emp-name">{{ b.employee_name }}</span></td>
+            <form method="post" action="/leave-balance/update/{{ b.id }}" style="display:contents">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <td><input type="number" name="entitlement" value="{{ b.entitlement }}" min="0" class="inline-input"></td>
+            <td><input type="number" name="used" value="{{ b.used }}" min="0" class="inline-input"></td>
+            <td><strong class="{% if b.remaining < 3 %}rem-low{% else %}rem-ok{% endif %}">{{ b.remaining }}</strong></td>
+            <td><button class="btn-green"><i class="bi bi-check2"></i> {{ L("حفظ", "Save") }}</button></td>
+            </form>
+          </tr>
+          {% else %}
+          <tr><td colspan="5" class="empty-msg">{{ L("لا توجد بيانات", "No data") }}</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

@@ -1,0 +1,771 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .collections-page {
+    --green: #20b874;
+    --green-dark: #11885a;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f5c84c;
+    --yellow-soft: #fff7df;
+    --red: #ef5b6c;
+    --red-soft: #fff0f2;
+    --text: #172033;
+    --muted: #7b8798;
+    --border: #e8eee9;
+    --card: #ffffff;
+    direction: inherit;
+  }
+
+  .collections-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .collections-head h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .collections-head p {
+    margin-top: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .kpi-card,
+  .collection-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.045);
+  }
+
+  .kpi-card {
+    padding: 18px;
+    min-height: 124px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .kpi-card::after {
+    content: "";
+    position: absolute;
+    left: -45px;
+    bottom: -50px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+  }
+
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-icon.green { background: var(--green-soft); color: var(--green); }
+  .kpi-icon.blue { background: var(--blue-soft); color: var(--blue); }
+  .kpi-icon.yellow { background: var(--yellow-soft); color: #b17a00; }
+  .kpi-icon.red { background: var(--red-soft); color: var(--red); }
+
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .collection-card {
+    margin-bottom: 18px;
+  }
+
+  .card-head {
+    padding: 19px 22px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .card-head span {
+    font-size: 12px;
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 7px 11px;
+    font-weight: 800;
+  }
+
+  .card-body {
+    padding: 18px 22px 22px;
+  }
+
+  .form-hint {
+    padding: 14px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--green-soft), #ffffff);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+
+  .collection-form {
+    display: grid;
+    grid-template-columns: 1fr 180px 170px 1fr 150px;
+    gap: 12px;
+    align-items: end;
+  }
+
+  .field-block label {
+    display: block;
+    font-size: 12px;
+    font-weight: 900;
+    color: var(--muted);
+    margin-bottom: 6px;
+  }
+
+  .collection-form input,
+  .collection-form select,
+  .allocate-panel input[type="number"] {
+    width: 100%;
+    height: 43px;
+    border: 1px solid #dfe7e3;
+    border-radius: 13px;
+    padding: 0 13px;
+    font-size: 13px;
+    background: #fff;
+  }
+
+  .reservations-area {
+    margin-top: 16px;
+  }
+
+  .reservations-title {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .reservations-title h3 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .reservations-title span {
+    font-size: 12px;
+    color: var(--muted);
+  }
+
+  .reservations-box {
+    max-height: 280px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: #fbfdfc;
+  }
+
+  .reservation-check {
+    display: grid;
+    grid-template-columns: 22px 1fr 120px;
+    gap: 10px;
+    align-items: center;
+    padding: 12px 13px;
+    border-bottom: 1px solid #edf2ef;
+    cursor: pointer;
+    transition: 0.15s ease;
+  }
+
+  .reservation-check:last-child {
+    border-bottom: 0;
+  }
+
+  .reservation-check:hover {
+    background: #ffffff;
+  }
+
+  .reservation-check input {
+    width: 16px;
+    height: 16px;
+    accent-color: var(--green);
+  }
+
+  .reservation-title {
+    font-size: 12px;
+    font-weight: 950;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .reservation-sub {
+    margin-top: 3px;
+    font-size: 11px;
+    color: var(--muted);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+  }
+
+  .collections-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .collections-table th {
+    background: #fbfdfc;
+    color: var(--muted);
+    padding: 13px 10px;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .collections-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+    vertical-align: middle;
+  }
+
+  .collections-table tr:hover td {
+    background: #fbfdfc;
+  }
+
+  .collection-number {
+    color: var(--green-dark);
+    font-weight: 950;
+  }
+
+  .money {
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+  }
+
+  .soft-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .badge-green { background: #eafff4; color: var(--green-dark); }
+  .badge-blue { background: var(--blue-soft); color: #11885a; }
+  .badge-yellow { background: var(--yellow-soft); color: #986a00; }
+  .badge-red { background: var(--red-soft); color: #c7384c; }
+  .badge-gray { background: #f1f5f9; color: #64748b; }
+
+  .notes-cell {
+    max-width: 260px;
+    white-space: normal !important;
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.7;
+  }
+
+  .allocate-row td {
+    background: #fbfdfc !important;
+    padding: 0 10px 16px !important;
+  }
+
+  .allocate-panel {
+    margin-top: 4px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: #ffffff;
+  }
+
+  .allocate-title {
+    font-size: 13px;
+    font-weight: 950;
+    color: var(--text);
+    margin-bottom: 12px;
+  }
+
+  .allocate-panel form {
+    display: grid;
+    grid-template-columns: 150px 1fr 120px;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .allocate-reservations {
+    max-height: 120px;
+    overflow-y: auto;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    background: #fbfdfc;
+  }
+
+  .allocate-reservations label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 8px 10px;
+    border-bottom: 1px solid #edf2ef;
+    font-size: 12px;
+    cursor: pointer;
+  }
+
+  .allocate-reservations label:last-child {
+    border-bottom: 0;
+  }
+
+  .empty-state {
+    padding: 32px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1200px) {
+    .kpi-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .collection-form {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .allocate-panel form {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .collections-head,
+    .card-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .kpi-grid,
+    .collection-form {
+      grid-template-columns: 1fr;
+    }
+
+    .reservation-check {
+      grid-template-columns: 22px 1fr;
+    }
+
+    .reservation-check .soft-badge {
+      grid-column: 2;
+      width: fit-content;
+    }
+  }
+</style>
+
+{% set ns = namespace(total_collected=0, total_allocated=0, total_unallocated=0) %}
+{% for c in collections %}
+  {% set ns.total_collected = ns.total_collected + (c.total_amount or 0) %}
+  {% set ns.total_allocated = ns.total_allocated + (c.allocated_amount or 0) %}
+  {% set ns.total_unallocated = ns.total_unallocated + (c.unallocated_amount or 0) %}
+{% endfor %}
+
+<div class="collections-page">
+
+  <div class="collections-head">
+    <div>
+      <h1>{{ L("التحصيلات", "Collections") }}</h1>
+      <p>{{ L("تسجيل تحصيلات العملاء وتوزيع المبالغ على الحجوزات المفتوحة مع حفظ أي زيادة تحت الحساب.", "Log customer collections and allocate amounts to open bookings, saving any excess on-account.") }}</p>
+    </div>
+  </div>
+
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon green">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي التحصيلات", "Total Collections") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.total_collected or 0) }}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon blue">
+        <i class="bi bi-diagram-3"></i>
+      </div>
+      <div class="kpi-label">{{ L("المبلغ الموزع", "Allocated Amount") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.total_allocated or 0) }}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon yellow">
+        <i class="bi bi-hourglass-split"></i>
+      </div>
+      <div class="kpi-label">{{ L("دفعات تحت الحساب", "On-Account Payments") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.total_unallocated or 0) }}</div>
+    </div>
+
+    <div class="kpi-card">
+      <div class="kpi-icon red">
+        <i class="bi bi-calendar2-check"></i>
+      </div>
+      <div class="kpi-label">{{ L("حجوزات مفتوحة", "Open Bookings") }}</div>
+      <div class="kpi-value">{{ open_reservations|length }}</div>
+    </div>
+  </div>
+
+  <div class="collection-card">
+    <div class="card-head">
+      <h2>{{ L("إضافة تحصيل جديد", "Add New Collection") }}</h2>
+      <span>{{ L("توزيع تلقائي", "Auto Allocation") }}</span>
+    </div>
+
+    <div class="card-body">
+      <div class="form-hint">
+        {{ L("اكتب بيانات التحصيل واختار الحجز أو الحجوزات المطلوبة. النظام يخصم من المتبقي، وأي زيادة تظهر كدفعة تحت الحساب.", "Enter collection data and choose the required booking(s). The system deducts from the remaining, any excess appears as an on-account payment.") }}
+      </div>
+
+      <form method="post" action="/collections/add">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="collection-form">
+          <div class="field-block">
+            <label>{{ L("العميل", "Customer") }}</label>
+            <select name="customer_id" class="collection-select" onchange="document.querySelector('input[name=payer_name]').value = this.options[this.selectedIndex]?.getAttribute('data-name') || ''">
+              <option value="">{{ L("اختر عميل...", "Select customer...") }}</option>
+              {% for c in customers %}
+              <option value="{{ c.id }}" data-name="{{ c.name }}">{{ c.name }} {% if c.phone %}- {{ c.phone }}{% endif %}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-block">
+            <label>{{ L("اسم الدافع", "Payer Name") }}</label>
+            <input name="payer_name" placeholder="{{ L("اسم الدافع", "Payer Name") }}" required>
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("المبلغ المدفوع", "Amount Paid") }}</label>
+            <input name="total_amount" type="number" step="0.01" min="0.01" placeholder="0.00" required>
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("العملة", "Currency") }}</label>
+            <select name="currency_id" onchange="autoFillExchangeRate('currency_id','exchange_rate')">
+              <option value="">{{ L("الأساسية", "Base") }}</option>
+              {% for c in currencies %}
+              <option value="{{ c.id }}" data-rate="{{ c.exchange_rate }}">{{ c.code }} - {{ c.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("سعر الصرف", "Exchange Rate") }}</label>
+            <input name="exchange_rate" id="exchange_rate" type="number" step="0.000001" value="1.0">
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("طريقة الدفع", "Payment Method") }}</label>
+            <select name="payment_method">
+              <option value="cash">{{ L("كاش", "Cash") }}</option>
+              <option value="bank">{{ L("تحويل بنكي", "Bank Transfer") }}</option>
+              <option value="visa">{{ L("فيزا", "Visa") }}</option>
+              <option value="wallet">{{ L("محفظة", "Wallet") }}</option>
+            </select>
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("حساب الإيداع", "Account") }} <span style="color:#d14454">*</span></label>
+            <select name="account_id" required>
+              <option value="">{{ L("اختر الحساب...", "Select account...") }}</option>
+              {% for a in accounts %}
+              {% set t = a.type or 'treasury' %}
+              {% set label = 'خزنة' if t == 'treasury' else ('بنك' if t == 'bank' else 'محفظة') %}
+              <option value="{{ a.id }}">{{ a.name }} ({{ label }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("ملاحظات", "Notes") }}</label>
+            <input name="notes" placeholder="{{ L("ملاحظات", "Notes") }}">
+          </div>
+
+          <button class="btn-add w-full justify-center">
+            {{ L("حفظ التحصيل", "Save Collection") }}
+          </button>
+        </div>
+
+        <div class="reservations-area">
+          <div class="reservations-title">
+            <h3>{{ L("الحجوزات المفتوحة", "Open Bookings") }}</h3>
+            <span>{{ open_reservations|length }} {{ L("حجز مفتوح", "Open Booking") }}</span>
+          </div>
+
+          <div class="reservations-box">
+            {% for r in open_reservations %}
+            <label class="reservation-check">
+              <input type="checkbox" name="reservation_ids" value="{{ r.id }}">
+
+              <div>
+                <div class="reservation-title">
+                  {{ r.booking_number }} - {{ r.customer.name if r.customer else r.guest_name }}
+                </div>
+                <div class="reservation-sub">
+                  {{ r.hotel.name if r.hotel else '-' }}
+                </div>
+              </div>
+
+              <span class="soft-badge badge-red">
+                {{ "%.2f"|format(r.remaining_to_office) }}
+              </span>
+            </label>
+            {% endfor %}
+
+            {% if not open_reservations %}
+            <div class="empty-state">{{ L("لا توجد حجوزات مفتوحة", "No open bookings") }}</div>
+            {% endif %}
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <div class="collection-card">
+    <div class="card-head">
+      <h2>{{ L("سجل التحصيلات", "Collections Log") }}</h2>
+      <span>{{ collections|length }} {{ L("عملية", "Operation") }}</span>
+    </div>
+
+    <div class="card-body table-wrap">
+      <table class="collections-table">
+        <thead>
+          <tr>
+            <th>{{ L("رقم التحصيل", "Collection No.") }}</th>
+            <th>{{ L("التاريخ", "Date") }}</th>
+            <th>{{ L("الدافع", "Payer") }}</th>
+            <th>{{ L("الإجمالي", "Total") }}</th>
+            <th>{{ L("العملة", "Curr.") }}</th>
+            <th>{{ L("المبلغ بالعملة", "In Currency") }}</th>
+            <th>{{ L("الموزع", "Distributor") }}</th>
+            <th>{{ L("تحت الحساب", "On Account") }}</th>
+            <th>{{ L("حالة السير", "Workflow") }}</th>
+            <th>{{ L("الحالة", "Status") }}</th>
+            <th>{{ L("ملاحظات", "Notes") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for c in collections %}
+          <tr>
+            <td>
+              <span class="collection-number">{{ c.collection_number }}</span>
+            </td>
+
+            <td>{{ c.date }}</td>
+
+            <td class="font-bold">{{ c.customer.name if c.customer else c.payer_name }}</td>
+
+            <td class="money">
+              {{ "%.2f"|format(c.total_amount or 0) }}
+            </td>
+
+            <td>{{ c.currency.code if c.currency else '-' }}</td>
+
+            <td class="money" style="font-size:12px;">
+              {{ "%.2f"|format(c.amount_currency or 0) }}
+              {% if c.currency and c.exchange_rate and c.exchange_rate != 1 %}
+              <br><span style="font-size:10px;color:var(--muted);">× {{ "%.4f"|format(c.exchange_rate) }}</span>
+              {% endif %}
+            </td>
+
+            <td class="money" style="color: var(--green-dark);">
+              {{ "%.2f"|format(c.allocated_amount or 0) }}
+            </td>
+
+            <td class="money" style="color: {{ '#986a00' if c.unallocated_amount and c.unallocated_amount > 0 else '#11885a' }};">
+              {{ "%.2f"|format(c.unallocated_amount or 0) }}
+            </td>
+
+            <td>
+              {% set wf_map = {"draft": "مسودة", "reviewed": "قيد المراجعة", "approved": "معتمد", "posted": "مرحّل", "cancelled": "ملغي"} %}
+              {% set wf_badge = {"draft": "badge-gray", "reviewed": "badge-yellow", "approved": "badge-blue", "posted": "badge-green", "cancelled": "badge-red"} %}
+              <span class="soft-badge {{ wf_badge.get(c.status, 'badge-gray') }}">{{ wf_map.get(c.status, c.status) }}</span>
+            </td>
+
+            <td>
+              {% if c.unallocated_amount and c.unallocated_amount > 0 %}
+                <span class="soft-badge badge-yellow">{{ L("تحت الحساب", "On Account") }}</span>
+              {% elif c.allocated_amount and c.allocated_amount > 0 %}
+                <span class="soft-badge badge-green">{{ L("موزع بالكامل", "Fully Allocated") }}</span>
+              {% else %}
+                <span class="soft-badge badge-gray">{{ L("غير موزع", "Unallocated") }}</span>
+              {% endif %}
+            </td>
+
+            <td class="notes-cell">
+              {{ c.notes or '-' }}
+            </td>
+
+            <td>
+              <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                {% if c.status == "draft" %}
+                  {% if has_permission(current_user, "collections.create") %}
+                  <form method="post" action="/collections/{{ c.id }}/submit" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="soft-badge badge-blue" style="border:none;cursor:pointer;">{{ L("تقديم", "Submit") }}</button>
+                  </form>
+                  {% endif %}
+                  {% if has_permission(current_user, "collections.cancel") %}
+                  <form method="post" action="/collections/{{ c.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="soft-badge badge-red" style="border:none;cursor:pointer;">{{ L("إلغاء", "Cancel") }}</button>
+                  </form>
+                  {% endif %}
+                {% elif c.status == "reviewed" %}
+                  {% if has_permission(current_user, "collections.approve") %}
+                  <form method="post" action="/collections/{{ c.id }}/approve" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="soft-badge badge-green" style="border:none;cursor:pointer;">{{ L("اعتماد", "Approve") }}</button>
+                  </form>
+                  {% endif %}
+                  {% if has_permission(current_user, "collections.cancel") %}
+                  <form method="post" action="/collections/{{ c.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="soft-badge badge-red" style="border:none;cursor:pointer;">{{ L("إلغاء", "Cancel") }}</button>
+                  </form>
+                  {% endif %}
+                {% elif c.status == "approved" %}
+                  {% if has_permission(current_user, "collections.post") %}
+                  <form method="post" action="/collections/{{ c.id }}/post" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="soft-badge badge-green" style="border:none;cursor:pointer;">{{ L("ترحيل", "Post") }}</button>
+                  </form>
+                  {% endif %}
+                  {% if has_permission(current_user, "collections.cancel") %}
+                  <form method="post" action="/collections/{{ c.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="soft-badge badge-red" style="border:none;cursor:pointer;">{{ L("إلغاء", "Cancel") }}</button>
+                  </form>
+                  {% endif %}
+                {% elif c.status == "posted" %}
+                  {% if has_permission(current_user, "collections.cancel") %}
+                  <form method="post" action="/collections/{{ c.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="soft-badge badge-red" style="border:none;cursor:pointer;">{{ L("إلغاء", "Cancel") }}</button>
+                  </form>
+                  {% endif %}
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+
+          {% if c.unallocated_amount and c.unallocated_amount > 0 %}
+          <tr class="allocate-row">
+            <td colspan="10">
+              <div class="allocate-panel">
+                <div class="allocate-title">
+                  {{ L("توزيع الدفعة تحت الحساب للتحصيل", "Allocate on-account payment to collection") }} {{ c.collection_number }}
+                </div>
+
+                <form method="post" action="/collections/{{ c.id }}/allocate-remaining">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input
+                    type="number"
+                    name="amount"
+                    step="0.01"
+                    max="{{ c.unallocated_amount }}"
+                    value="{{ c.unallocated_amount }}"
+                    placeholder="{{ L("المبلغ", "Amount") }}"
+                  >
+
+                  <div class="allocate-reservations">
+                    {% for r in open_reservations %}
+                    <label>
+                      <input type="checkbox" name="reservation_ids" value="{{ r.id }}">
+                      <span>{{ r.booking_number }} - {{ r.customer.name if r.customer else r.guest_name }} - {{ "%.2f"|format(r.remaining_to_office) }}</span>
+                    </label>
+                    {% endfor %}
+                  </div>
+
+                  <button class="btn-add justify-center">
+                    {{ L("توزيع", "Allocation") }}
+                  </button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endif %}
+          {% endfor %}
+
+          {% if not collections %}
+          <tr>
+            <td colspan="10">
+              <div class="empty-state">{{ L("لا توجد تحصيلات بعد", "No collections yet") }}</div>
+            </td>
+          </tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  {% import '_pagination.html' as pgn %}
+  {{ pgn.pagination_bar(p, base_url) }}
+
+</div>
+
+{% endblock %}

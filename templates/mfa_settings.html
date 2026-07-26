@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/qrcode@1.5.3/build/qrcode.min.js"></script>
+<style>
+  .mfa-page{--brass:#b8873b;--teal:#0e6b64;--text:#16202e;--muted:#736a58;--border:#e6ddc8;max-width:620px;margin:0 auto;}
+  .mfa-header h1{margin:0;font-size:24px;font-weight:950;color:var(--text);font-family:"El Messiri","Cairo",sans-serif;}
+  .mfa-header p{margin:6px 0 22px;color:var(--muted);font-size:13px;font-weight:800;}
+  .card-box{background:#fff;border:1px solid var(--border);border-radius:24px;box-shadow:0 12px 28px rgba(16,24,38,.05);padding:24px;margin-bottom:20px;}
+  .status-row{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-radius:14px;background:#f7f3ea;margin-bottom:18px;}
+  .status-row .label{font-size:13px;font-weight:800;color:var(--text);}
+  .badge-on{background:#eaf3f1;color:#0a4f4a;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:900;}
+  .badge-off{background:#f1ede1;color:#736a58;padding:5px 14px;border-radius:999px;font-size:12px;font-weight:900;}
+  #qrcanvas{display:block;margin:0 auto 16px;border-radius:16px;border:8px solid #f7f3ea;}
+  .secret-box{background:#f7f3ea;border:1px dashed #d8cba3;border-radius:12px;padding:12px 14px;font-family:monospace;font-size:14px;letter-spacing:2px;text-align:center;direction:ltr;margin-bottom:18px;word-break:break-all;}
+  .step-label{font-size:12px;font-weight:900;color:var(--brass);text-transform:uppercase;letter-spacing:.5px;margin-bottom:8px;}
+  input[name="mfa_code"], input[name="password"]{width:100%;padding:12px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;font-family:inherit;margin-bottom:12px;}
+  .btn-submit{background:linear-gradient(135deg,#0e6b64,#0a4f4a);color:#fff;border:0;border-radius:14px;padding:12px 22px;font-weight:900;font-size:14px;cursor:pointer;}
+  .btn-danger{background:linear-gradient(135deg,#b0463f,#8a332d);color:#fff;border:0;border-radius:14px;padding:12px 22px;font-weight:900;font-size:14px;cursor:pointer;}
+  .hint{font-size:12.5px;color:var(--muted);margin-bottom:16px;line-height:1.7;}
+</style>
+
+<div class="mfa-page">
+  <div class="mfa-header">
+    <h1><i class="bi bi-shield-lock-fill"></i> {{ L("المصادقة الثنائية (MFA)", "Two-Factor Authentication") }}</h1>
+    <p>{{ L("طبقة حماية إضافية لحسابك — حتى لو حد عرف كلمة المرور مش هيقدر يدخل من غير رمز من موبايلك.", "An extra layer of protection for your account — even if someone knows your password, they can't sign in without the code on your phone.") }}</p>
+  </div>
+
+  {% if request.query_params.get('error') %}
+  <div class="card-box" style="background:#fbeeec;border-color:#f0d8d4;color:#8a332d;font-weight:800;">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ request.query_params.get('error') }}
+  </div>
+  {% endif %}
+
+  <div class="card-box">
+    <div class="status-row">
+      <span class="label">{{ L("الحالة الحالية", "Current Status") }}</span>
+      {% if mfa_enabled %}
+        <span class="badge-on"><i class="bi bi-check-circle-fill"></i> {{ L("مفعّلة", "Enabled") }}</span>
+      {% else %}
+        <span class="badge-off"><i class="bi bi-x-circle"></i> {{ L("غير مفعّلة", "Disabled") }}</span>
+      {% endif %}
+    </div>
+
+    {% if not mfa_enabled %}
+      <div class="step-label">{{ L("الخطوة 1", "Step 1") }}</div>
+      <p class="hint">{{ L("افتح تطبيق مصادقة (Google Authenticator أو Authy أو أي تطبيق TOTP) وامسح الكود ده:", "Open an authenticator app (Google Authenticator, Authy, or any TOTP app) and scan this code:") }}</p>
+      <canvas id="qrcanvas"></canvas>
+      <div class="secret-box">{{ secret_display }}</div>
+      <p class="hint">{{ L("لو مش قادر تمسح الكود، اكتب المفتاح ده يدويًا في التطبيق.", "If you can't scan the code, type this key manually into the app instead.") }}</p>
+
+      <div class="step-label">{{ L("الخطوة 2", "Step 2") }}</div>
+      <form method="post" action="/settings/mfa/enable">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="text" name="mfa_code" inputmode="numeric" maxlength="6" placeholder="{{ L('أدخل الرمز المكوّن من 6 أرقام من التطبيق', 'Enter the 6-digit code from the app') }}" required autocomplete="one-time-code">
+        <button type="submit" class="btn-submit"><i class="bi bi-shield-check"></i> {{ L("تأكيد وتفعيل", "Confirm & Enable") }}</button>
+      </form>
+
+      <script>
+        QRCode.toCanvas(document.getElementById('qrcanvas'), {{ provisioning_uri|tojson }}, { width: 220, margin: 1 });
+      </script>
+    {% else %}
+      <p class="hint">{{ L("المصادقة الثنائية مفعّلة على حسابك. لو عايز توقفها، أدخل كلمة المرور تأكيدًا.", "Two-factor authentication is active on your account. To turn it off, confirm with your password.") }}</p>
+      <form method="post" action="/settings/mfa/disable" onsubmit="return confirm('{{ L('تأكيد إيقاف المصادقة الثنائية؟', 'Confirm disabling two-factor authentication?') }}')">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <input type="password" name="password" placeholder="{{ L('كلمة المرور', 'Password') }}" required>
+        <button type="submit" class="btn-danger"><i class="bi bi-shield-x"></i> {{ L("إيقاف المصادقة الثنائية", "Disable Two-Factor Auth") }}</button>
+      </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .dept-page{--brass:#b8873b;--teal:#0e6b64;--text:#16202e;--muted:#736a58;--border:#e6ddc8;}
+  .dept-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:20px;}
+  .dept-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);font-family:"El Messiri","Cairo",sans-serif;}
+  .dept-header p{margin:7px 0 0;color:var(--muted);font-size:13px;font-weight:800;}
+  .grid-2{display:grid;grid-template-columns:1.3fr 1fr;gap:20px;}
+  @media (max-width:900px){.grid-2{grid-template-columns:1fr;}}
+  .card-box{background:#fff;border:1px solid var(--border);border-radius:24px;box-shadow:0 12px 28px rgba(16,24,38,.05);padding:20px;margin-bottom:20px;}
+  .card-box h2{font-size:16px;font-weight:900;color:var(--text);margin:0 0 14px;font-family:"El Messiri","Cairo",sans-serif;}
+  .dept-card{border:1px solid var(--border);border-radius:16px;padding:14px 16px;margin-bottom:12px;position:relative;border-inline-start:3px solid var(--brass);}
+  .dept-card h3{margin:0 0 3px;font-size:15px;font-weight:900;color:var(--text);}
+  .dept-card .en-name{font-size:11.5px;color:var(--muted);font-weight:700;}
+  .dept-card .meta{font-size:12px;color:var(--muted);margin-top:6px;font-weight:700;}
+  .dept-card .count-pill{position:absolute;top:14px;inset-inline-end:14px;background:#eaf3f1;color:#0a4f4a;font-size:11px;font-weight:900;padding:3px 10px;border-radius:999px;}
+  .dept-actions{margin-top:10px;display:flex;gap:8px;}
+  .dept-actions button, .dept-actions a{font-size:11.5px;font-weight:800;padding:5px 12px;border-radius:10px;border:1px solid var(--border);background:#fff;cursor:pointer;color:var(--text);text-decoration:none;}
+  .dept-actions .danger{color:#8a332d;border-color:#f0d8d4;}
+  form.inline-form{display:flex;flex-direction:column;gap:10px;}
+  form.inline-form input, form.inline-form select, form.inline-form textarea{border:1px solid var(--border);border-radius:12px;padding:9px 12px;font-size:13px;font-family:inherit;}
+  form.inline-form label{font-size:11.5px;font-weight:800;color:var(--muted);}
+  .btn-submit{background:linear-gradient(135deg,#0e6b64,#0a4f4a);color:#fff;border:0;border-radius:12px;padding:10px;font-weight:900;font-size:13px;cursor:pointer;}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:start;padding:8px 6px;color:var(--muted);font-size:11px;font-weight:900;text-transform:uppercase;border-bottom:1px solid var(--border);}
+  td{padding:8px 6px;border-bottom:1px solid var(--border);font-weight:700;}
+  .unassigned-flag{background:#fbeeec;color:#8a332d;font-size:10.5px;font-weight:900;padding:2px 8px;border-radius:999px;}
+</style>
+
+<div class="dept-page">
+  <div class="dept-header">
+    <div>
+      <h1><i class="bi bi-diagram-3-fill"></i> {{ L("الأقسام وتوزيع الموظفين", "Departments") }}</h1>
+      <p>{{ L("إنشاء أقسام الشركة وتوزيع الموظفين عليها", "Create departments and assign employees to them") }}</p>
+    </div>
+  </div>
+
+  <div class="grid-2">
+    <div>
+      <div class="card-box">
+        <h2><i class="bi bi-building"></i> {{ L("الأقسام الحالية", "Current Departments") }} ({{ departments|length }})</h2>
+        {% for d in departments %}
+        <div class="dept-card">
+          <span class="count-pill">{{ d.employees|length }} {{ L("موظف", "staff") }}</span>
+          <h3>{{ d.name }}</h3>
+          {% if d.name_en %}<div class="en-name">{{ d.name_en }}</div>{% endif %}
+          {% if d.manager %}<div class="meta"><i class="bi bi-person-badge"></i> {{ L("المدير", "Manager") }}: {{ d.manager.name }}</div>{% endif %}
+          {% if d.notes %}<div class="meta">{{ d.notes }}</div>{% endif %}
+          <div class="dept-actions">
+            <a href="#" onclick="document.getElementById('edit-{{ d.id }}').style.display='block';return false;">
+              <i class="bi bi-pencil"></i> {{ L("تعديل", "Edit") }}
+            </a>
+            <form method="post" action="/settings/departments/{{ d.id }}/delete" style="display:inline"
+                  onsubmit="return confirm('{{ L('حذف القسم؟ الموظفين هيرجعوا بدون قسم.', 'Delete department? Staff will become unassigned.') }}')">
+              <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+              <button type="submit" class="danger"><i class="bi bi-trash"></i> {{ L("حذف", "Delete") }}</button>
+            </form>
+          </div>
+          <form id="edit-{{ d.id }}" method="post" action="/settings/departments/{{ d.id }}/edit" class="inline-form" style="display:none;margin-top:12px;padding-top:12px;border-top:1px dashed var(--border);">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <input type="text" name="name" value="{{ d.name }}" required placeholder="{{ L('اسم القسم بالعربي', 'Arabic name') }}">
+            <input type="text" name="name_en" value="{{ d.name_en or '' }}" placeholder="English name">
+            <select name="manager_id">
+              <option value="">{{ L("بدون مدير", "No manager") }}</option>
+              {% for e in employees %}
+              <option value="{{ e.id }}" {{ 'selected' if d.manager_id == e.id }}>{{ e.name }}</option>
+              {% endfor %}
+            </select>
+            <textarea name="notes" rows="2" placeholder="{{ L('ملاحظات', 'Notes') }}">{{ d.notes or '' }}</textarea>
+            <button type="submit" class="btn-submit">{{ L("حفظ", "Save") }}</button>
+          </form>
+        </div>
+        {% else %}
+        <p style="color:var(--muted);font-size:13px;">{{ L("مفيش أقسام لسه — أضيف أول قسم من الفورم جنب.", "No departments yet — add the first one.") }}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    <div>
+      <div class="card-box">
+        <h2><i class="bi bi-plus-circle"></i> {{ L("إضافة قسم جديد", "Add Department") }}</h2>
+        <form method="post" action="/settings/departments/add" class="inline-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label>{{ L("اسم القسم (عربي)", "Name (Arabic)") }}</label>
+          <input type="text" name="name" required>
+          <label>{{ L("اسم القسم (إنجليزي)", "Name (English)") }}</label>
+          <input type="text" name="name_en">
+          <label>{{ L("المدير", "Manager") }}</label>
+          <select name="manager_id">
+            <option value="">{{ L("بدون مدير", "No manager") }}</option>
+            {% for e in employees %}
+            <option value="{{ e.id }}">{{ e.name }}</option>
+            {% endfor %}
+          </select>
+          <label>{{ L("ملاحظات", "Notes") }}</label>
+          <textarea name="notes" rows="2"></textarea>
+          <button type="submit" class="btn-submit">{{ L("إضافة القسم", "Add Department") }}</button>
+        </form>
+      </div>
+
+      <div class="card-box">
+        <h2><i class="bi bi-person-lines-fill"></i> {{ L("توزيع موظف على قسم", "Assign Employee") }}</h2>
+        <form method="post" action="/settings/departments/assign" class="inline-form">
+          <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <label>{{ L("الموظف", "Employee") }}</label>
+          <select name="employee_id" required>
+            {% for e in employees %}
+            <option value="{{ e.id }}">{{ e.name }}{% if not e.department_id %} — {{ L("بدون قسم", "unassigned") }}{% endif %}</option>
+            {% endfor %}
+          </select>
+          <label>{{ L("القسم", "Department") }}</label>
+          <select name="department_id">
+            <option value="">{{ L("بدون قسم", "No department") }}</option>
+            {% for d in departments %}
+            <option value="{{ d.id }}">{{ d.name }}</option>
+            {% endfor %}
+          </select>
+          <button type="submit" class="btn-submit">{{ L("حفظ التوزيع", "Save Assignment") }}</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  {% if unassigned %}
+  <div class="card-box">
+    <h2><i class="bi bi-exclamation-triangle"></i> {{ L("موظفين بدون قسم", "Unassigned Employees") }} ({{ unassigned|length }})</h2>
+    <table>
+      <thead><tr><th>{{ L("الاسم", "Name") }}</th><th>{{ L("الوظيفة", "Job Title") }}</th><th></th></tr></thead>
+      <tbody>
+        {% for e in unassigned %}
+        <tr>
+          <td>{{ e.name }} <span class="unassigned-flag">{{ L("بدون قسم", "unassigned") }}</span></td>
+          <td>{{ e.job_title or "—" }}</td>
+          <td></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

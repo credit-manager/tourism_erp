@@ -1,0 +1,152 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .pv-page{max-width:900px;margin:0 auto;--text:#172033;--muted:#7b8798;--border:#e8eee9}
+  .pv-page .card{background:#fff;border:1px solid var(--border);border-radius:26px;padding:24px;margin-bottom:18px;box-shadow:0 18px 45px rgba(15,23,42,0.045)}
+  .pv-page .card h3{margin:0 0 16px;font-size:15px;font-weight:950;color:var(--text)}
+  .pv-page .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:16px}
+  .pv-page .info-item{}
+  .pv-page .info-item .label{font-size:11px;font-weight:800;color:var(--muted);text-transform:uppercase;letter-spacing:.3px;margin-bottom:4px}
+  .pv-page .info-item .value{font-size:15px;font-weight:800;color:var(--text)}
+  .pv-page table{width:100%;border-collapse:collapse;font-size:13px}
+  .pv-page th{background:#fbfdfc;color:var(--muted);padding:12px 8px;font-size:12px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+  .pv-page td{padding:13px 8px;border-bottom:1px solid #edf2ef;color:var(--text);text-align:center;vertical-align:middle}
+  .pv-page tr:hover td{background:#fbfdfc}
+  .pv-page .money{font-weight:950;direction:ltr}
+  .pv-page .soft-badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap}
+  .pv-page .badge-green{background:#eafff4;color:#11885a}
+  .pv-page .badge-yellow{background:#fff7df;color:#986a00}
+  .pv-page .badge-red{background:#fff0f2;color:#c7384c}
+  .pv-page .badge-blue{background:#eef3ff;color:#1a56db}
+  .pv-page .badge-gray{background:#f1f5f9;color:#64748b}
+  .pv-page .badge-purple{background:#f3eeff;color:#7c3aed}
+  .pv-page .v-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;font-size:14px;font-weight:800;border-radius:13px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+  .pv-page .v-btn-outline{background:#fff;color:#64748b;border:2px solid #e2e8f0}
+  .pv-page .v-btn-outline:hover{background:#f8fafc;color:#172033;border-color:#cbd5e1}
+  .pv-page .v-btn-primary{background:#11885a;color:#fff}
+  .pv-page .v-btn-primary:hover{background:#0d6e49}
+  .pv-page .v-btn-danger{background:#fee2e4;color:#c7384c}
+  .pv-page .v-btn-danger:hover{background:#fcced1}
+  .pv-page .v-btn-blue{background:#eef3ff;color:#1a56db}
+  .pv-page .v-btn-blue:hover{background:#dde6ff}
+  .pv-page .total-row{background:#fbfdfc;font-weight:950}
+  .pv-page .total-row td{padding:14px 8px;font-size:14px}
+</style>
+<div class="pv-page">
+  <div style="display:flex;justify-content:flex-end">
+    <a href="/suppliers/payments" class="v-btn v-btn-outline" style="margin-bottom:14px;padding:7px 16px;font-size:12px">
+      <i class="bi bi-arrow-right"></i> {{ L("العودة", "Back") }}
+    </a>
+  </div>
+  <div class="card">
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:18px">
+      <div>
+        <h1 style="font-size:26px;font-weight:950;color:var(--text);margin:0">{{ payment.payment_number }}</h1>
+        <p style="color:var(--muted);font-size:13px;margin:4px 0 0">{{ L("دفعة مورد", "Supplier Payment") }}</p>
+      </div>
+      <div>
+        {% set wf_badge = {"draft":"badge-gray","reviewed":"badge-yellow","approved":"badge-blue","posted":"badge-green","cancelled":"badge-red"} %}
+        <span class="soft-badge {{ wf_badge.get(payment.status,'badge-gray') }}" style="font-size:13px;padding:6px 14px">
+          {{ {"draft":"مسودة","reviewed":"قيد المراجعة","approved":"معتمد","posted":"مرحّل","cancelled":"ملغي"}.get(payment.status, payment.status) }}
+        </span>
+        {% if payment.unallocated_amount > 0 %}
+        <span class="soft-badge badge-yellow" style="font-size:13px;padding:6px 14px;margin-right:6px">{{ L("حساب معلق", "Suspended") }}</span>
+        {% endif %}
+      </div>
+    </div>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="label">{{ L("المورد", "Supplier") }}</div>
+        <div class="value">{{ payment.supplier.name if payment.supplier else '-' }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("التاريخ", "Date") }}</div>
+        <div class="value">{{ payment.date }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("الإجمالي", "Total") }}</div>
+        <div class="value money" style="color:#11885a">{{ payment.total_amount|c }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("تم توزيعه", "Allocated") }}</div>
+        <div class="value money" style="color:#1a56db">{{ payment.allocated_amount|c }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("معلق", "Pending") }}</div>
+        <div class="value money" style="color:{{ '#986a00' if payment.unallocated_amount > 0 else '#64748b' }}">{{ payment.unallocated_amount|c }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("بواسطة", "Created By") }}</div>
+        <div class="value">{{ payment.created_by or '-' }}</div>
+      </div>
+    </div>
+    {% if payment.notes %}
+    <div style="margin-top:16px;padding:14px;background:#fbfdfc;border-radius:14px;border:1px solid var(--border);font-size:13px;color:var(--muted)">
+      <strong>{{ L("ملاحظات:", "Notes:") }}</strong> {{ payment.notes }}
+    </div>
+    {% endif %}
+  </div>
+
+  {% if payment.allocations %}
+  <div class="card">
+    <h3><i class="bi bi-diagram-2"></i> {{ L("توزيعات الدفعة", "Payment Allocations") }}</h3>
+    <table>
+      <thead>
+        <tr>
+          <th style="width:18%">{{ L("رقم الحجز", "Booking #") }}</th>
+          <th style="width:20%">{{ L("العميل", "Customer") }}</th>
+          <th style="width:15%">{{ L("التاريخ", "Date") }}</th>
+          <th style="width:15%">{{ L("المبلغ", "Amount") }}</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for a in payment.allocations %}
+        <tr>
+          <td style="font-weight:700;color:#11885a">#{{ a.reservation_id }}</td>
+          <td>{{ a.reservation.guest_name if a.reservation else '-' }}</td>
+          <td>{{ a.date }}</td>
+          <td class="money">{{ a.amount|c }}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+      <tfoot>
+        <tr class="total-row">
+          <td colspan="3" style="text-align:left;font-weight:950">{{ L("الإجمالي", "Total") }}</td>
+          <td class="money">{{ payment.allocated_amount|c }}</td>
+        </tr>
+      </tfoot>
+    </table>
+  </div>
+  {% endif %}
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:flex-end">
+    <a href="/suppliers/payments" class="v-btn v-btn-outline">
+      <i class="bi bi-arrow-right"></i> {{ L("العودة للقائمة", "Back to List") }}
+    </a>
+    {% if payment.status == "draft" and has_permission(request.state.user, 'supplier_payments.create') %}
+    <form method="post" action="/suppliers/payments/{{ payment.id }}/submit" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="v-btn v-btn-blue" type="submit"><i class="bi bi-send"></i> {{ L("تقديم", "Submit") }}</button>
+    </form>
+    {% endif %}
+    {% if payment.status == "reviewed" and has_permission(request.state.user, 'supplier_payments.approve') %}
+    <form method="post" action="/suppliers/payments/{{ payment.id }}/approve" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="v-btn v-btn-primary" type="submit"><i class="bi bi-check-lg"></i> {{ L("اعتماد", "Approve") }}</button>
+    </form>
+    {% endif %}
+    {% if payment.status == "approved" and has_permission(request.state.user, 'supplier_payments.post') %}
+    <form method="post" action="/suppliers/payments/{{ payment.id }}/post" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="v-btn v-btn-primary" type="submit"><i class="bi bi-arrow-right-circle"></i> {{ L("ترحيل", "Post") }}</button>
+    </form>
+    {% endif %}
+    {% if payment.status in ("draft","reviewed","approved","posted") and has_permission(request.state.user, 'supplier_payments.cancel') %}
+    <form method="post" action="/suppliers/payments/{{ payment.id }}/cancel" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="v-btn v-btn-danger" type="submit"><i class="bi bi-x-lg"></i> {{ L("إلغاء", "Cancel") }}</button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

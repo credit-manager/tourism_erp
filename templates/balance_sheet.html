@@ -1,0 +1,30 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="grid grid-cols-2 gap-6">
+  <div class="bg-white rounded-xl shadow p-5">
+    <h2 class="font-bold text-gray-700 mb-4 border-b pb-2">{{ L("الأصول (Assets)", "Assets") }}</h2>
+    <div class="flex justify-between py-2"><span>{{ L("الخزنة والبنوك", "Treasury & Banks") }}</span><span class="font-bold">{{ "%.2f"|format(treasury_total) }}</span></div>
+    <div class="flex justify-between py-2"><span>{{ L("ذمم العملاء (مستحق من العملاء)", "Customer Receivables (Due from Customers)") }}</span><span class="font-bold">{{ "%.2f"|format(accounts_receivable) }}</span></div>
+    <div class="flex justify-between py-3 border-t mt-2 font-bold" style="color:var(--purple);"><span>{{ L("إجمالي الأصول", "Total Assets") }}</span><span>{{ "%.2f"|format(total_assets) }}</span></div>
+  </div>
+
+  <div class="bg-white rounded-xl shadow p-5">
+    <h2 class="font-bold text-gray-700 mb-4 border-b pb-2">{{ L("الخصوم وحقوق الملكية", "Liabilities & Equity") }}</h2>
+    <div class="flex justify-between py-2"><span>{{ L("ذمم الموردين (مستحق للموردين)", "Supplier Receivables (Due to Suppliers)") }}</span><span class="font-bold text-red-600">{{ "%.2f"|format(accounts_payable) }}</span></div>
+    <div class="flex justify-between py-3 border-t mt-2 font-bold"><span>{{ L("إجمالي الخصوم", "Total Liabilities") }}</span><span>{{ "%.2f"|format(total_liabilities) }}</span></div>
+    <div class="flex justify-between py-2 mt-4"><span>{{ L("حقوق الملكية (الفرق بين الأصول والخصوم)", "Equity (difference between assets and liabilities)") }}</span><span class="font-bold text-green-600">{{ "%.2f"|format(equity) }}</span></div>
+    <div class="flex justify-between py-3 border-t mt-2 font-bold" style="color:var(--purple);"><span>{{ L("إجمالي الخصوم + حقوق الملكية", "Total Liabilities + Equity") }}</span><span>{{ "%.2f"|format(total_liabilities + equity) }}</span></div>
+  </div>
+</div>
+
+<div class="bg-white rounded-xl shadow p-5 mt-6">
+  <p class="text-sm text-gray-500">
+    <i class="bi bi-info-circle"></i> {{ L("هذه ميزانية مبسطة تُحسب لحظياً من بيانات النظام: الخزنة الفعلية، المتبقي تحصيله من كل الحجوزات (أصل)،
+    والمستحق لكل الموردين (خصم). حقوق الملكية هنا رقم موازن (Assets - Liabilities) وليست نتاج قيود يومية مزدوجة كاملة.
+    لربط الأرباح والخسائر بنفس الشجرة، راجع صفحة", "This is a simplified balance sheet calculated in real-time from system data: actual treasury, remaining to collect from all bookings (asset),
+    and amounts due to all suppliers (liability). Equity here is a balancing figure (Assets - Liabilities) and is not full double-entry accounting.
+    To link profit and loss to the same tree, see page") }} <a href="/reports" class="underline" style="color:var(--purple);">{{ L("التقارير", "Reports") }}</a>.
+  </p>
+</div>
+{% endblock %}

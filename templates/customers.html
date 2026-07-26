@@ -1,0 +1,803 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .customers-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --blue:#bfd175;
+    --blue-soft:#f4fce8;
+    --yellow:#f4c44d;
+    --yellow-soft:#fff8de;
+    --purple:#8a7cf7;
+    --purple-soft:#f4f1ff;
+    --red:#eb5d6c;
+    --red-soft:#fff1f3;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --card:#ffffff;
+    direction: inherit;
+  }
+
+  .customers-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:20px;
+  }
+
+  .customers-header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .customers-header p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .customers-stats{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+
+  .stat-card,
+  .main-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);
+  }
+
+  .stat-card{
+    padding:18px;
+    min-height:118px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    left:-40px;
+    bottom:-45px;
+    width:110px;
+    height:110px;
+    border-radius:999px;
+    background:rgba(26,86,219,.06);
+  }
+
+  .stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    margin-bottom:12px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-icon.orange{ background:var(--yellow-soft); color:#ab7700; }
+  .stat-icon.purple{ background:var(--purple-soft); color:var(--purple); }
+  .stat-icon.green{ background:var(--primary-soft); color:var(--primary); }
+  .stat-icon.blue{ background:var(--blue-soft); color:var(--blue); }
+
+  .stat-label{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:850;
+    margin-bottom:5px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-value{
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+    direction:ltr;
+    text-align:right;
+    position:relative;
+    z-index:1;
+  }
+
+  .customers-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1.7fr) minmax(340px,.9fr);
+    gap:18px;
+    align-items:start;
+  }
+
+  .card-head{
+    padding:18px 20px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+
+  .card-head h2{
+    margin:0;
+    font-size:16px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .card-chip{
+    padding:7px 11px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:#fbfdfc;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:850;
+    white-space:nowrap;
+  }
+
+  .customers-search{
+    width:270px;
+    max-width:100%;
+    height:43px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:#fbfdfc;
+    display:flex;
+    align-items:center;
+    gap:9px;
+    padding:0 14px;
+  }
+
+  .customers-search i{
+    color:var(--muted);
+  }
+
+  .customers-search input{
+    width:100%;
+    border:0 !important;
+    outline:0 !important;
+    background:transparent !important;
+    box-shadow:none !important;
+    font-size:13px !important;
+    font-weight:700;
+    color:var(--text);
+  }
+
+  .card-body{
+    padding:16px 20px 20px;
+  }
+
+  .table-wrap{
+    overflow-x:auto;
+    padding-bottom:6px;
+  }
+
+  .table-wrap::-webkit-scrollbar{
+    height:10px;
+  }
+
+  .table-wrap::-webkit-scrollbar-thumb{
+    background:#d4ddd7;
+    border-radius:999px;
+  }
+
+  .table-wrap::-webkit-scrollbar-track{
+    background:#f3f7f5;
+    border-radius:999px;
+  }
+
+  .customers-table{
+    width:100%;
+    min-width:850px;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13px;
+  }
+
+  .customers-table th{
+    background:#f8fcfa;
+    color:var(--muted);
+    padding:14px 10px;
+    font-size:12px;
+    font-weight:950;
+    border-bottom:1px solid var(--border);
+    text-align:center;
+    white-space:nowrap;
+  }
+
+  .customers-table td{
+    padding:14px 10px;
+    border-bottom:1px solid #edf2ef;
+    text-align:center;
+    white-space:nowrap;
+    color:var(--text);
+    vertical-align:middle;
+  }
+
+  .customers-table tr:hover td{
+    background:#fbfefc;
+  }
+
+  .customer-name{
+    color:var(--primary-dark);
+    font-weight:950;
+  }
+
+  .customer-name:hover{
+    text-decoration:underline;
+  }
+
+  .type-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .type-b2b{
+    background:var(--blue-soft);
+    color:#11885a;
+  }
+
+  .type-b2c{
+    background:#f1f5f9;
+    color:#64748b;
+  }
+
+  .money-green{
+    color:var(--primary-dark);
+    font-weight:950;
+    direction:ltr;
+  }
+
+  .money-red{
+    color:var(--red);
+    font-weight:950;
+    direction:ltr;
+  }
+
+  .actions{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+
+  .action-btn{
+    width:34px;
+    height:34px;
+    border-radius:11px;
+    border:1px solid #dde7e1;
+    background:#fff;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.15s ease;
+    box-shadow:0 6px 14px rgba(15,23,42,.05);
+  }
+
+  .action-btn:hover{
+    transform:translateY(-1px);
+    background:#fbfefc;
+  }
+
+  .action-btn.edit{ color:#11885a; }
+  .action-btn.delete{ color:var(--red); }
+
+  .edit-row td{
+    background:#fbfdfc !important;
+    padding:0 10px 16px !important;
+  }
+
+  .edit-box{
+    margin-top:4px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:#fff;
+    padding:14px;
+  }
+
+  .edit-form{
+    display:grid;
+    grid-template-columns:1.2fr 160px 1fr 1fr 1fr 1fr 120px;
+    gap:10px;
+    align-items:start;
+  }
+
+  .side-card{
+    position:sticky;
+    top:18px;
+  }
+
+  .helper-box{
+    padding:13px 14px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:linear-gradient(135deg,var(--primary-soft),#fff);
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.8;
+    margin-bottom:14px;
+  }
+
+  .form-grid{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .field-group label{
+    display:block;
+    margin-bottom:6px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .field-input,
+  .field-select{
+    width:100%;
+    border:1px solid #dde7e1;
+    border-radius:14px;
+    background:#fff;
+    color:var(--text);
+    font-size:13px;
+    font-weight:700;
+    padding:0 13px;
+    height:43px;
+  }
+
+  .field-input:focus,
+  .field-select:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(26,86,219,.1);
+  }
+
+  .save-btn{
+    width:100%;
+    min-height:43px;
+    border:0;
+    border-radius:15px;
+    background:linear-gradient(135deg,var(--lime),#b8c96a);
+    color:#172033;
+    font-size:13px;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    cursor:pointer;
+    box-shadow:0 8px 16px rgba(103, 197, 80,.24);
+    transition:.16s ease;
+    white-space:nowrap;
+  }
+
+  .save-btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(.98);
+  }
+
+  .empty-state{
+    padding:34px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .filter-bar{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    padding:14px 18px;
+    margin-bottom:18px;
+    display:flex;
+    flex-wrap:wrap;
+    gap:10px;
+    align-items:end;
+  }
+
+  .filter-bar .field-group label{
+    display:block;
+    margin-bottom:4px;
+    color:var(--muted);
+    font-size:11px;
+    font-weight:900;
+  }
+
+  .filter-bar .field-input,
+  .filter-bar .field-select{
+    height:38px;
+    font-size:12px;
+    border-radius:14px;
+  }
+
+  .filter-bar .filter-reset{
+    height:38px;
+    padding:0 14px;
+    border:1px solid var(--border);
+    border-radius:14px;
+    background:#fbfdfc;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:800;
+    cursor:pointer;
+    text-decoration:none;
+    display:inline-flex;
+    align-items:center;
+    white-space:nowrap;
+  }
+
+  .filter-bar .filter-reset:hover{
+    background:#f0f4f2;
+  }
+
+  @media (max-width:1250px){
+    .customers-stats{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .customers-layout{
+      grid-template-columns:1fr;
+    }
+
+    .side-card{
+      position:static;
+    }
+
+    .edit-form{
+      grid-template-columns:1fr;
+    }
+  }
+
+  @media (max-width:700px){
+    .customers-header,
+    .card-head{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .customers-stats{
+      grid-template-columns:1fr;
+    }
+
+    .customers-search{
+      width:100%;
+    }
+  }
+</style>
+
+<div class="customers-page">
+
+  <div class="customers-header">
+    <div>
+      <h1>{{ L("العملاء", "Customers") }}</h1>
+      <p>{{ L("إدارة العملاء، بيانات التواصل، نوع العميل، والأرصدة الحالية.", "Manage customers, contact data, customer type, and current balances.") }}</p>
+    </div>
+  </div>
+
+  <div class="customers-stats">
+    <div class="stat-card">
+      <div class="stat-icon orange">
+        <i class="bi bi-people-fill"></i>
+      </div>
+      <div class="stat-label">{{ L("إجمالي العملاء", "Total Customers") }}</div>
+      <div class="stat-value">{{ customers|length }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        <i class="bi bi-buildings"></i>
+      </div>
+      <div class="stat-label">B2B</div>
+      <div class="stat-value">{{ b2b_count }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="bi bi-person"></i>
+      </div>
+      <div class="stat-label">B2C</div>
+      <div class="stat-value">{{ b2c_count }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <div class="stat-label">{{ L("إجمالي الأرصدة", "Total Balances") }}</div>
+      <div class="stat-value">{{ "%.0f"|format(total_balance or 0) }}</div>
+    </div>
+  </div>
+
+  <form method="GET" action="/customers" class="filter-bar">
+    <div class="field-group">
+      <label>{{ L("التصنيف", "Classification") }}</label>
+      <select name="classification" class="field-select" onchange="this.form.submit()">
+        <option value="">{{ L("الكل", "All") }}</option>
+        {% for cls in classifications %}
+          <option value="{{ cls }}" {{ 'selected' if f_classification == cls }}>{{ cls|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>{{ L("المصدر", "Source") }}</label>
+      <select name="source" class="field-select" onchange="this.form.submit()">
+        <option value="">{{ L("الكل", "All") }}</option>
+        {% for src in sources %}
+          <option value="{{ src }}" {{ 'selected' if f_source == src }}>{{ src|capitalize }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>{{ L("النوع", "Type") }}</label>
+      <select name="type" class="field-select" onchange="this.form.submit()">
+        <option value="">{{ L("الكل", "All") }}</option>
+        <option value="B2C" {{ 'selected' if f_type == 'B2C' }}>B2C</option>
+        <option value="B2B" {{ 'selected' if f_type == 'B2B' }}>B2B</option>
+      </select>
+    </div>
+
+    <div class="field-group">
+      <label>{{ L("بحث", "Search") }}</label>
+      <input type="text" name="q" value="{{ f_q }}" class="field-input" placeholder="{{ L("بحث...", "Search...") }}">
+    </div>
+
+    <a href="/customers" class="filter-reset">{{ L("إعادة تعيين", "Reset") }}</a>
+  </form>
+
+  <div class="customers-layout">
+
+    <div class="main-card">
+      <div class="card-head">
+        <div>
+          <h2>{{ L("قائمة العملاء", "Customers List") }}</h2>
+        </div>
+
+        <div class="customers-search">
+          <i class="bi bi-search"></i>
+          <input placeholder="{{ L("بحث عن عميل...", "Search customer...") }}" onkeyup="filterTable(this,'custTable')">
+        </div>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="customers-table" id="custTable">
+            <thead>
+              <tr>
+                <th>S/N</th>
+                <th>{{ L("الاسم", "Name") }}</th>
+                <th>{{ L("النوع", "Type") }}</th>
+                <th>{{ L("الهاتف", "Phone") }}</th>
+                <th>{{ L("التصنيف", "Classification") }}</th>
+                <th>{{ L("المصدر", "Source") }}</th>
+                <th>{{ L("مدير الحساب", "Account Manager") }}</th>
+                <th>{{ L("الرصيد", "Balance") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for c in customers %}
+              <tr>
+                <td>{{ loop.index }}</td>
+
+                <td>
+                  <a href="/customers/{{ c.id }}" class="customer-name">
+                    {{ c.name }}
+                  </a>
+                </td>
+
+                <td>
+                  {% if c.type == 'B2B' %}
+                    <span class="type-badge type-b2b">B2B</span>
+                  {% else %}
+                    <span class="type-badge type-b2c">B2C</span>
+                  {% endif %}
+                </td>
+
+                <td>{{ c.phone or '-' }}</td>
+
+                <td>{{ c.classification or '-' }}</td>
+
+                <td>{{ c.source or '-' }}</td>
+
+                <td>{{ c.account_manager.name if c.account_manager else '-' }}</td>
+
+                <td class="{{ 'money-green' if (c.balance or 0) >= 0 else 'money-red' }}">
+                  {{ "%.2f"|format(c.balance or 0) }}
+                </td>
+
+                <td>
+                  <div class="actions">
+                    <a href="/customers/{{ c.id }}/statement" class="action-btn edit" title="كشف حساب">
+                      <i class="bi bi-journal-text"></i>
+                    </a>
+                    {% if has_permission(current_user, "customers.manage") %}
+                    <button
+                      type="button"
+                      onclick="document.getElementById('edit-{{ c.id }}').classList.toggle('hidden')"
+                      class="action-btn edit"
+                      title="تعديل"
+                    >
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>
+
+                    <form method="post" action="/customers/{{ c.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="action-btn delete" type="submit" title="حذف">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+
+              <tr id="edit-{{ c.id }}" class="hidden edit-row">
+                <td colspan="9">
+                  <div class="edit-box">
+                    <form method="post" action="/customers/{{ c.id }}/edit" class="edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input name="name" value="{{ c.name }}" required class="field-input">
+
+                      <select name="type" class="field-select">
+                        <option value="B2C" {{ 'selected' if c.type=='B2C' }}>{{ L("فردي (B2C)", "Individual (B2C)") }}</option>
+                        <option value="B2B" {{ 'selected' if c.type=='B2B' }}>{{ L("شركة (B2B)", "Company (B2B)") }}</option>
+                      </select>
+
+                      <input name="phone" value="{{ c.phone or '' }}" placeholder="{{ L("رقم الهاتف", "Phone Number") }}" class="field-input">
+
+                      <input name="email" value="{{ c.email or '' }}" placeholder="{{ L("البريد الإلكتروني", "Email") }}" class="field-input">
+
+                      <select name="classification" class="field-select">
+                        <option value="">{{ L("بدون", "None") }}</option>
+                        {% for cls in classifications %}
+                          <option value="{{ cls }}" {{ 'selected' if c.classification == cls }}>{{ cls|capitalize }}</option>
+                        {% endfor %}
+                      </select>
+
+                      <select name="source" class="field-select">
+                        <option value="">{{ L("بدون", "None") }}</option>
+                        {% for src in sources %}
+                          <option value="{{ src }}" {{ 'selected' if c.source == src }}>{{ src|capitalize }}</option>
+                        {% endfor %}
+                      </select>
+
+                      <button class="save-btn" type="submit">
+                        {{ L("حفظ", "Save") }}
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if not customers %}
+              <tr>
+                <td colspan="9">
+                  <div class="empty-state">{{ L("لا يوجد عملاء بعد", "No customers yet") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+          {% import '_pagination.html' as pgn %}
+          {{ pgn.pagination_bar(p, base_url) }}
+        </div>
+      </div>
+    </div>
+
+    <div class="main-card side-card">
+      <div class="card-head">
+        <h2>{{ L("إضافة عميل جديد", "Add New Customer") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="helper-box">
+          {{ L("أضف بيانات العميل الأساسية، وحدد هل هو عميل فردي B2C أو شركة سياحة B2B.", "Add basic customer data and specify whether individual B2C or tourism company B2B.") }}
+        </div>
+
+        <form method="post" action="/customers/add" class="form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field-group">
+            <label>{{ L("اسم العميل", "Customer Name") }}</label>
+            <input name="name" placeholder="{{ L("اسم العميل", "Customer Name") }}" required class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("نوع العميل", "Customer Type") }}</label>
+            <select name="type" class="field-select">
+              <option value="B2C">{{ L("عميل فردي (B2C)", "Individual Customer (B2C)") }}</option>
+              <option value="B2B">{{ L("شركة سياحة (B2B)", "Tourism Company (B2B)") }}</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("رقم الهاتف", "Phone Number") }}</label>
+            <input name="phone" placeholder="{{ L("رقم الهاتف", "Phone Number") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("البريد الإلكتروني", "Email") }}</label>
+            <input name="email" placeholder="{{ L("البريد الإلكتروني", "Email") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("التصنيف", "Classification") }}</label>
+            <select name="classification" class="field-select">
+              <option value="">{{ L("بدون", "None") }}</option>
+              {% for cls in classifications %}
+                <option value="{{ cls }}">{{ cls|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("المصدر", "Source") }}</label>
+            <select name="source" class="field-select">
+              <option value="">{{ L("بدون", "None") }}</option>
+              {% for src in sources %}
+                <option value="{{ src }}">{{ src|capitalize }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("حد الائتمان", "Credit Limit") }}</label>
+            <input name="credit_limit" type="number" step="0.01" value="0" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("شروط الدفع", "Payment Terms") }}</label>
+            <select name="payment_terms" class="field-select">
+              <option value="due_on_receipt">{{ L("عند الاستلام", "Due on Receipt") }}</option>
+              <option value="net_15">{{ L("15 يوم", "Net 15") }}</option>
+              <option value="net_30">{{ L("30 يوم", "Net 30") }}</option>
+              <option value="net_60">{{ L("60 يوم", "Net 60") }}</option>
+              <option value="custom">{{ L("مخصص", "Custom") }}</option>
+            </select>
+          </div>
+
+          <button class="save-btn" type="submit">
+            {{ L("حفظ", "Save") }}
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function filterTable(input, tableId) {
+  const filter = input.value.toLowerCase();
+  const rows = document.getElementById(tableId).getElementsByTagName('tr');
+
+  for (let i = 1; i < rows.length; i++) {
+    const text = rows[i].textContent.toLowerCase();
+    rows[i].style.display = text.includes(filter) ? '' : 'none';
+  }
+}
+</script>
+
+{% endblock %}

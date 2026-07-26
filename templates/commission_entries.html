@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .cp-tabs{display:flex;gap:0;margin-bottom:22px;border-bottom:2px solid #e8eee9}
+  .cp-tabs a{padding:12px 22px;font-size:14px;font-weight:900;text-decoration:none;color:#7b8798;border-bottom:3px solid transparent;margin-bottom:-2px;transition:all .2s}
+  .cp-tabs a:hover{color:#11885a}
+  .cp-tabs a.active{color:#11885a;border-bottom-color:#11885a}
+  .ce-page{--text:#172033;--muted:#7b8798;--card:#fff;--border:#e8eee9;direction:inherit}
+  .ce-page .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px}
+  .ce-page .page-head h1{margin:0;font-size:28px;font-weight:950;color:var(--text)}
+  .ce-page .page-head p{margin-top:7px;font-size:13px;color:var(--muted)}
+  .ce-page .card{border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);overflow:hidden}
+  .ce-page .card-head{padding:19px 22px 0;display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .ce-page .card-head h2{margin:0;font-size:16px;font-weight:950;color:var(--text)}
+  .ce-page .card-body{padding:18px 22px 22px}
+  .ce-page table{width:100%;border-collapse:collapse;font-size:13px}
+  .ce-page th{background:#fbfdfc;color:var(--muted);padding:13px 8px;font-size:12px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+  .ce-page td{padding:13px 8px;border-bottom:1px solid #edf2ef;color:var(--text);text-align:center;vertical-align:middle}
+  .ce-page tr:hover td{background:#fbfdfc}
+  .ce-page .badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap}
+  .ce-page .badge-gray{background:#f1f5f9;color:#64748b}
+  .ce-page .badge-blue{background:#eef3ff;color:#1a56db}
+  .ce-page .badge-green{background:#eafff4;color:#11885a}
+  .ce-page .badge-yellow{background:#fff7df;color:#986a00}
+  .ce-page .badge-red{background:#fff0f2;color:#c7384c}
+  .ce-page .badge-purple{background:#f3eeff;color:#7c3aed}
+  .ce-page .status-form{display:inline-flex;gap:4px;align-items:center}
+  .ce-page .status-form select{padding:5px 8px;border-radius:8px;border:1px solid var(--border);font-size:11px;font-weight:800;background:#fff}
+  .ce-page .status-form button{padding:5px 10px;border-radius:8px;border:none;font-size:11px;font-weight:800;cursor:pointer;background:#11885a;color:#fff}
+  .ce-page .empty-state{padding:32px;text-align:center;color:var(--muted);font-size:13px}
+</style>
+<div class="cp-tabs">
+  <a href="/settings/commission-policies">{{ L("السياسات", "Policies") }}</a>
+  <a href="/settings/commission-policies/entries" class="active">{{ L("سجلات العمولات", "Commission Entries") }}</a>
+</div>
+<div class="ce-page">
+  <div class="page-head">
+    <div>
+      <h1>{{ L("سجلات العمولات", "Commission Entries") }}</h1>
+      <p>{{ L("تتبع عمولات الحجوزات حسب كل سياسة", "Track reservation commissions per policy") }}</p>
+    </div>
+  </div>
+  <div class="card">
+    <div class="card-head">
+      <h2>{{ L("جميع السجلات", "All Entries") }}</h2>
+      <span>{{ entries|length }} {{ L("سجل", "Entry") }}</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ L("الحجز", "Reservation") }}</th>
+            <th>{{ L("السياسة", "Policy") }}</th>
+            <th>{{ L("المستفيد", "Recipient") }}</th>
+            <th>{{ L("النوع", "Type") }}</th>
+            <th>{{ L("الدور", "Role") }}</th>
+            <th>{{ L("الأساس", "Base") }}</th>
+            <th>{{ L("المبلغ", "Amount") }}</th>
+            <th>{{ L("الحالة", "Status") }}</th>
+            <th>{{ L("تاريخ الإنشاء", "Created") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for e in entries %}
+          {% set status_class = {'calculated':'badge-gray','earned':'badge-blue','accrued':'badge-yellow','paid':'badge-green','reversed':'badge-red'} %}
+          <tr>
+            <td>{{ e.id }}</td>
+            <td><a href="/reservations/{{ e.reservation_id }}/edit" style="color:#11885a;font-weight:800;text-decoration:none">{{ e.reservation.booking_number if e.reservation else '—' }}</a></td>
+            <td style="font-weight:700;color:#11885a">{{ e.policy.name if e.policy else ('يدوي — Manual' if e.source == 'legacy' else '—') }}</td>
+            <td>{{ e.recipient_id }}</td>
+            <td><span class="badge badge-purple">{{ e.recipient_type }}</span></td>
+            <td>{{ e.role }}</td>
+            <td>{{ "%.2f"|format(e.base_amount) }}</td>
+            <td style="font-weight:900">{{ "%.2f"|format(e.calculated_amount) }}</td>
+            <td>
+              <span class="badge {{ status_class.get(e.status, 'badge-gray') }}">{{ e.status }}</span>
+              {% if e.accrued %}<div style="font-size:10px;color:var(--muted);margin-top:2px">{{ L("مُرحّلة بالفعل", "already booked") }}</div>{% endif %}
+            </td>
+            <td style="font-size:11px;color:var(--muted)">{{ e.created_at.strftime('%Y-%m-%d') if e.created_at else '—' }}</td>
+            <td>
+              {% if e.status == 'paid' %}
+                <span style="font-size:11px;color:var(--muted)">
+                  {{ L("مدفوعة", "Paid") }} — {{ e.paid_date.strftime('%Y-%m-%d') if e.paid_date else '' }}
+                </span>
+              {% else %}
+                <form method="post" action="/settings/commission-policies/entries/{{ e.id }}/status" class="status-form">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <select name="status">
+                    <option value="calculated" {{ 'selected' if e.status == 'calculated' }}>calculated</option>
+                    <option value="earned" {{ 'selected' if e.status == 'earned' }}>earned</option>
+                    <option value="reversed" {{ 'selected' if e.status == 'reversed' }}>reversed</option>
+                  </select>
+                  <button type="submit">{{ L("تحديث", "Update") }}</button>
+                </form>
+                <form method="post" action="/settings/commission-policies/entries/{{ e.id }}/pay" class="status-form" style="margin-top:4px">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <select name="account_id" required>
+                    <option value="">{{ L("اختر حساب الدفع", "Pay from...") }}</option>
+                    {% for acc in accounts %}
+                    <option value="{{ acc.id }}">{{ acc.name }}</option>
+                    {% endfor %}
+                  </select>
+                  <button type="submit" style="background:#b8873b">{{ L("ادفع", "Pay") }}</button>
+                </form>
+              {% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not entries %}
+          <tr><td colspan="11"><div class="empty-state">{{ L("لا توجد سجلات عمولات بعد", "No commission entries yet") }}</div></td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

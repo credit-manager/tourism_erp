@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .pf{max-width:600px;margin:0 auto;--text:#172033;--border:#e0e8e4}
+  .pf .page-head{margin-bottom:27px}
+  .pf .page-head h1{margin:0;font-size:28px;font-weight:950;color:var(--text)}
+  .pf .page-head p{margin-top:7px;font-size:13px;color:#7b8798}
+  .pf .card{border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);overflow:hidden}
+  .pf .card-body{padding:32px}
+  .pf .field{display:flex;flex-direction:column;gap:5px;margin-bottom:18px}
+  .pf .field label{font-size:12px;font-weight:950;color:#364153}
+  .pf .field input,.pf .field textarea{padding:10px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;transition:all .2s;background:#fff;font-family:inherit}
+  .pf .field input:focus,.pf .field textarea:focus{outline:none;border-color:#11885a;box-shadow:0 0 0 3px rgba(17,136,90,0.10)}
+  .pf .field textarea{min-height:70px;resize:vertical}
+  .pf .hint{font-size:11px;color:#7b8798;margin-top:2px}
+  .pf .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:27px;padding-top:22px;border-top:1px solid var(--border)}
+  .pf .btn{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;border-radius:14px;font-size:14px;font-weight:900;border:none;cursor:pointer;text-decoration:none;transition:all .2s;min-height:40px}
+  .pf .btn-primary{background:linear-gradient(135deg,#11885a,#0d6e49);color:#fff;box-shadow:0 8px 20px rgba(17,136,90,0.25)}
+  .pf .btn-primary:hover{transform:translateY(-2px)}
+  .pf .btn-secondary{background:#f1f5f9;border:1.5px solid var(--border);color:#364153}
+</style>
+<div class="pf">
+  <div class="page-head">
+    <h1>{{ L("إنشاء شهرية رواتب", "Create Payroll Run") }}</h1>
+    <p>{{ L("تحديد الفترة — سيتم حساب جميع البنود تلقائياً", "Set the period — all items will be calculated automatically") }}</p>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field">
+          <label>{{ L("اسم الشهرية", "Run Name") }}</label>
+          <input name="name" required placeholder="{{ L('مثال: رواتب يوليو 2025', 'e.g. July 2025 Payroll') }}">
+        </div>
+        <div class="field">
+          <label>{{ L("بداية الفترة", "Period Start") }}</label>
+          <input type="date" name="period_start" required>
+        </div>
+        <div class="field">
+          <label>{{ L("نهاية الفترة", "Period End") }}</label>
+          <input type="date" name="period_end" required>
+          <div class="hint">{{ L("عدد الأيام يحدد قيمة اليومية للراتب", "Day count determines daily rate") }}</div>
+        </div>
+        <div class="field">
+          <label>{{ L("ملاحظات", "Notes") }}</label>
+          <textarea name="notes" placeholder="{{ L('اختياري', 'Optional') }}"></textarea>
+        </div>
+        <div class="actions">
+          <a href="/payroll-runs" class="btn btn-secondary">{{ L("إلغاء", "Cancel") }}</a>
+          <button class="btn btn-primary">{{ L("إنشاء وحساب", "Create & Calculate") }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

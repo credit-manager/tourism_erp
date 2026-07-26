@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+.list-page{--primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;--text:#182033;--muted:#708093;--border:#e4ebe6;direction:inherit}
+.list-page h1{font-size:26px;font-weight:950;color:var(--text);margin:0}
+.list-page .sub{color:var(--muted);font-size:13px;margin:3px 0 0}
+.filter-bar{display:flex;flex-wrap:wrap;gap:10px;align-items:center;background:#fff;border:1px solid var(--border);border-radius:20px;padding:14px 18px;margin-bottom:18px;box-shadow:0 4px 12px rgba(0,0,0,.02)}
+.filter-bar select,.filter-bar input{height:40px;border:1.5px solid var(--border);border-radius:12px;padding:0 12px;font-size:13px;font-weight:700;min-width:150px;background:#fbfdfc;transition:.15s;color:var(--text)}
+.filter-bar select:focus,.filter-bar input:focus{outline:none;border-color:var(--primary);background:#fff;box-shadow:0 0 0 4px rgba(32,184,116,.1)}
+.filter-bar .reset{font-size:13px;font-weight:900;color:var(--muted);text-decoration:none;padding:0 6px}
+.filter-bar .reset:hover{color:var(--primary)}
+.save-btn{min-height:40px;padding:0 24px;border:0;border-radius:12px;background:linear-gradient(135deg,#bfd175,#b4c667);color:#172033;font-size:13px;font-weight:950;cursor:pointer;display:inline-flex;align-items:center;gap:7px;text-decoration:none;transition:.16s;box-shadow:0 6px 16px rgba(191,209,117,.25)}
+.save-btn:hover{transform:translateY(-1px);filter:brightness(.97)}
+.table-wrap{border:1px solid var(--border);border-radius:20px;overflow:hidden;background:#fff;box-shadow:0 4px 14px rgba(0,0,0,.02)}
+.data-table{width:100%;min-width:1000px;border-collapse:separate;border-spacing:0;font-size:13px}
+.data-table th{background:#f8fcfa;color:var(--muted);padding:13px 12px;font-size:11px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;letter-spacing:.3px}
+.data-table td{padding:12px;border-bottom:1px solid #edf2ef;text-align:center;white-space:nowrap;color:var(--text);vertical-align:middle}
+.data-table tr:last-child td{border-bottom:0}
+.data-table tr:hover td{background:#f6fdf9}
+.data-table tr td:first-child{padding-right:16px;font-weight:700;color:var(--muted);font-size:12px}
+.stage-badge{display:inline-flex;padding:5px 12px;border-radius:999px;font-size:11px;font-weight:950;line-height:1.2}
+.stage-Lead,.stage-{background:#f1f5f9;color:#475569}
+.stage-Qualified{background:#fef3c7;color:#92400e}
+.stage-Quotation{background:#dbeafe;color:#1e40af}
+.stage-Negotiation{background:#f3e8ff;color:#6b21a8}
+.stage-Won{background:#d1fae5;color:#065f46}
+.stage-Lost{background:#fee2e2;color:#991b1b}
+.actions{display:flex;gap:6px;justify-content:center}
+.actions .action-btn{width:34px;height:34px;border:0;border-radius:10px;display:inline-flex;align-items:center;justify-content:center;text-decoration:none;font-size:14px;transition:.14s;cursor:pointer}
+.actions .edit{background:#eef6ff;color:#2563eb}
+.actions .edit:hover{background:#dbeafe;color:#1d4ed8}
+.actions .view{background:#edf9f3;color:var(--primary-dark)}
+.actions .view:hover{background:#d1fae5;color:#065f46}
+.actions .delete{background:#fef2f2;color:#dc2626}
+.actions .delete:hover{background:#fee2e2;color:#b91c1c}
+.actions form{display:inline}
+.empty-state{padding:48px 20px;text-align:center;color:var(--muted);font-size:14px;font-weight:700}
+.header-bar{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px}
+.stats-row{display:flex;gap:12px;margin-bottom:18px;flex-wrap:wrap}
+.stat-card{flex:1;min-width:130px;background:#fff;border:1px solid var(--border);border-radius:16px;padding:14px 18px;text-align:center;box-shadow:0 4px 12px rgba(0,0,0,.02)}
+.stat-card .stat-num{font-size:22px;font-weight:950;color:var(--text)}
+.stat-card .stat-label{font-size:11px;font-weight:900;color:var(--muted);margin-top:2px}
+</style>
+<div class="list-page">
+<div class="header-bar">
+  <div>
+    <h1>{{ L("قائمة الفرص", "Opportunities List") }}</h1>
+    <p class="sub">{{ L("عرض وإدارة فرص البيع", "View and manage sales opportunities") }}</p>
+  </div>
+  <div style="display:flex;gap:10px">
+    <a href="/sales-pipeline" class="save-btn" style="background:#fff;border:1.5px solid var(--border);box-shadow:none"><i class="bi bi-columns-gap"></i> {{ L("لوحة", "Kanban") }}</a>
+    <a href="/sales-pipeline/add" class="save-btn"><i class="bi bi-plus-lg"></i> {{ L("إضافة فرصة", "Add") }}</a>
+  </div>
+</div>
+<div class="stats-row">
+  {% set won = opportunities|selectattr('stage','equalto','Won')|list|length %}
+  {% set lost = opportunities|selectattr('stage','equalto','Lost')|list|length %}
+  {% set total_budget = opportunities|sum(attribute='budget') or 0 %}
+  <div class="stat-card"><div class="stat-num">{{ opportunities|length }}</div><div class="stat-label">{{ L("الإجمالي", "Total") }}</div></div>
+  <div class="stat-card"><div class="stat-num">{{ won }}</div><div class="stat-label">{{ L("فوز", "Won") }}</div></div>
+  <div class="stat-card"><div class="stat-num">{{ lost }}</div><div class="stat-label">{{ L("خسارة", "Lost") }}</div></div>
+  <div class="stat-card"><div class="stat-num" dir="ltr">{{ "%.0f"|format(total_budget) }}</div><div class="stat-label">{{ L("إجمالي الميزانية", "Total Budget") }}</div></div>
+</div>
+<form class="filter-bar" method="GET" action="/sales-pipeline/list">
+  <i class="bi bi-funnel" style="color:var(--muted);font-size:16px"></i>
+  <select name="stage" onchange="this.form.submit()">
+    <option value="">{{ L("كل المراحل", "All Stages") }}</option>
+    {% for s in stages %}<option value="{{ s }}" {{ 'selected' if f_stage==s }}>{{ {'Lead': L('عميل محتمل', 'Lead'), 'Qualified': L('مؤهل', 'Qualified'), 'Quotation Sent': L('عرض سعر', 'Quotation Sent'), 'Negotiation': L('تفاوض', 'Negotiation'), 'Won': L('فوز', 'Won'), 'Lost': L('خسارة', 'Lost')}.get(s, s) }}</option>{% endfor %}
+  </select>
+  <select name="source" onchange="this.form.submit()">
+    <option value="">{{ L("كل المصادر", "All Sources") }}</option>
+    {% for s in sources %}<option value="{{ s }}" {{ 'selected' if f_source==s }}>{{ {'direct': L('مباشر', 'Direct'), 'facebook': L('فيسبوك', 'Facebook'), 'referral': L('توصية', 'Referral'), 'advertisement': L('إعلان', 'Advertisement'), 'walk_in': L('زيارة', 'Walk-in'), 'other': L('أخرى', 'Other')}.get(s, s) }}</option>{% endfor %}
+  </select>
+  <div style="position:relative;flex:1;min-width:160px">
+    <i class="bi bi-search" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--muted);font-size:14px"></i>
+    <input name="q" placeholder="{{ L('بحث بالعميل أو الوجهة...', 'Search by customer or destination...') }}" value="{{ f_q }}" style="padding-left:34px;width:100%">
+  </div>
+  <button class="save-btn" style="height:40px;padding:0 22px;min-height:auto"><i class="bi bi-search"></i> {{ L("بحث", "Search") }}</button>
+  <a href="/sales-pipeline/list" class="reset"><i class="bi bi-arrow-counterclockwise"></i> {{ L("إعادة", "Reset") }}</a>
+</form>
+<div class="table-wrap">
+<table class="data-table">
+<thead><tr>
+  <th>#</th><th>{{ L("العميل", "Customer") }}</th><th>{{ L("المرحلة", "Stage") }}</th><th>{{ L("المصدر", "Source") }}</th>
+  <th>{{ L("الوجهة", "Destination") }}</th><th>{{ L("الميزانية", "Budget") }}</th><th>{{ L("تاريخ السفر", "Travel Date") }}</th>
+  <th>{{ L("عدد المسافرين", "Travelers") }}</th><th>{{ L("الاحتمالية", "Prob.") }}</th><th>{{ L("القيمة المتوقعة", "Expected") }}</th>
+  <th>{{ L("مسؤول المبيعات", "Sales Rep") }}</th><th>{{ L("متابعة", "Follow-up") }}</th><th>{{ L("إجراءات", "Actions") }}</th>
+</tr></thead>
+<tbody>
+{% for op in opportunities %}
+<tr>
+  <td>{{ loop.index }}</td>
+  <td style="font-weight:900;color:var(--primary-dark);text-align:right">{{ op.customer.name if op.customer else '—' }}</td>
+  <td><span class="stage-badge stage-{{ op.stage.replace(' ', '') }}">{{ {'Lead': L('عميل محتمل', 'Lead'), 'Qualified': L('مؤهل', 'Qualified'), 'Quotation Sent': L('عرض سعر', 'Quotation Sent'), 'Negotiation': L('تفاوض', 'Negotiation'), 'Won': L('فوز', 'Won'), 'Lost': L('خسارة', 'Lost')}.get(op.stage, op.stage) }}</span></td>
+  <td>{{ {'direct': L('مباشر', 'Direct'), 'facebook': L('فيسبوك', 'Facebook'), 'referral': L('توصية', 'Referral'), 'advertisement': L('إعلان', 'Advertisement'), 'walk_in': L('زيارة', 'Walk-in'), 'other': L('أخرى', 'Other')}.get(op.source, op.source or '—') }}</td>
+  <td>{{ op.destination or '—' }}</td>
+  <td dir="ltr">{{ "%.0f"|format(op.budget or 0) }}</td>
+  <td>{{ op.travel_date.strftime('%Y-%m-%d') if op.travel_date else '—' }}</td>
+  <td>{{ op.travelers_count }}</td>
+  <td><span style="font-weight:950;color:{% if op.probability>=70 %}#065f46{% elif op.probability>=40 %}#92400e{% else %}#991b1b{% endif %}">{{ op.probability }}%</span></td>
+  <td dir="ltr" style="font-weight:700">{{ "%.0f"|format(op.expected_value or 0) }}</td>
+  <td>{{ op.sales_rep.name if op.sales_rep else '—' }}</td>
+  <td>{{ op.next_followup_date.strftime('%Y-%m-%d') if op.next_followup_date else '—' }}</td>
+  <td><div class="actions">
+    <a href="/sales-pipeline/{{ op.id }}/edit" class="action-btn edit" title="{{ L('تعديل', 'Edit') }}"><i class="bi bi-pencil-fill"></i></a>
+    <form method="post" action="/sales-pipeline/{{ op.id }}/delete" onsubmit="return confirm('{{ L('تأكيد الحذف؟', 'Confirm delete?') }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="action-btn delete" type="submit" title="{{ L('حذف', 'Delete') }}"><i class="bi bi-trash-fill"></i></button>
+    </form>
+  </div></td>
+</tr>
+{% else %}
+<tr><td colspan="13"><div class="empty-state"><i class="bi bi-inbox" style="font-size:32px;display:block;margin-bottom:8px;color:var(--border)"></i>{{ L("لا توجد فرص", "No opportunities") }}</div></td></tr>
+{% endfor %}
+</tbody>
+</table>
+</div>
+{% import '_pagination.html' as pgn %}
+{{ pgn.pagination_bar(p, base_url) }}
+</div>
+{% endblock %}

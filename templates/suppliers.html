@@ -1,0 +1,492 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .suppliers-page {
+    --green: #20b874;
+    --green-dark: #11885a;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f5c84c;
+    --yellow-soft: #fff7df;
+    --red: #ef5b6c;
+    --red-soft: #fff0f2;
+    --purple: #8b7cf6;
+    --purple-soft: #f3f0ff;
+    --text: #172033;
+    --muted: #7b8798;
+    --border: #e8eee9;
+    direction: inherit;
+  }
+
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .page-head h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .page-head p {
+    margin-top: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .suppliers-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .supplier-kpi,
+  .supplier-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.045);
+  }
+
+  .supplier-kpi {
+    padding: 18px;
+    min-height: 126px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .supplier-kpi::after {
+    content: "";
+    position: absolute;
+    left: -45px;
+    bottom: -50px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+  }
+
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-icon.green {
+    background: var(--green-soft);
+    color: var(--green);
+  }
+
+  .kpi-icon.blue {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+
+  .kpi-icon.yellow {
+    background: var(--yellow-soft);
+    color: #b17a00;
+  }
+
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 800;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    color: var(--text);
+    font-size: 29px;
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .suppliers-layout {
+    display: grid;
+    grid-template-columns: 1fr 360px;
+    gap: 18px;
+  }
+
+  .card-head {
+    padding: 19px 22px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .card-head span {
+    font-size: 12px;
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 13px;
+    padding: 7px 11px;
+    font-weight: 800;
+  }
+
+  .card-body {
+    padding: 18px 22px 22px;
+  }
+
+  .suppliers-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+    table-layout: fixed;
+  }
+
+  .suppliers-table th {
+    background: #fbfdfc;
+    color: var(--muted);
+    padding: 13px 10px;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    text-align: start;
+    overflow: hidden;
+  }
+
+  .suppliers-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    vertical-align: middle;
+  }
+
+  /* Fixed column widths */
+  .suppliers-table col.col-sn     { width: 46px; }
+  .suppliers-table col.col-name   { width: auto; }
+  .suppliers-table col.col-type   { width: 130px; }
+  .suppliers-table col.col-phone  { width: 130px; }
+  .suppliers-table col.col-bal    { width: 110px; }
+  .suppliers-table col.col-act    { width: 90px; }
+
+  .suppliers-table tr:hover td {
+    background: #fbfdfc;
+  }
+
+  .supplier-name {
+    color: var(--green-dark);
+    font-weight: 950;
+  }
+
+  .soft-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .badge-hotel {
+    background: var(--blue-soft);
+    color: #11885a;
+  }
+
+  .badge-other {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .badge-red {
+    background: var(--red-soft);
+    color: #c7384c;
+  }
+
+  .action-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .edit-row td {
+    background: #fbfdfc !important;
+  }
+
+  .edit-form {
+    display: grid;
+    grid-template-columns: 1fr 160px 1fr auto;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .side-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .side-form input,
+  .side-form select,
+  .edit-form input,
+  .edit-form select {
+    height: 43px;
+    border: 1px solid #dfe7e3;
+    border-radius: 13px;
+    padding: 0 13px;
+    font-size: 13px;
+  }
+
+  .form-hint {
+    padding: 14px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--green-soft), #ffffff);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+
+  .empty-state {
+    padding: 32px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1100px) {
+    .suppliers-kpis {
+      grid-template-columns: 1fr;
+    }
+
+    .suppliers-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .edit-form {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .page-head,
+    .card-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+  }
+</style>
+
+<div class="suppliers-page">
+
+  <div class="page-head">
+    <div>
+      <h1>{{ L("الموردين / المنفذين", "Suppliers / Executors") }}</h1>
+      <p>{{ L("إدارة بيانات الموردين والفنادق والمنفذين وأرصدة المستحقات.", "Manage suppliers, hotels, executors data and due balances.") }}</p>
+    </div>
+  </div>
+
+  <div class="suppliers-kpis">
+    <div class="supplier-kpi">
+      <div class="kpi-icon green">
+        <i class="bi bi-person-plus-fill"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي الموردين", "Total Suppliers") }}</div>
+      <div class="kpi-value">{{ suppliers|length }}</div>
+    </div>
+
+    <div class="supplier-kpi">
+      <div class="kpi-icon blue">
+        <i class="bi bi-buildings"></i>
+      </div>
+      <div class="kpi-label">{{ L("موردين فنادق", "Hotel Suppliers") }}</div>
+      <div class="kpi-value">{{ hotel_suppliers }}</div>
+    </div>
+
+    <div class="supplier-kpi">
+      <div class="kpi-icon yellow">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي المستحق", "Total Due") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(total_due) }}</div>
+    </div>
+  </div>
+
+  <div class="suppliers-layout">
+
+    <div class="supplier-card">
+      <div class="card-head">
+        <h2>{{ L("قائمة الموردين", "Suppliers List") }}</h2>
+        <span>{{ suppliers|length }} {{ L("مورد", "Supplier") }}</span>
+      </div>
+
+      <div class="card-body overflow-x-auto">
+        <table class="suppliers-table">
+          <colgroup>
+            <col class="col-sn">
+            <col class="col-name">
+            <col class="col-type">
+            <col class="col-phone">
+            <col class="col-bal">
+            <col class="col-act">
+          </colgroup>
+          <thead>
+            <tr>
+              <th>S/N</th>
+              <th>{{ L("الاسم", "Name") }}</th>
+              <th>{{ L("النوع", "Type") }}</th>
+              <th>{{ L("الهاتف", "Phone") }}</th>
+              <th>{{ L("الرصيد", "Balance") }}</th>
+              <th>{{ L("إجراءات", "Actions") }}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for s in suppliers %}
+            <tr>
+              <td>{{ loop.index }}</td>
+
+              <td>
+                <span class="supplier-name">{{ s.name }}</span>
+              </td>
+
+              <td>
+                <span class="soft-badge {{ 'badge-hotel' if s.type == 'hotel' else 'badge-other' }}">
+                  {% if s.type == 'hotel' %}{{ L("فندق", "Hotel") }}
+                  {% elif s.type == 'transport' %}{{ L("نقل", "Transport") }}
+                  {% elif s.type == 'local_company' %}{{ L("شركة محلية", "Local Company") }}
+                  {% elif s.type == 'guide' %}{{ L("مرشد", "Guide") }}
+                  {% elif s.type == 'service' %}{{ L("خدمات", "Services") }}
+                  {% else %}{{ L("أخرى", "Other") }}{% endif %}
+                </span>
+              </td>
+
+              <td>{{ s.phone or '-' }}</td>
+
+              <td class="font-bold {{ 'text-red-600' if s.balance > 0 else 'text-green-600' }}">
+                {{ "%.2f"|format(s.balance or 0) }}
+              </td>
+
+              <td>
+                <div class="action-row">
+                  {% if has_permission(current_user, "suppliers.manage") %}
+                  <button
+                    type="button"
+                    onclick="document.getElementById('edit-supplier-{{ s.id }}').classList.toggle('hidden')"
+                    class="icon-btn icon-edit"
+                    title="تعديل"
+                  >
+                    <i class="bi bi-pencil-fill"></i>
+                  </button>
+
+                  <form method="post" action="/suppliers/{{ s.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <button class="icon-btn icon-delete" title="حذف">
+                      <i class="bi bi-trash-fill"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+              </td>
+            </tr>
+
+            <tr id="edit-supplier-{{ s.id }}" class="hidden edit-row">
+              <td colspan="6" class="p-3">
+                <form method="post" action="/suppliers/{{ s.id }}/edit" class="edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input name="name" value="{{ s.name }}" required>
+
+                  <select name="type">
+                    <option value="hotel" {{ 'selected' if s.type == 'hotel' }}>{{ L("فندق", "Hotel") }}</option>
+                    <option value="transport" {{ 'selected' if s.type == 'transport' }}>{{ L("نقل", "Transfer") }}</option>
+                    <option value="service" {{ 'selected' if s.type == 'service' }}>{{ L("خدمات", "Services") }}</option>
+                    <option value="other" {{ 'selected' if s.type == 'other' }}>{{ L("أخرى", "Other") }}</option>
+                  </select>
+
+                  <input name="phone" value="{{ s.phone or '' }}" placeholder="{{ L("رقم الهاتف", "Phone Number") }}">
+
+                  <button class="btn-add justify-center">
+                    {{ L("حفظ", "Save") }}
+                  </button>
+                </form>
+              </td>
+            </tr>
+            {% endfor %}
+
+            {% if not suppliers %}
+            <tr>
+              <td colspan="6">
+                <div class="empty-state">{{ L("لا يوجد موردين بعد", "No suppliers yet") }}</div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+        {% import '_pagination.html' as pgn %}
+        {{ pgn.pagination_bar(p, base_url) }}
+      </div>
+    </div>
+
+    {% if has_permission(current_user, "suppliers.manage") %}
+    <div class="supplier-card">
+      <div class="card-head">
+        <h2>{{ L("إضافة مورد جديد", "Add New Supplier") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="form-hint">
+          {{ L("أضف المورد أو المنفذ بنفس بيانات النظام الحالية. لن يتم تغيير أي ربط في السيستم.", "Add supplier or executor with current system data. No existing links will be changed.") }}
+        </div>
+
+        <form method="post" action="/suppliers/add" class="side-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <input name="name" placeholder="{{ L("اسم المورد", "Supplier Name") }}" required>
+
+          <select name="type">
+            <option value="hotel">{{ L("فندق", "Hotel") }}</option>
+            <option value="transport">{{ L("نقل", "Transfer") }}</option>
+            <option value="service">{{ L("خدمات", "Services") }}</option>
+            <option value="other">{{ L("أخرى", "Other") }}</option>
+          </select>
+
+          <input name="phone" placeholder="{{ L("رقم الهاتف", "Phone Number") }}">
+
+          <button class="btn-add w-full justify-center">
+            {{ L("حفظ", "Save") }}
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

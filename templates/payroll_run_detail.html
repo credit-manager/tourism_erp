@@ -1,0 +1,124 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .prd{--text:#172033;--muted:#7b8798;--card:#fff;--border:#e8eee9}
+  .prd .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px;flex-wrap:wrap}
+  .prd .page-head h1{margin:0;font-size:28px;font-weight:950;color:var(--text)}
+  .prd .page-head p{margin-top:7px;font-size:13px;color:var(--muted)}
+  .prd .status-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .prd .badge{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap}
+  .prd .badge-gray{background:#f1f5f9;color:#64748b}
+  .prd .badge-blue{background:#eef3ff;color:#1a56db}
+  .prd .badge-green{background:#eafff4;color:#11885a}
+  .prd .badge-yellow{background:#fff7df;color:#986a00}
+  .prd .badge-red{background:#fff0f2;color:#c7384c}
+  .prd .badge-purple{background:#f3eeff;color:#7c3aed}
+  .prd .card{border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);overflow:hidden;margin-bottom:18px}
+  .prd .card-head{padding:19px 22px 0;display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .prd .card-body{padding:18px 22px 22px}
+  .prd table{width:100%;border-collapse:collapse;font-size:12px}
+  .prd th{background:#fbfdfc;color:var(--muted);padding:10px 5px;font-size:11px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+  .prd td{padding:11px 5px;border-bottom:1px solid #edf2ef;color:var(--text);text-align:center;vertical-align:middle}
+  .prd tr:hover td{background:#fbfdfc}
+  .prd .money{direction:ltr;font-weight:900}
+  .prd .pos{color:#11885a}
+  .prd .neg{color:#c7384c}
+  .prd .actions{display:flex;gap:6px;justify-content:center;align-items:center;flex-wrap:wrap}
+  .prd .btn{display:inline-flex;align-items:center;gap:6px;padding:8px 16px;border-radius:12px;font-size:12px;font-weight:900;border:none;cursor:pointer;text-decoration:none;transition:all .2s}
+  .prd .btn-green{background:#11885a;color:#fff}
+  .prd .btn-blue{background:#1a56db;color:#fff}
+  .prd .btn-gray{background:#f1f5f9;color:#364153;border:1px solid var(--border)}
+  .prd .btn-red{background:#c7384c;color:#fff}
+  .prd .kpi-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:18px}
+  .prd .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:20px;padding:16px;text-align:center}
+  .prd .kpi-card .val{font-size:26px;font-weight:950;color:var(--text)}
+  .prd .kpi-card .lbl{font-size:12px;color:var(--muted);font-weight:850;margin-top:5px}
+</style>
+<div class="prd">
+  <div class="page-head">
+    <div>
+      <h1>{{ run.name }}</h1>
+      <p>{{ run.period_start }} → {{ run.period_end }} &nbsp;|&nbsp; {{ L("بواسطة", "by") }} {{ run.created_by or '?' }}</p>
+    </div>
+    <div class="status-bar">
+      {% set sc = {'draft':'badge-gray','reviewed':'badge-blue','approved':'badge-green','paid':'badge-purple'} %}
+      <span class="badge {{ sc.get(run.status,'badge-gray') }}" style="font-size:13px;padding:7px 14px">{{ run.status }}</span>
+      <form method="post" action="/payroll-runs/{{ run.id }}/status" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        {% if run.status == 'draft' %}
+        <input type="hidden" name="status" value="reviewed">
+        <button class="btn btn-blue">{{ L("مراجعة", "Review") }}</button>
+        {% elif run.status == 'reviewed' %}
+        <input type="hidden" name="status" value="approved">
+        <button class="btn btn-green">{{ L("اعتماد", "Approve") }}</button>
+        {% elif run.status == 'approved' %}
+        <input type="hidden" name="status" value="paid">
+        <button class="btn btn-purple" style="background:#7c3aed;color:#fff" onclick="return confirm('{{ L("تأكيد الصرف؟", "Confirm payment?") }}')">{{ L("صرف", "Pay") }}</button>
+        {% endif %}
+      </form>
+      <form method="post" action="/payroll-runs/{{ run.id }}/delete" style="display:inline" onsubmit="return confirm('{{ L("حذف الشهرية؟", "Delete this run?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <button class="btn btn-red">{{ L("حذف", "Delete") }}</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="kpi-row">
+    <div class="kpi-card"><div class="val pos">{{ "%.0f"|format(run.total_gross) }}</div><div class="lbl">{{ L("إجمالي الاستحقاق", "Total Gross") }}</div></div>
+    <div class="kpi-card"><div class="val neg">{{ "%.0f"|format(run.total_deductions) }}</div><div class="lbl">{{ L("إجمالي الخصم", "Total Deductions") }}</div></div>
+    <div class="kpi-card"><div class="val pos">{{ "%.0f"|format(run.total_net) }}</div><div class="lbl">{{ L("صافي الرواتب", "Total Net") }}</div></div>
+    <div class="kpi-card"><div class="val">{{ items|length }}</div><div class="lbl">{{ L("عدد الموظفين", "Employees") }}</div></div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2>{{ L("تفاصيل الرواتب", "Salary Details") }}</h2>
+      <span>{{ items|length }} {{ L("موظف", "Employee") }}</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>{{ L("الموظف", "Employee") }}</th>
+            <th>{{ L("أساسي", "Basic") }}</th>
+            <th>{{ L("سكن", "Hous.") }}</th>
+            <th>{{ L("مواصلات", "Trans.") }}</th>
+            <th>{{ L("بدلات", "Other") }}</th>
+            <th>{{ L("إضافي", "OT") }}</th>
+            <th>{{ L("عمولات", "Comm.") }}</th>
+            <th>{{ L("غياب", "Abs.") }}</th>
+            <th>{{ L("تأخير", "Late") }}</th>
+            <th>{{ L("سلف", "Adv.") }}</th>
+            <th>{{ L("تأمينات", "Ins.") }}</th>
+            <th>{{ L("استحقاق", "Gross") }}</th>
+            <th>{{ L("خصم", "Ded.") }}</th>
+            <th>{{ L("صافي", "Net") }}</th>
+            <th>{{ L("قسيمة", "Slip") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for it in items %}
+          <tr>
+            <td style="font-weight:800;color:#11885a;text-align:right">{{ it.employee.name if it.employee else '?' }}</td>
+            <td class="money">{{ "%.0f"|format(it.basic_salary) }}</td>
+            <td class="money">{{ "%.0f"|format(it.housing_allowance) }}</td>
+            <td class="money">{{ "%.0f"|format(it.transport_allowance) }}</td>
+            <td class="money">{{ "%.0f"|format(it.other_allowances) }}</td>
+            <td class="money pos">{{ "%.0f"|format(it.overtime_amount) }}</td>
+            <td class="money pos">{{ "%.0f"|format(it.commission_amount) }}</td>
+            <td class="money neg">{{ "%.0f"|format(it.absence_deduction) }}</td>
+            <td class="money neg">{{ "%.0f"|format(it.late_deduction) }}</td>
+            <td class="money neg">{{ "%.0f"|format(it.advances_deduction) }}</td>
+            <td class="money neg">{{ "%.0f"|format(it.social_insurance) }}</td>
+            <td class="money pos">{{ "%.0f"|format(it.gross_pay) }}</td>
+            <td class="money neg">{{ "%.0f"|format(it.total_deductions) }}</td>
+            <td class="money pos" style="font-weight:950">{{ "%.0f"|format(it.net_pay) }}</td>
+            <td><a href="/payroll-runs/{{ run.id }}/pdf/{{ it.id }}" class="badge badge-blue" style="text-decoration:none">PDF</a></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock %}

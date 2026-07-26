@@ -1,0 +1,592 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if request.query_params.get('error') %}
+<div id="top-error" style="background:#fff0f2;border:1px solid #ffd7dd;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#d14454;font-size:14px;font-weight:700;">
+  {{ request.query_params.get('error') }}
+</div>
+{% endif %}
+
+<style>
+  .expenses-page {
+    --green: #20b874;
+    --green-dark: #11885a;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f5c84c;
+    --yellow-soft: #fff7df;
+    --red: #ef5b6c;
+    --red-soft: #fff0f2;
+    --purple: #8b7cf6;
+    --purple-soft: #f3f0ff;
+    --text: #172033;
+    --muted: #6f7d90;
+    --border: #e3ebe5;
+    --card: #ffffff;
+    direction: inherit;
+  }
+
+  .expenses-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .expenses-head h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .expenses-head p {
+    margin-top: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .expenses-kpis {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .expense-kpi,
+  .expense-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 26px;
+    box-shadow: 0 16px 38px rgba(15, 23, 42, 0.045);
+  }
+
+  .expense-kpi {
+    padding: 18px;
+    min-height: 124px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .expense-kpi::after {
+    content: "";
+    position: absolute;
+    left: -45px;
+    bottom: -50px;
+    width: 120px;
+    height: 120px;
+    border-radius: 999px;
+    background: rgba(239, 91, 108, 0.06);
+  }
+
+  .kpi-icon {
+    width: 46px;
+    height: 46px;
+    border-radius: 17px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 21px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-icon.red {
+    background: var(--red-soft);
+    color: var(--red);
+  }
+
+  .kpi-icon.blue {
+    background: var(--blue-soft);
+    color: var(--blue);
+  }
+
+  .kpi-icon.yellow {
+    background: var(--yellow-soft);
+    color: #b17a00;
+  }
+
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 850;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    color: var(--text);
+    font-size: 28px;
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .expenses-layout {
+    display: grid;
+    grid-template-columns: 1fr 380px;
+    gap: 18px;
+    align-items: start;
+  }
+
+  .card-head {
+    padding: 19px 22px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 14px;
+  }
+
+  .card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .card-head span {
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-size: 12px;
+    font-weight: 850;
+    white-space: nowrap;
+  }
+
+  .card-body {
+    padding: 18px 22px 22px;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .expenses-table {
+    width: 100%;
+    min-width: 720px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+
+  .expenses-table th {
+    background: #f8fcfa;
+    color: var(--muted);
+    padding: 14px 10px;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .expenses-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .expenses-table tr:hover td {
+    background: #fbfefc;
+  }
+
+  .category-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: #64748b;
+    font-size: 11px;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .money-red {
+    color: var(--red);
+    font-weight: 950;
+    direction: ltr;
+  }
+
+  .description-cell {
+    max-width: 360px;
+    white-space: normal !important;
+    text-align: right !important;
+    color: var(--muted) !important;
+    line-height: 1.7;
+  }
+
+  .expense-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form-hint {
+    padding: 14px;
+    border-radius: 18px;
+    background: linear-gradient(135deg, var(--red-soft), #ffffff);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+
+  .field-block label {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+
+  .expense-input,
+  .expense-select {
+    width: 100%;
+    height: 43px;
+    border: 1px solid #dde7e1;
+    border-radius: 14px;
+    padding: 0 13px;
+    background: #fff;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .expense-input:focus,
+  .expense-select:focus {
+    outline: none;
+    border-color: var(--red);
+    box-shadow: 0 0 0 4px rgba(239, 91, 108, 0.10);
+  }
+
+  .save-btn {
+    min-height: 42px;
+    border: 0;
+    border-radius: 15px;
+    background: linear-gradient(135deg, var(--lime), #b8c96a);
+    color: #172033;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 15px;
+    font-size: 13px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 8px 16px rgba(103, 197, 80, 0.24);
+    transition: 0.16s ease;
+  }
+
+  .save-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.98);
+  }
+
+  .empty-state {
+    padding: 34px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1100px) {
+    .expenses-kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .expenses-layout {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .expenses-head,
+    .card-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .expenses-kpis {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .act-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 12px;
+    border: none;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 850;
+    cursor: pointer;
+    transition: 0.12s ease;
+    min-height: 30px;
+    white-space: nowrap;
+    line-height: 1;
+  }
+  .act-btn:hover {
+    filter: brightness(0.92);
+    transform: translateY(-1px);
+  }
+  .act-submit { background: #dbeafe; color: #1e40af; }
+  .act-approve { background: #dcfce7; color: #166534; }
+  .act-post { background: #dcfce7; color: #166534; }
+  .act-cancel { background: #fee2e2; color: #991b1b; }
+
+  .save-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 14px;
+    font-size: 14px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: 0.16s ease;
+    background: linear-gradient(135deg, #20b874, #11885a);
+    color: #fff;
+    box-shadow: 0 8px 16px rgba(32,184,116,0.25);
+  }
+  .save-btn:hover {
+    filter: brightness(1.08);
+    transform: translateY(-2px);
+    box-shadow: 0 12px 24px rgba(32,184,116,0.35);
+  }
+</style>
+
+{% set ns = namespace(total_amount=0) %}
+{% for e in expenses %}
+  {% set ns.total_amount = ns.total_amount + (e.amount or 0) %}
+{% endfor %}
+
+<div class="expenses-page">
+
+  <div class="expenses-head">
+    <div>
+      <h1>{{ L("المصروفات", "Expenses") }}</h1>
+      <p>{{ L("تسجيل ومتابعة المصروفات، ويتم خصم المصروف من الخزنة الرئيسية حسب النظام الحالي.", "Log and track expenses; the expense is deducted from the main treasury per current system.") }}</p>
+    </div>
+  </div>
+
+  <div class="expenses-kpis">
+    <div class="expense-kpi">
+      <div class="kpi-icon red">
+        <i class="bi bi-receipt"></i>
+      </div>
+      <div class="kpi-label">{{ L("عدد المصروفات", "Expense Count") }}</div>
+      <div class="kpi-value">{{ expenses|length }}</div>
+    </div>
+
+    <div class="expense-kpi">
+      <div class="kpi-icon blue">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+      <div class="kpi-label">{{ L("إجمالي المصروفات", "Total Expenses") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.total_amount or 0) }}</div>
+    </div>
+
+    <div class="expense-kpi">
+      <div class="kpi-icon yellow">
+        <i class="bi bi-tags"></i>
+      </div>
+      <div class="kpi-label">{{ L("تصنيفات المصروف", "Expense Categories") }}</div>
+      <div class="kpi-value">5</div>
+    </div>
+  </div>
+
+  <div class="expenses-layout">
+
+    <div class="expense-card">
+      <div class="card-head">
+        <h2>{{ L("سجل المصروفات", "Expenses Log") }}</h2>
+        <span>{{ expenses|length }} {{ L("عملية", "Operation") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="expenses-table">
+            <thead>
+              <tr>
+                <th>{{ L("التاريخ", "Date") }}</th>
+                <th>{{ L("التصنيف", "Category") }}</th>
+                <th>{{ L("المبلغ", "Amount") }}</th>
+                <th>{{ L("العملة", "Curr.") }}</th>
+                <th>{{ L("الوصف", "Description") }}</th>
+                <th>{{ L("حالة السير", "Workflow") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for e in expenses %}
+              <tr>
+                <td>{{ e.date }}</td>
+
+                <td>
+                  <span class="category-badge">{{ e.category }}</span>
+                </td>
+
+                <td class="money-red">
+                  {{ "%.2f"|format(e.amount or 0) }}
+                </td>
+
+                <td style="font-size:12px;">{{ e.currency.code if e.currency else '-' }}<br><span style="font-size:10px;color:var(--muted);">{{ "%.2f"|format(e.amount_currency or 0) }}</span></td>
+
+                <td class="description-cell">
+                  {{ e.description or '-' }}
+                </td>
+
+                <td>
+                  {% set wf_map = {"draft": "مسودة", "reviewed": "قيد المراجعة", "approved": "معتمد", "posted": "مرحّل", "cancelled": "ملغي"} %}
+                  {% set wf_badge = {"draft": "badge-gray", "reviewed": "badge-yellow", "approved": "badge-blue", "posted": "badge-green", "cancelled": "badge-red"} %}
+                  <span class="soft-badge {{ wf_badge.get(e.status, 'badge-gray') }}">{{ wf_map.get(e.status, e.status) }}</span>
+                </td>
+
+                <td>
+                  {% if has_permission(current_user, "expenses.manage") %}
+                  <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                    {% if e.status == "draft" %}
+                      <form method="post" action="/expenses/{{ e.id }}/submit" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="act-btn act-submit">{{ L("تقديم", "Submit") }}</button>
+                      </form>
+                      <form method="post" action="/expenses/{{ e.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="act-btn act-cancel">{{ L("إلغاء", "Cancel") }}</button>
+                      </form>
+                    {% elif e.status == "reviewed" %}
+                      <form method="post" action="/expenses/{{ e.id }}/approve" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="act-btn act-approve">{{ L("اعتماد", "Approve") }}</button>
+                      </form>
+                      <form method="post" action="/expenses/{{ e.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="act-btn act-cancel">{{ L("إلغاء", "Cancel") }}</button>
+                      </form>
+                    {% elif e.status == "approved" %}
+                      <form method="post" action="/expenses/{{ e.id }}/post" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="act-btn act-post">{{ L("ترحيل", "Post") }}</button>
+                      </form>
+                      <form method="post" action="/expenses/{{ e.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="act-btn act-cancel">{{ L("إلغاء", "Cancel") }}</button>
+                      </form>
+                    {% elif e.status == "posted" %}
+                      <form method="post" action="/expenses/{{ e.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="act-btn act-cancel">{{ L("إلغاء", "Cancel") }}</button>
+                      </form>
+                    {% endif %}
+                  </div>
+                  {% endif %}
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if not expenses %}
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">{{ L("لا توجد مصروفات مسجلة بعد", "No expenses registered yet") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    {% if has_permission(current_user, "expenses.manage") %}
+    <div class="expense-card">
+      <div class="card-head">
+        <h2>{{ L("إضافة مصروف", "Add Expense") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="form-hint">
+          {{ L("عند حفظ المصروف سيتم خصمه من الخزنة الرئيسية بنفس طريقة النظام الموجودة حاليًا.", "When saving an expense it will be deducted from the main treasury using the current system method.") }}
+        </div>
+
+        <form method="post" action="/expenses/add" class="expense-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field-block">
+            <label>{{ L("التصنيف", "Category") }}</label>
+            <select name="category" class="expense-select">
+              <option>{{ L("تشغيلية", "Operational") }}</option>
+              <option>{{ L("إيجار", "Rent") }}</option>
+              <option>{{ L("تسويق", "Marketing") }}</option>
+              <option>{{ L("رواتب", "Salaries") }}</option>
+              <option>{{ L("أخرى", "Other") }}</option>
+            </select>
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("المبلغ", "Amount") }}</label>
+            <input name="amount" type="number" step="0.01" placeholder="{{ L("المبلغ", "Amount") }}" required class="expense-input">
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("العملة", "Currency") }}</label>
+            <select name="currency_id" class="expense-select" onchange="autoFillExchangeRate('currency_id','exchange_rate')">
+              <option value="">{{ L("الأساسية", "Base") }}</option>
+              {% for c in currencies %}
+              <option value="{{ c.id }}" data-rate="{{ c.exchange_rate }}">{{ c.code }} - {{ c.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("سعر الصرف", "Exchange Rate") }}</label>
+            <input name="exchange_rate" id="exchange_rate" type="number" step="0.000001" value="1.0" class="expense-input">
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("حساب الصرف", "Account") }} <span style="color:#d14454">*</span></label>
+            <select name="account_id" required class="expense-select">
+              <option value="">{{ L("اختر الحساب...", "Select account...") }}</option>
+              {% for a in accounts %}
+              {% set t = a.type or 'treasury' %}
+              {% set label = 'خزنة' if t == 'treasury' else ('بنك' if t == 'bank' else 'محفظة') %}
+              <option value="{{ a.id }}">{{ a.name }} ({{ label }})</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-block">
+            <label>{{ L("الوصف", "Description") }}</label>
+            <input name="description" placeholder="{{ L("الوصف", "Description") }}" class="expense-input">
+          </div>
+
+          <button class="save-btn w-full" type="submit">
+            {{ L("حفظ المصروف", "Save Expense") }}
+          </button>
+        </form>
+      </div>
+    </div>
+    {% endif %}
+
+  </div>
+</div>
+
+{% endblock %}

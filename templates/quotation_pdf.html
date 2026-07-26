@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html dir="rtl">
+<head><meta charset="UTF-8"><title>{{ q.quote_number }}</title>
+<style>
+@page{margin:20mm 15mm}
+body{font-family:'DejaVu Sans','Cairo','Segoe UI',sans-serif;color:#172033;font-size:12px;line-height:1.6;margin:0;padding:30px}
+.header{text-align:center;border-bottom:2px solid #20b874;padding-bottom:15px;margin-bottom:20px}
+.header h1{font-size:22px;margin:0;color:#11885a}
+.header .sub{font-size:12px;color:#708093;margin:4px 0 0}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px}
+.info-grid .item label{font-size:10px;font-weight:900;color:#708093;display:block}
+.info-grid .item .val{font-size:13px;font-weight:800}
+table{width:100%;border-collapse:collapse;margin:16px 0}
+th{background:#f0fce4;padding:10px 8px;font-size:11px;font-weight:900;text-align:center;border-bottom:2px solid #d4f0b0}
+td{padding:9px 8px;text-align:center;border-bottom:1px solid #e4ebe6;font-size:12px}
+tr:last-child td{border-bottom:0}
+.totals{width:280px;margin-inline-start:auto;margin-top:12px}
+.totals .tr{display:flex;justify-content:space-between;padding:5px 0;font-size:12px;border-bottom:1px solid #e4ebe6}
+.totals .tr.grand{font-size:16px;font-weight:950;color:#11885a;border-bottom:0;padding-top:8px}
+.notes{margin-top:18px;padding-top:14px;border-top:1px solid #e4ebe6}
+.notes label{font-size:10px;font-weight:900;color:#708093}
+.footer{text-align:center;margin-top:30px;padding-top:14px;border-top:1px solid #e4ebe6;font-size:11px;color:#708093}
+@media print{body{padding:0}.no-print{display:none!important}}
+</style>
+</head>
+<body>
+<div class="header">
+  <h1>{{ L("عرض سعر", "Quotation") }}</h1>
+  <div class="sub">{{ q.quote_number }}</div>
+</div>
+
+<div class="info-grid">
+  <div class="item"><label>{{ L("العميل", "Customer") }}</label><div class="val">{{ q.customer.name if q.customer else '—' }}</div></div>
+  <div class="item"><label>{{ L("التاريخ", "Date") }}</label><div class="val">{{ q.created_at.strftime('%Y-%m-%d') if q.created_at else '—' }}</div></div>
+  <div class="item"><label>{{ L("رقم العرض", "Quote #") }}</label><div class="val">{{ q.quote_number }}</div></div>
+  <div class="item"><label>{{ L("صالح حتى", "Valid Until") }}</label><div class="val">{{ q.validity_date.strftime('%Y-%m-%d') if q.validity_date else '—' }}</div></div>
+</div>
+
+<table>
+<thead><tr>
+  <th>#</th><th>{{ L("النوع", "Type") }}</th><th>{{ L("الوصف", "Description") }}</th>
+  <th>{{ L("سعر البيع", "Price") }}</th><th>{{ L("الكمية", "Qty") }}</th><th>{{ L("الإجمالي", "Total") }}</th>
+</tr></thead>
+<tbody>
+{% for it in q.items %}
+<tr>
+  <td>{{ loop.index }}</td>
+  <td>{{ {'hotel': L('فندق','Hotel'), 'transport': L('نقل','Transport'), 'visa': L('تأشيرة','Visa'), 'ticket': L('تذكرة','Ticket'), 'insurance': L('تأمين','Insurance'), 'trip': L('رحلة','Trip'), 'service': L('خدمة','Service'), 'other': L('أخرى','Other')}.get(it.item_type, it.item_type) }}</td>
+  <td style="text-align:right">{{ it.description }}</td>
+  <td dir="ltr">{{ "%.2f"|format(it.sale_price or 0) }}</td>
+  <td>{{ it.qty }}</td>
+  <td dir="ltr" style="font-weight:900">{{ "%.2f"|format(it.total or 0) }}</td>
+</tr>
+{% endfor %}
+</tbody>
+</table>
+
+<div class="totals">
+  <div class="tr"><span>{{ L("المجموع الفرعي", "Subtotal") }}</span><span dir="ltr">{{ "%.2f"|format(q.subtotal or 0) }}</span></div>
+  {% if q.discount_value and q.discount_value > 0 %}
+  <div class="tr"><span>{{ L("الخصم", "Discount") }}</span><span dir="ltr" style="color:#dc2626">-{{ "%.2f"|format(q.discount_value or 0) }}</span></div>
+  {% endif %}
+  {% if q.tax_amount and q.tax_amount > 0 %}
+  <div class="tr"><span>{{ L("الضريبة", "Tax") }}</span><span dir="ltr">{{ "%.2f"|format(q.tax_amount or 0) }}</span></div>
+  {% endif %}
+  <div class="tr grand"><span>{{ L("الإجمالي النهائي", "Grand Total") }}</span><span dir="ltr">{{ "%.2f"|format(q.grand_total or 0) }}</span></div>
+</div>
+
+{% if q.notes %}
+<div class="notes"><label>{{ L("ملاحظات", "Notes") }}</label><div style="margin-top:4px;font-size:12px">{{ q.notes }}</div></div>
+{% endif %}
+{% if q.terms_conditions %}
+<div class="notes"><label>{{ L("الشروط والأحكام", "Terms & Conditions") }}</label><div style="margin-top:4px;font-size:12px;white-space:pre-wrap">{{ q.terms_conditions }}</div></div>
+{% endif %}
+
+<div class="footer">
+  <p>{{ L("عرض سعر رقم", "Quotation No.") }} {{ q.quote_number }} | {{ L("تم الإنشاء في", "Created on") }} {{ q.created_at.strftime('%Y-%m-%d') if q.created_at else '' }}</p>
+  <p style="font-size:10px;margin-top:2px">{{ L("هذا العرض صالح لمدة", "This offer is valid for") }} {{ q.validity_date.strftime('%Y-%m-%d') if q.validity_date else '—' }}</p>
+</div>
+
+<div class="no-print" style="text-align:center;margin-top:20px">
+  <button onclick="window.print()" style="padding:10px 30px;border:0;border-radius:10px;background:#20b874;color:#fff;font-size:14px;font-weight:900;cursor:pointer"><i class="bi bi-printer"></i> {{ L("طباعة / PDF", "Print / PDF") }}</button>
+</div>
+</body>
+</html>

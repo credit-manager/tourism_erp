@@ -1,0 +1,723 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .withdrawals-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --blue:#bfd175;
+    --blue-soft:#f4fce8;
+    --yellow:#f4c44d;
+    --yellow-soft:#fff8de;
+    --purple:#8a7cf7;
+    --purple-soft:#f4f1ff;
+    --red:#eb5d6c;
+    --red-soft:#fff1f3;
+    --orange:#f59e0b;
+    --orange-soft:#fff7ed;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --card:#ffffff;
+    direction: inherit;
+  }
+
+  .withdrawals-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:20px;
+  }
+
+  .withdrawals-header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .withdrawals-header p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .error-alert{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:14px 16px;
+    border-radius:18px;
+    border:1px solid #ffd7dd;
+    background:var(--red-soft);
+    color:#b42336;
+    font-size:13px;
+    font-weight:850;
+    line-height:1.8;
+    margin-bottom:16px;
+  }
+
+  .summary-note{
+    padding:14px 16px;
+    border-radius:18px;
+    border:1px solid var(--border);
+    background:linear-gradient(135deg,var(--primary-soft),#fff);
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.9;
+    margin-bottom:14px;
+  }
+
+  .withdrawals-stats{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+
+  .stat-card,
+  .main-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);
+  }
+
+  .stat-card{
+    padding:18px;
+    min-height:118px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    left:-40px;
+    bottom:-45px;
+    width:110px;
+    height:110px;
+    border-radius:999px;
+    background:rgba(26,86,219,.06);
+  }
+
+  .stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    margin-bottom:12px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-icon.green{ background:var(--primary-soft); color:var(--primary); }
+  .stat-icon.blue{ background:var(--blue-soft); color:var(--blue); }
+  .stat-icon.red{ background:var(--red-soft); color:var(--red); }
+  .stat-icon.purple{ background:var(--purple-soft); color:var(--purple); }
+
+  .stat-label{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:850;
+    margin-bottom:5px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-value{
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+    direction:ltr;
+    text-align:right;
+    position:relative;
+    z-index:1;
+  }
+
+  .summary-card{
+    margin-bottom:18px;
+  }
+
+  .withdrawals-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1.7fr) minmax(340px,.9fr);
+    gap:18px;
+    align-items:start;
+  }
+
+  .card-head{
+    padding:18px 20px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+
+  .card-head h2{
+    margin:0;
+    font-size:16px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .card-chip{
+    padding:7px 11px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:#fbfdfc;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:850;
+    white-space:nowrap;
+  }
+
+  .card-body{
+    padding:16px 20px 20px;
+  }
+
+  .table-wrap{
+    overflow-x:auto;
+    padding-bottom:6px;
+  }
+
+  .table-wrap::-webkit-scrollbar{
+    height:10px;
+  }
+
+  .table-wrap::-webkit-scrollbar-thumb{
+    background:#d4ddd7;
+    border-radius:999px;
+  }
+
+  .table-wrap::-webkit-scrollbar-track{
+    background:#f3f7f5;
+    border-radius:999px;
+  }
+
+  .modern-table{
+    width:100%;
+    min-width:900px;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13px;
+  }
+
+  .modern-table th{
+    background:#f8fcfa;
+    color:var(--muted);
+    padding:14px 10px;
+    font-size:12px;
+    font-weight:950;
+    border-bottom:1px solid var(--border);
+    text-align:center;
+    white-space:nowrap;
+  }
+
+  .modern-table td{
+    padding:14px 10px;
+    border-bottom:1px solid #edf2ef;
+    text-align:center;
+    white-space:nowrap;
+    color:var(--text);
+    vertical-align:middle;
+  }
+
+  .modern-table tr:hover td{
+    background:#fbfefc;
+  }
+
+  .employee-name{
+    font-weight:950;
+    color:var(--primary-dark);
+  }
+
+  .money{
+    direction:ltr;
+    font-weight:900;
+  }
+
+  .money-green{
+    color:var(--primary-dark);
+    font-weight:950;
+  }
+
+  .money-red{
+    color:var(--red);
+    font-weight:950;
+  }
+
+  .money-purple{
+    color:var(--purple);
+    font-weight:950;
+  }
+
+  .type-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .type-salary{
+    background:var(--blue-soft);
+    color:#11885a;
+  }
+
+  .type-advance{
+    background:var(--orange-soft);
+    color:#c26a00;
+  }
+
+  .percent-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:4px 8px;
+    border-radius:999px;
+    background:#f1f5f9;
+    color:#64748b;
+    font-size:11px;
+    font-weight:900;
+    margin-right:5px;
+  }
+
+  .delete-btn{
+    width:34px;
+    height:34px;
+    border-radius:11px;
+    border:1px solid #fde2e5;
+    background:#fff;
+    color:var(--red);
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.15s ease;
+    box-shadow:0 6px 14px rgba(15,23,42,.05);
+  }
+
+  .delete-btn:hover{
+    transform:translateY(-1px);
+    background:var(--red-soft);
+  }
+
+  .side-card{
+    position:sticky;
+    top:18px;
+  }
+
+  .helper-box{
+    padding:13px 14px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:linear-gradient(135deg,var(--primary-soft),#fff);
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.8;
+    margin-bottom:14px;
+  }
+
+  .form-grid{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .field-group label{
+    display:block;
+    margin-bottom:6px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .field-input,
+  .field-select,
+  .field-textarea{
+    width:100%;
+    border:1px solid #dde7e1;
+    border-radius:14px;
+    background:#fff;
+    color:var(--text);
+    font-size:13px;
+    font-weight:700;
+    padding:0 13px;
+    height:43px;
+  }
+
+  .field-textarea{
+    min-height:82px;
+    height:auto;
+    resize:vertical;
+    padding-top:10px;
+  }
+
+  .field-input:focus,
+  .field-select:focus,
+  .field-textarea:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(26,86,219,.1);
+  }
+
+  .save-btn{
+    width:100%;
+    min-height:43px;
+    border:0;
+    border-radius:15px;
+    background:linear-gradient(135deg,var(--lime),#b8c96a);
+    color:#172033;
+    font-size:13px;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    cursor:pointer;
+    box-shadow:0 8px 16px rgba(103, 197, 80,.24);
+    transition:.16s ease;
+  }
+
+  .save-btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(.98);
+  }
+
+  .empty-state{
+    padding:34px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  @media (max-width:1250px){
+    .withdrawals-stats{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .withdrawals-layout{
+      grid-template-columns:1fr;
+    }
+
+    .side-card{
+      position:static;
+    }
+  }
+
+  @media (max-width:700px){
+    .withdrawals-header,
+    .card-head{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .withdrawals-stats{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+
+{% set ns = namespace(total_earned=0, total_withdrawn=0, total_allowed=0, total_available=0) %}
+{% for s in employee_summaries %}
+  {% set ns.total_earned = ns.total_earned + (s.earned or 0) %}
+  {% set ns.total_withdrawn = ns.total_withdrawn + (s.withdrawn or 0) %}
+  {% set ns.total_allowed = ns.total_allowed + (s.max_allowed or 0) %}
+  {% set ns.total_available = ns.total_available + (s.available or 0) %}
+{% endfor %}
+
+<div class="withdrawals-page">
+
+  <div class="withdrawals-header">
+    <div>
+      <h1>{{ L("سحوبات الموظفين", "Employee Withdrawals") }}</h1>
+      <p>{{ L("متابعة تحصيل كل موظف، الحد المسموح للسحب، وسجل عمليات السحب من الخزنة.", "Track each employee's collection, allowed withdrawal limit, and withdrawal operations from treasury.") }}</p>
+    </div>
+  </div>
+
+  {% if request.query_params.get('error') %}
+  <div class="error-alert">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div>{{ request.query_params.get('error') }}</div>
+  </div>
+  {% endif %}
+
+  <div class="withdrawals-stats">
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="bi bi-graph-up-arrow"></i></div>
+      <div class="stat-label">{{ L("إجمالي ما حصّله الموظفون", "Total Collected by Employees") }}</div>
+      <div class="stat-value">{{ "%.2f"|format(ns.total_earned or 0) }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon red"><i class="bi bi-cash-coin"></i></div>
+      <div class="stat-label">{{ L("إجمالي المسحوب فعلاً", "Total Actually Withdrawn") }}</div>
+      <div class="stat-value">{{ "%.2f"|format(ns.total_withdrawn or 0) }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="bi bi-speedometer2"></i></div>
+      <div class="stat-label">{{ L("إجمالي الحد المسموح الآن", "Total Current Allowed Limit") }}</div>
+      <div class="stat-value">{{ "%.2f"|format(ns.total_allowed or 0) }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="bi bi-wallet2"></i></div>
+      <div class="stat-label">{{ L("إجمالي المتاح للسحب", "Total Available to Withdraw") }}</div>
+      <div class="stat-value">{{ "%.2f"|format(ns.total_available or 0) }}</div>
+    </div>
+  </div>
+
+  <div class="main-card summary-card">
+    <div class="card-head">
+      <h2>{{ L("ملخص تحصيل وسحب كل موظف هذا الشهر", "Collection & withdrawal summary per employee this month") }}</h2>
+      <span class="card-chip">{{ L("اليوم الحالي:", "Today:") }} {{ today_day }}</span>
+    </div>
+
+    <div class="card-body">
+      <div class="summary-note">
+        {{ L("القاعدة: قبل يوم 15 من الشهر، أقصى مسموح للسحب = 50% من إجمالي ما حصّله/كسبه الموظف هذا الشهر
+        بأي دور: مسؤول حجز / وكيل سفر / مسؤول مبيعات.
+        بعد يوم 15، يمكنه سحب المتبقي بالكامل.", "Rule: Before the 15th of the month, max withdrawal = 50% of total collected/earned by the employee this month
+        in any role: booking manager / travel agent / sales manager.
+        After the 15th, they can withdraw the full remaining amount.") }}
+      </div>
+
+      <div class="table-wrap">
+        <table class="modern-table">
+          <thead>
+            <tr>
+              <th>{{ L("الموظف", "Employee") }}</th>
+              <th>{{ L("إجمالي ما حصّله هذا الشهر", "Total Collected This Month") }}</th>
+              <th>{{ L("المسحوب فعلاً", "Actually Withdrawn") }}</th>
+              <th>{{ L("الحد المسموح الآن", "Current Allowed Limit") }}</th>
+              <th>{{ L("المتاح للسحب", "Available to Withdraw") }}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for s in employee_summaries %}
+            <tr>
+              <td>
+                <span class="employee-name">{{ s.employee.name }}</span>
+              </td>
+
+              <td class="money">
+                {{ "%.2f"|format(s.earned or 0) }}
+              </td>
+
+              <td class="money-red">
+                {{ "%.2f"|format(s.withdrawn or 0) }}
+              </td>
+
+              <td class="money-purple">
+                {{ "%.2f"|format(s.max_allowed or 0) }}
+                <span class="percent-badge">{{ '100%' if today_day > 15 else '50%' }}</span>
+              </td>
+
+              <td class="money-green">
+                {{ "%.2f"|format(s.available or 0) }}
+              </td>
+            </tr>
+            {% endfor %}
+
+            {% if not employee_summaries %}
+            <tr>
+              <td colspan="5">
+                <div class="empty-state">{{ L("لا توجد بيانات موظفين لهذا الشهر", "No employee data for this month") }}</div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="withdrawals-layout">
+
+    <div class="main-card">
+      <div class="card-head">
+        <h2>{{ L("سجل عمليات السحب", "Withdrawal Operations Log") }}</h2>
+        <span class="card-chip">{{ withdrawals|length }} {{ L("عملية", "Operation") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>{{ L("التاريخ", "Date") }}</th>
+                <th>{{ L("الموظف", "Employee") }}</th>
+                <th>{{ L("النوع", "Type") }}</th>
+                <th>{{ L("المبلغ", "Amount") }}</th>
+                <th>{{ L("الحساب", "Account") }}</th>
+                <th>{{ L("ملاحظات", "Notes") }}</th>
+                <th>{{ L("حالة السير", "Workflow") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for w in withdrawals %}
+              <tr>
+                <td>{{ w.date }}</td>
+
+                <td>
+                  <span class="employee-name">{{ w.employee.name if w.employee else '-' }}</span>
+                </td>
+
+                <td>
+                  {% if w.withdrawal_type == 'salary' %}
+                    <span class="type-badge type-salary">{{ L("راتب", "Salary") }}</span>
+                  {% else %}
+                    <span class="type-badge type-advance">{{ L("سحب على الحساب", "Account Withdrawal") }}</span>
+                  {% endif %}
+                </td>
+
+                <td class="money-red">
+                  {{ "%.2f"|format(w.amount or 0) }}
+                </td>
+
+                <td>{{ w.account.name if w.account else '-' }}</td>
+
+                <td>{{ w.notes or '-' }}</td>
+
+                <td>
+                  {% set wf_map = {"draft": "مسودة", "reviewed": "قيد المراجعة", "approved": "معتمد", "posted": "مرحّل", "cancelled": "ملغي"} %}
+                  {% set wf_badge = {"draft": "badge-gray", "reviewed": "badge-yellow", "approved": "badge-blue", "posted": "badge-green", "cancelled": "badge-red"} %}
+                  <span class="soft-badge {{ wf_badge.get(w.status, 'badge-gray') }}">{{ wf_map.get(w.status, w.status) }}</span>
+                </td>
+
+                <td>
+                  <div style="display:flex;gap:4px;flex-wrap:wrap;">
+                    {% if w.status == "draft" %}
+                      <form method="post" action="/withdrawals/{{ w.id }}/submit" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="soft-badge badge-blue" style="border:none;cursor:pointer;">{{ L("تقديم", "Submit") }}</button>
+                      </form>
+                      <form method="post" action="/withdrawals/{{ w.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="soft-badge badge-red" style="border:none;cursor:pointer;">{{ L("إلغاء", "Cancel") }}</button>
+                      </form>
+                    {% elif w.status == "reviewed" %}
+                      <form method="post" action="/withdrawals/{{ w.id }}/approve" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="soft-badge badge-green" style="border:none;cursor:pointer;">{{ L("اعتماد", "Approve") }}</button>
+                      </form>
+                      <form method="post" action="/withdrawals/{{ w.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="soft-badge badge-red" style="border:none;cursor:pointer;">{{ L("إلغاء", "Cancel") }}</button>
+                      </form>
+                    {% elif w.status == "approved" %}
+                      <form method="post" action="/withdrawals/{{ w.id }}/post" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="soft-badge badge-green" style="border:none;cursor:pointer;">{{ L("ترحيل", "Post") }}</button>
+                      </form>
+                      <form method="post" action="/withdrawals/{{ w.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="soft-badge badge-red" style="border:none;cursor:pointer;">{{ L("إلغاء", "Cancel") }}</button>
+                      </form>
+                    {% elif w.status == "posted" %}
+                      <form method="post" action="/withdrawals/{{ w.id }}/cancel" style="display:inline;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                        <button class="soft-badge badge-red" style="border:none;cursor:pointer;">{{ L("إلغاء", "Cancel") }}</button>
+                      </form>
+                    {% endif %}
+                    <form method="post" action="/withdrawals/{{ w.id }}/delete" onsubmit="return confirm('تأكيد حذف السحب؟ سيُعاد المبلغ للخزنة.')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="delete-btn" type="submit" title="حذف">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if not withdrawals %}
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">{{ L("لا توجد عمليات سحب مسجّلة بعد", "No withdrawal operations registered yet") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-card side-card">
+      <div class="card-head">
+        <h2>{{ L("تسجيل سحب جديد", "Log New Withdrawal") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="helper-box">
+          {{ L("اختار الموظف ونوع السحب والمبلغ والحساب. النظام سيطبق قاعدة الحد المسموح للسحب حسب اليوم الحالي.", "Select employee, withdrawal type, amount and account. System will apply the allowed withdrawal limit rule based on current day.") }}
+        </div>
+
+        <form method="post" action="/withdrawals/add" class="form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field-group">
+            <label>{{ L("الموظف", "Employee") }}</label>
+            <select name="employee_id" required class="field-select">
+              <option value="">{{ L("الموظف...", "Employee...") }}</option>
+              {% for s in employee_summaries %}
+              <option value="{{ s.employee.id }}">
+                {{ s.employee.name }} {{ L("- متاح:", "- Available:") }} {{ "%.2f"|format(s.available or 0) }}
+              </option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("نوع السحب", "Withdrawal Type") }}</label>
+            <select name="withdrawal_type" class="field-select">
+              <option value="advance">{{ L("سحب على الحساب (عمولة)", "Account Withdrawal (Commission)") }}</option>
+              <option value="salary">{{ L("راتب", "Salary") }}</option>
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("المبلغ", "Amount") }}</label>
+            <input name="amount" type="number" step="0.01" placeholder="{{ L("المبلغ", "Amount") }}" required class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("الحساب", "Account") }}</label>
+            <select name="account_id" class="field-select">
+              {% for a in accounts %}
+              <option value="{{ a.id }}">{{ a.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("ملاحظات", "Notes") }}</label>
+            <textarea name="notes" placeholder="{{ L("ملاحظات", "Notes") }}" class="field-textarea" rows="2"></textarea>
+          </div>
+
+          <button class="save-btn" type="submit">
+            {{ L("تسجيل السحب", "Log Withdrawal") }}
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+{% endblock %}

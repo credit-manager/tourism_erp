@@ -1,0 +1,223 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .r-page{--text:#172033;--muted:#7b8798;--card:#fff;--border:#e8eee9;direction:inherit}
+  .r-page .page-head{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:22px;flex-wrap:wrap}
+  .r-page .page-head h1{margin:0;font-size:28px;font-weight:950;color:var(--text)}
+  .r-page .page-head p{margin-top:7px;font-size:13px;color:var(--muted)}
+  .r-page .kpi-grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:16px;margin-bottom:18px}
+  .r-page .kpi-card{background:var(--card);border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);padding:18px;min-height:124px;position:relative;overflow:hidden}
+  .r-page .kpi-card::after{content:"";position:absolute;left:-45px;bottom:-50px;width:120px;height:120px;border-radius:999px;background:rgba(26,86,219,0.06)}
+  .r-page .kpi-icon{width:46px;height:46px;border-radius:17px;display:inline-flex;align-items:center;justify-content:center;font-size:21px;margin-bottom:14px;position:relative;z-index:1}
+  .r-page .kpi-icon.soft-blue{background:#eef3ff;color:#4a72c9}
+  .r-page .kpi-icon.soft-green{background:#edf9f3;color:#3a9b6a}
+  .r-page .kpi-icon.soft-amber{background:#fff7df;color:#9a7a3a}
+  .r-page .kpi-icon.soft-rose{background:#fff0f2;color:#b95667}
+  .r-page .kpi-icon.soft-purple{background:#f3eeff;color:#6b5b9a}
+  .r-page .kpi-label{color:var(--muted);font-size:12px;font-weight:800;margin-bottom:5px;position:relative;z-index:1}
+  .r-page .kpi-value{color:var(--text);font-size:28px;font-weight:950;direction:ltr;text-align:right;position:relative;z-index:1}
+  .r-page .card{border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);margin-bottom:18px;overflow:hidden}
+  .r-page .card-head{padding:19px 22px 0;display:flex;align-items:center;justify-content:space-between;gap:14px}
+  .r-page .card-head h2{margin:0;font-size:16px;font-weight:950;color:var(--text)}
+  .r-page .card-head .badge{font-size:12px;color:var(--muted);background:#fbfdfc;border:1px solid var(--border);border-radius:13px;padding:7px 11px;font-weight:800}
+  .r-page .card-body{padding:18px 22px 22px}
+  .r-page table{width:100%;border-collapse:collapse;font-size:13px}
+  .r-page th{background:#fbfdfc;color:var(--muted);padding:12px 8px;font-size:12px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap}
+  .r-page td{padding:13px 8px;border-bottom:1px solid #edf2ef;color:var(--text);text-align:center;vertical-align:middle}
+  .r-page tr:hover td{background:#fbfdfc}
+  .r-page .empty-state{padding:40px;text-align:center;color:var(--muted);font-size:14px}
+  .r-page .filter-bar{display:flex;gap:12px;align-items:center;flex-wrap:wrap;margin-bottom:18px}
+  .r-page .filter-bar select{padding:10px 14px;border:1px solid var(--border);border-radius:14px;font-size:14px;font-weight:700;color:var(--text);background:var(--card);min-width:260px}
+  .r-page .filter-bar .btn-go{display:inline-flex;align-items:center;gap:6px;padding:10px 22px;font-size:14px;font-weight:800;border-radius:14px;border:none;background:#4a72c9;color:#fff;cursor:pointer;text-decoration:none;transition:all .15s}
+  .r-page .filter-bar .btn-go:hover{background:#3b5ea8}
+  .r-page .rating-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(400px,1fr));gap:18px;margin-bottom:18px}
+  .r-page .dim-row{display:flex;align-items:center;gap:10px;margin-bottom:9px}
+  .r-page .dim-row .dim-label{font-size:11px;font-weight:800;color:var(--muted);min-width:100px;text-align:right}
+  .r-page .dim-row .dim-track{flex:1;height:16px;background:#edf2ef;border-radius:999px;overflow:hidden}
+  .r-page .dim-row .dim-fill{height:100%;border-radius:999px;transition:width 0.5s ease}
+  .r-page .dim-row .dim-fill.good{background:#6bae8a}
+  .r-page .dim-row .dim-fill.ok{background:#b8a06a}
+  .r-page .dim-row .dim-fill.low{background:#b97a82}
+  .r-page .dim-row .dim-score{font-size:12px;font-weight:950;color:var(--text);min-width:28px;text-align:center;direction:ltr}
+  .r-page .score-badge{display:inline-flex;align-items:center;justify-content:center;padding:4px 12px;border-radius:999px;font-size:14px;font-weight:950}
+  .r-page .score-badge.good{background:#e6f5ed;color:#3a8a5e}
+  .r-page .score-badge.ok{background:#faf3e0;color:#8a723a}
+  .r-page .score-badge.low{background:#f5e6e8;color:#8a4a56}
+  .r-page .star{font-size:16px}
+  .r-page .star.filled{color:#c4a44a}
+  .r-page .star.empty{color:#dce3e8}
+  .r-page .suggest-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:12px}
+  .r-page .suggest-card{background:#fbfdfc;border:1px solid var(--border);border-radius:18px;padding:14px}
+  .r-page .suggest-card .s-city{font-size:13px;font-weight:950;color:var(--text);margin-bottom:8px}
+  .r-page .suggest-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid #edf2ef;font-size:12px}
+  .r-page .suggest-item:last-child{border-bottom:none}
+  .r-page .rank-num{font-weight:950;font-size:17px;margin-left:6px}
+</style>
+<div class="r-page">
+  {% if error %}
+  <div style="background:#fff0f2;border:1px solid #ffd7dd;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#d14454;font-size:14px;font-weight:700;">
+    <i class="bi bi-exclamation-triangle-fill"></i> {{ error }}
+  </div>
+  {% endif %}
+
+  <div class="page-head">
+    <div>
+      <h1>{{ L("تقييم الموردين", "Supplier Rating") }}</h1>
+      <p>{{ L("تحليل أداء الموردين وتصنيفهم", "Analyze supplier performance and rankings") }}</p>
+    </div>
+  </div>
+
+  <form class="filter-bar" method="get" action="/suppliers/rating">
+    <select name="supplier_type" onchange="this.form.submit()">
+      <option value="">{{ L("جميع الأنواع", "All Types") }}</option>
+      <option value="hotel" {% if supplier_type == "hotel" %}selected{% endif %}>{{ L("فنادق", "Hotels") }}</option>
+      <option value="transport" {% if supplier_type == "transport" %}selected{% endif %}>{{ L("نقل", "Transport") }}</option>
+      <option value="guide" {% if supplier_type == "guide" %}selected{% endif %}>{{ L("مرشدين", "Guides") }}</option>
+      <option value="local_company" {% if supplier_type == "local_company" %}selected{% endif %}>{{ L("شركات محلية", "Local Companies") }}</option>
+    </select>
+    {% if supplier_type %}
+    <a href="/suppliers/rating" class="btn-go" style="background:#8a929e">× {{ L("إلغاء التصفية", "Clear") }}</a>
+    {% endif %}
+  </form>
+
+  {% if ratings %}
+  <div class="kpi-grid">
+    <div class="kpi-card">
+      <div class="kpi-icon soft-blue"><i class="bi bi-trophy"></i></div>
+      <div class="kpi-label">{{ L("متوسط التقييم", "Avg Rating") }}</div>
+      <div class="kpi-value">{{ avg_overall }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon soft-green"><i class="bi bi-currency-dollar"></i></div>
+      <div class="kpi-label">{{ L("دقة التكلفة", "Cost Acc.") }}</div>
+      <div class="kpi-value">{{ cost_avg }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon soft-amber"><i class="bi bi-clock"></i></div>
+      <div class="kpi-label">{{ L("سرعة التأكيد", "Speed") }}</div>
+      <div class="kpi-value">{{ speed_avg }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon soft-purple"><i class="bi bi-star"></i></div>
+      <div class="kpi-label">{{ L("جودة الخدمة", "Quality") }}</div>
+      <div class="kpi-value">{{ quality_avg }}</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-icon soft-rose"><i class="bi bi-people"></i></div>
+      <div class="kpi-label">{{ L("عدد الموردين", "Suppliers") }}</div>
+      <div class="kpi-value">{{ total_suppliers }}</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-head">
+      <h2><i class="bi bi-list-ol"></i> {{ L("جدول المقارنة", "Comparison") }}</h2>
+      <span class="badge">{{ total_suppliers }} {{ L("مورد", "suppliers") }}</span>
+    </div>
+    <div class="card-body" style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th style="text-align:right">{{ L("المورد", "Supplier") }}</th>
+            <th>{{ L("النوع", "Type") }}</th>
+            <th>{{ L("التقييم", "Score") }}</th>
+            <th>{{ L("تكلفة", "Cost") }}</th>
+            <th>{{ L("سرعة", "Spd") }}</th>
+            <th>{{ L("جودة", "Qual") }}</th>
+            <th>{{ L("إلغاء", "Cancel") }}</th>
+            <th>{{ L("شكاوى", "Cmpl") }}</th>
+            <th>{{ L("التزام", "Comp") }}</th>
+            <th>{{ L("استجابة", "Resp") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in ratings %}
+          <tr>
+            <td><span class="rank-num" style="color:{% if loop.index == 1 %}#b8a06a{% elif loop.index == 2 %}#8a929e{% elif loop.index == 3 %}#a08a6a{% else %}#8a929e{% endif %}">{{ loop.index }}</span></td>
+            <td style="text-align:right;font-weight:800">{{ r.supplier_name }}</td>
+            <td><span style="font-size:11px;color:var(--muted);background:#fbfdfc;border:1px solid var(--border);border-radius:12px;padding:3px 10px;font-weight:700">{{ r.supplier_type }}</span></td>
+            <td><span class="score-badge {% if r.overall >= 75 %}good{% elif r.overall >= 50 %}ok{% else %}low{% endif %}">{{ r.overall }}</span></td>
+            <td>{{ r.dimensions.cost_accuracy.score }}</td>
+            <td>{{ r.dimensions.confirmation_speed.score }}</td>
+            <td>{{ r.dimensions.service_quality.score }}</td>
+            <td>{{ r.dimensions.cancellation_rate.score }}</td>
+            <td>{{ r.dimensions.complaints.score }}</td>
+            <td>{{ r.dimensions.invoice_compliance.score }}</td>
+            <td>{{ r.dimensions.response_time.score }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="rating-grid">
+    {% for r in ratings %}
+    {% set dims = r.dimensions %}
+    <div class="card" style="break-inside:avoid">
+      <div class="card-head">
+        <div>
+          <span class="rank-num" style="color:{% if loop.index == 1 %}#b8a06a{% elif loop.index == 2 %}#8a929e{% elif loop.index == 3 %}#a08a6a{% else %}#8a929e{% endif %}">#{{ loop.index }}</span>
+          <span style="font-weight:950;font-size:15px;color:var(--text)">{{ r.supplier_name }}</span>
+          {% if r.city %}<span style="font-size:12px;color:var(--muted)">({{ r.city }})</span>{% endif %}
+        </div>
+        <span class="score-badge {% if r.overall >= 75 %}good{% elif r.overall >= 50 %}ok{% else %}low{% endif %}" style="font-size:16px;padding:5px 16px">{{ r.overall }}</span>
+      </div>
+      <div class="card-body">
+        <div style="margin-bottom:10px">
+          {% set full = (r.overall / 20)|int %}
+          {% for i in range(5) %}
+          <span class="star {{ 'filled' if i < full else 'empty' }}">★</span>
+          {% endfor %}
+        </div>
+        {% for key, dim in dims.items() %}
+        <div class="dim-row">
+          <span class="dim-label">{{ dim.label_ar }}</span>
+          <div class="dim-track">
+            <div class="dim-fill {% if dim.score >= 70 %}good{% elif dim.score >= 45 %}ok{% else %}low{% endif %}" style="width:{{ dim.score }}%"></div>
+          </div>
+          <span class="dim-score">{{ dim.score }}</span>
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+    {% endfor %}
+  </div>
+
+  {% if suggestions %}
+  <div class="card">
+    <div class="card-head">
+      <h2><i class="bi bi-geo-alt"></i> {{ L("اقتراحات الجهات", "Recommended Suppliers") }}</h2>
+      <span class="badge">{{ suggestions|length }} {{ L("وجهة", "dest.") }}</span>
+    </div>
+    <div class="card-body">
+      <div class="suggest-grid">
+        {% for city, items in suggestions.items() %}
+        <div class="suggest-card">
+          <div class="s-city"><i class="bi bi-geo-alt"></i> {{ city }}</div>
+          {% for item in items %}
+          <div class="suggest-item">
+            <span style="font-weight:800;color:var(--text)">{{ item.supplier_name }}</span>
+            <span class="score-badge {% if item.overall >= 75 %}good{% elif item.overall >= 50 %}ok{% else %}low{% endif %}">{{ item.overall }}</span>
+          </div>
+          {% endfor %}
+        </div>
+        {% endfor %}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% else %}
+  <div class="card">
+    <div class="card-body">
+      <div class="empty-state">
+        <i class="bi bi-bar-chart" style="font-size:32px;display:block;margin-bottom:12px;color:#cbd5e1"></i>
+        {{ L("لا توجد بيانات تقييم متاحة", "No rating data available") }}
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+{% endblock %}

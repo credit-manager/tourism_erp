@@ -1,0 +1,105 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .sf-page{
+    --primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --text:#182033;--muted:#708093;--border:#e4ebe6;
+    direction:inherit;
+  }
+  .sf-header{margin-bottom:18px;}
+  .sf-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);}
+  .sf-header p{margin:6px 0 0;color:var(--muted);font-size:13px;font-weight:700;}
+
+  .form-card{background:#fff;border:1px solid var(--border);border-radius:22px;overflow:hidden;width:100%;max-width:75%;margin:0 auto;}
+  .form-head{padding:18px 22px 0;display:flex;align-items:center;gap:10px;}
+  .form-head .ic{width:42px;height:42px;border-radius:13px;background:var(--primary-soft);color:var(--primary);display:inline-flex;align-items:center;justify-content:center;font-size:19px;flex-shrink:0;}
+  .form-head h2{margin:0;font-size:16px;font-weight:950;color:var(--text);}
+  .form-head .sub{font-size:11px;color:var(--muted);font-weight:800;margin-top:2px;}
+  .form-body{padding:18px 22px 22px;}
+
+  .fld{margin-bottom:16px;}
+  .fld label{display:block;font-size:12px;font-weight:900;color:var(--muted);margin-bottom:6px;}
+  .fld input[type="text"],.fld input[type="time"]{
+    width:100%;height:44px;border:1.5px solid #dde7e1;border-radius:12px;padding:0 13px;font-size:13px;background:#fafefc;color:var(--text);box-sizing:border-box;transition:.15s;
+  }
+  .fld input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.1);}
+
+  .row2{display:grid;grid-template-columns:1fr 1fr;gap:14px;}
+
+  .switch-row{display:flex;align-items:center;justify-content:space-between;gap:12px;background:#f6faf8;border:1px solid var(--border);border-radius:14px;padding:13px 15px;}
+  .switch-row .lbl{font-size:13px;font-weight:850;color:var(--text);}
+  .switch-row .desc{font-size:11px;color:var(--muted);font-weight:700;margin-top:2px;}
+  /* toggle switch */
+  .toggle{position:relative;display:inline-block;width:48px;height:27px;flex-shrink:0;}
+  .toggle input{opacity:0;width:0;height:0;}
+  .toggle .track{position:absolute;cursor:pointer;inset:0;background:#cfd8d3;border-radius:999px;transition:.2s;}
+  .toggle .track:before{content:"";position:absolute;height:21px;width:21px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.2s;box-shadow:0 2px 5px rgba(0,0,0,.18);}
+  .toggle input:checked + .track{background:linear-gradient(135deg,#2ec182,#11885a);}
+  .toggle input:checked + .track:before{transform:translateX(21px);}
+  html[dir="rtl"] .toggle input:checked + .track:before{transform:translateX(-21px);}
+
+  .form-actions{display:flex;gap:12px;margin-top:22px;padding-top:18px;border-top:1px solid var(--border);}
+  .btn{min-height:44px;border-radius:14px;font-weight:900;font-size:13.5px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 26px;border:0;cursor:pointer;transition:.18s ease;text-decoration:none;white-space:nowrap;letter-spacing:.2px;}
+  .btn-green{background:linear-gradient(135deg,#2ec182,#11885a);color:#fff;box-shadow:0 8px 18px rgba(32,184,116,.28);}
+  .btn-gray{background:#f1f5f9;color:#364153;border:1px solid var(--border);}
+  .btn:hover{transform:translateY(-1px);filter:brightness(.97);}
+
+  @media(max-width:700px){.row2{grid-template-columns:1fr;}.form-card{max-width:100%;}.form-actions{flex-direction:column;}.btn{width:100%;}}
+</style>
+
+<div class="sf-page">
+  <div class="sf-header">
+    <h1>{% if shift %}{{ L("تعديل وردية", "Edit Shift") }}{% else %}{{ L("إضافة وردية", "Add Shift") }}{% endif %}</h1>
+    <p>{{ L("حدد اسم الوردية وأوقات البداية والنهاية", "Set the shift name and start/end times") }}</p>
+  </div>
+
+  <div class="form-card">
+    <div class="form-head">
+      <div class="ic"><i class="bi bi-clock-history"></i></div>
+      <div>
+        <h2>{% if shift %}{{ shift.name }}{% else %}{{ L("وردية جديدة", "New Shift") }}{% endif %}</h2>
+        <div class="sub">{{ L("بيانات الوردية", "Shift Details") }}</div>
+      </div>
+    </div>
+    <div class="form-body">
+      <form method="post" action="/shifts/{% if shift %}{{ shift.id }}/edit{% else %}add{% endif %}">
+        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+        <div class="fld">
+          <label>{{ L("اسم الوردية", "Shift Name") }}</label>
+          <input type="text" name="name" value="{{ shift.name if shift else '' }}" placeholder="{{ L('مثال: وردية صباحية', 'e.g. Morning Shift') }}" required>
+        </div>
+
+        <div class="row2">
+          <div class="fld">
+            <label>{{ L("وقت البداية", "Start Time") }}</label>
+            <input type="time" name="start_time" value="{{ shift.start_time.strftime('%H:%M') if shift else '08:00' }}" required>
+          </div>
+          <div class="fld">
+            <label>{{ L("وقت النهاية", "End Time") }}</label>
+            <input type="time" name="end_time" value="{{ shift.end_time.strftime('%H:%M') if shift else '16:00' }}" required>
+          </div>
+        </div>
+
+        <div class="switch-row">
+          <div>
+            <div class="lbl">{{ L("وردية نشطة", "Active Shift") }}</div>
+            <div class="desc">{{ L("الورديات النشطة فقط تظهر عند تسجيل الحضور", "Only active shifts appear when logging attendance") }}</div>
+          </div>
+          <label class="toggle">
+            <input type="checkbox" name="is_active" value="1" {{ 'checked' if not shift or shift.is_active else '' }}>
+            <span class="track"></span>
+          </label>
+        </div>
+
+        <div class="form-actions">
+          <button type="submit" class="btn btn-green"><i class="bi bi-check2"></i> {{ L("حفظ", "Save") }}</button>
+          <a href="/shifts" class="btn btn-gray"><i class="bi bi-x-lg"></i> {{ L("إلغاء", "Cancel") }}</a>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

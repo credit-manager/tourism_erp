@@ -1,0 +1,702 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .transport-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --blue:#bfd175;
+    --blue-soft:#f4fce8;
+    --yellow:#f4c44d;
+    --yellow-soft:#fff8de;
+    --purple:#8a7cf7;
+    --purple-soft:#f4f1ff;
+    --red:#eb5d6c;
+    --red-soft:#fff1f3;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --card:#ffffff;
+    direction: inherit;
+  }
+
+  .transport-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:20px;
+  }
+
+  .transport-header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .transport-header p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .transport-stats{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+
+  .stat-card,
+  .main-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);
+  }
+
+  .stat-card{
+    padding:18px;
+    min-height:118px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    left:-40px;
+    bottom:-45px;
+    width:110px;
+    height:110px;
+    border-radius:999px;
+    background:rgba(26,86,219,.06);
+  }
+
+  .stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    margin-bottom:12px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-icon.green{ background:var(--primary-soft); color:var(--primary); }
+  .stat-icon.blue{ background:var(--blue-soft); color:var(--blue); }
+  .stat-icon.yellow{ background:var(--yellow-soft); color:#ab7700; }
+  .stat-icon.purple{ background:var(--purple-soft); color:var(--purple); }
+
+  .stat-label{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:850;
+    margin-bottom:5px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-value{
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+    direction:ltr;
+    text-align:right;
+    position:relative;
+    z-index:1;
+  }
+
+  .transport-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1.7fr) minmax(340px,.9fr);
+    gap:18px;
+    align-items:start;
+  }
+
+  .card-head{
+    padding:18px 20px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+
+  .card-head h2{
+    margin:0;
+    font-size:16px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .card-chip{
+    padding:7px 11px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:#fbfdfc;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:850;
+    white-space:nowrap;
+  }
+
+  .card-body{
+    padding:16px 20px 20px;
+  }
+
+  .table-wrap{
+    overflow-x:auto;
+    padding-bottom:6px;
+  }
+
+  .table-wrap::-webkit-scrollbar{
+    height:10px;
+  }
+
+  .table-wrap::-webkit-scrollbar-thumb{
+    background:#d4ddd7;
+    border-radius:999px;
+  }
+
+  .table-wrap::-webkit-scrollbar-track{
+    background:#f3f7f5;
+    border-radius:999px;
+  }
+
+  .transport-table{
+    width:100%;
+    min-width:1120px;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13px;
+  }
+
+  .transport-table th{
+    background:#f8fcfa;
+    color:var(--muted);
+    padding:14px 10px;
+    font-size:12px;
+    font-weight:950;
+    border-bottom:1px solid var(--border);
+    text-align:center;
+    white-space:nowrap;
+  }
+
+  .transport-table td{
+    padding:14px 10px;
+    border-bottom:1px solid #edf2ef;
+    text-align:center;
+    white-space:nowrap;
+    color:var(--text);
+    vertical-align:middle;
+  }
+
+  .transport-table tr:hover td{
+    background:#fbfefc;
+  }
+
+  .vehicle-name{
+    font-weight:950;
+    color:var(--primary-dark);
+  }
+
+  .driver-name{
+    font-weight:850;
+  }
+
+  .driver-phone{
+    display:block;
+    margin-top:3px;
+    font-size:11px;
+    color:var(--muted);
+  }
+
+  .supplier-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:900;
+    background:var(--blue-soft);
+    color:#11885a;
+  }
+
+  .supplier-empty{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:900;
+    background:#f1f5f9;
+    color:#64748b;
+  }
+
+  .money{
+    direction:ltr;
+    font-weight:900;
+  }
+
+  .money-profit-plus{
+    color:var(--primary-dark);
+    font-weight:950;
+  }
+
+  .money-profit-minus{
+    color:var(--red);
+    font-weight:950;
+  }
+
+  .actions{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+
+  .action-btn{
+    width:34px;
+    height:34px;
+    border-radius:11px;
+    border:1px solid #dde7e1;
+    background:#fff;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.15s ease;
+    box-shadow:0 6px 14px rgba(15,23,42,.05);
+  }
+
+  .action-btn:hover{
+    transform:translateY(-1px);
+    background:#fbfefc;
+  }
+
+  .action-btn.edit{ color:#11885a; }
+  .action-btn.delete{ color:var(--red); }
+
+  .edit-row td{
+    background:#fbfdfc !important;
+    padding:0 10px 16px !important;
+  }
+
+  .edit-box{
+    margin-top:4px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:#fff;
+    padding:14px;
+  }
+
+  .edit-form{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:10px;
+    align-items:start;
+  }
+
+  .side-card{
+    position:sticky;
+    top:18px;
+  }
+
+  .helper-box{
+    padding:13px 14px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:linear-gradient(135deg,var(--primary-soft),#fff);
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.8;
+    margin-bottom:14px;
+  }
+
+  .form-grid{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .field-group label{
+    display:block;
+    margin-bottom:6px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .field-input,
+  .field-select,
+  .field-textarea{
+    width:100%;
+    border:1px solid #dde7e1;
+    border-radius:14px;
+    background:#fff;
+    color:var(--text);
+    font-size:13px;
+    font-weight:700;
+    padding:0 13px;
+    height:43px;
+  }
+
+  .field-textarea{
+    min-height:82px;
+    height:auto;
+    resize:vertical;
+    padding-top:10px;
+  }
+
+  .field-input:focus,
+  .field-select:focus,
+  .field-textarea:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(26,86,219,.1);
+  }
+
+  .save-btn{
+    width:100%;
+    min-height:43px;
+    border:0;
+    border-radius:15px;
+    background:linear-gradient(135deg,var(--lime),#b8c96a);
+    color:#172033;
+    font-size:13px;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    cursor:pointer;
+    box-shadow:0 8px 16px rgba(103, 197, 80,.24);
+    transition:.16s ease;
+  }
+
+  .save-btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(.98);
+  }
+
+  .empty-state{
+    padding:34px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  @media (max-width: 1250px){
+    .transport-stats{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .transport-layout{
+      grid-template-columns:1fr;
+    }
+
+    .side-card{
+      position:static;
+    }
+
+    .edit-form{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .edit-form .full-row,
+    .edit-form button{
+      grid-column:1 / -1;
+    }
+  }
+
+  @media (max-width: 700px){
+    .transport-header,
+    .card-head{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .transport-stats,
+    .edit-form{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+
+{% set ns = namespace(total_cost=0, total_sale=0, total_profit=0) %}
+{% for t in transports %}
+  {% set ns.total_cost = ns.total_cost + (t.cost or 0) %}
+  {% set ns.total_sale = ns.total_sale + (t.sale_price or 0) %}
+  {% set ns.total_profit = ns.total_profit + (t.profit or 0) %}
+{% endfor %}
+
+<div class="transport-page">
+
+  <div class="transport-header">
+    <div>
+      <h1>{{ L("النقل", "Transport") }}</h1>
+      <p>{{ L("إدارة رحلات النقل والسائقين والموردين والتكلفة وسعر البيع بشكل منظم وواضح.", "Manage transport trips, drivers, suppliers, cost and sale price in an organized way.") }}</p>
+    </div>
+  </div>
+
+  <div class="transport-stats">
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="bi bi-truck"></i></div>
+      <div class="stat-label">{{ L("إجمالي الرحلات", "Total Trips") }}</div>
+      <div class="stat-value">{{ transports|length }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="bi bi-cash-stack"></i></div>
+      <div class="stat-label">{{ L("إجمالي البيع", "Total Sales") }}</div>
+      <div class="stat-value">{{ "%.0f"|format(ns.total_sale or 0) }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon yellow"><i class="bi bi-wallet2"></i></div>
+      <div class="stat-label">{{ L("إجمالي التكلفة", "Total Cost") }}</div>
+      <div class="stat-value">{{ "%.0f"|format(ns.total_cost or 0) }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="bi bi-graph-up-arrow"></i></div>
+      <div class="stat-label">{{ L("إجمالي الربح", "Total Profit") }}</div>
+      <div class="stat-value">{{ "%.0f"|format(ns.total_profit or 0) }}</div>
+    </div>
+  </div>
+
+  <div class="transport-layout">
+
+    <div class="main-card">
+      <div class="card-head">
+        <h2>{{ L("رحلات النقل", "Transport Trips") }}</h2>
+        <span class="card-chip">{{ transports|length }} {{ L("رحلة", "Trip") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="transport-table">
+            <thead>
+              <tr>
+                <th>{{ L("النوع", "Type") }}</th>
+                <th>{{ L("اللوحة", "Dashboard") }}</th>
+                <th>{{ L("السائق", "Driver") }}</th>
+                <th>{{ L("المورد", "Supplier") }}</th>
+                <th>{{ L("تاريخ الرحلة", "Trip Date") }}</th>
+                <th>{{ L("المسار", "Route") }}</th>
+                <th>{{ L("التكلفة", "Cost") }}</th>
+                <th>{{ L("البيع", "Sale") }}</th>
+                <th>{{ L("العملة", "Curr.") }}</th>
+                <th>{{ L("الربح", "Profit") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+            <tbody>
+              {% for t in transports %}
+              <tr>
+                <td><span class="vehicle-name">{{ t.vehicle_type }}</span></td>
+                <td>{{ t.plate_number or '-' }}</td>
+                <td>
+                  <span class="driver-name">{{ t.driver_name or '-' }}</span>
+                  {% if t.driver_phone %}
+                    <span class="driver-phone">{{ t.driver_phone }}</span>
+                  {% endif %}
+                </td>
+                <td>
+                  {% if t.supplier %}
+                    <span class="supplier-badge">{{ t.supplier.name }}</span>
+                  {% else %}
+                    <span class="supplier-empty">{{ L("بدون مورد", "No Supplier") }}</span>
+                  {% endif %}
+                </td>
+                <td>{{ t.trip_date or '-' }}</td>
+                <td>{{ t.route or '-' }}</td>
+                <td class="money">{{ "%.2f"|format(t.cost or 0) }}</td>
+                <td class="money">{{ "%.2f"|format(t.sale_price or 0) }}</td>
+                <td style="font-size:12px;">{{ t.currency.code if t.currency else '-' }}<br><span style="font-size:10px;color:var(--muted);">{{ "%.2f"|format(t.amount_currency or 0) }}</span></td>
+                <td class="{{ 'money-profit-plus' if (t.profit or 0) >= 0 else 'money-profit-minus' }}">
+                  {{ "%.2f"|format(t.profit or 0) }}
+                </td>
+                <td>
+                  {% if has_permission(current_user, "transport.manage") %}
+<div class="actions">
+                    <button
+                      type="button"
+                      onclick="document.getElementById('edit-{{ t.id }}').classList.toggle('hidden')"
+                      class="action-btn edit"
+                      title="تعديل"
+                    >
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+
+                    <form method="post" action="/transportations/{{ t.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="action-btn delete" type="submit" title="حذف">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+                  </div>
+{% endif %}
+                </td>
+              </tr>
+
+              <tr id="edit-{{ t.id }}" class="hidden edit-row">
+                <td colspan="11">
+                  <div class="edit-box">
+                    <form method="post" action="/transportations/{{ t.id }}/edit" class="edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input name="vehicle_type" value="{{ t.vehicle_type }}" required class="field-input">
+                      <input name="plate_number" value="{{ t.plate_number or '' }}" class="field-input">
+                      <input name="driver_name" value="{{ t.driver_name or '' }}" class="field-input">
+                      <input name="driver_phone" value="{{ t.driver_phone or '' }}" class="field-input">
+                      <input name="capacity" type="number" value="{{ t.capacity or '' }}" class="field-input">
+
+                      <select name="supplier_id" class="field-select">
+                        <option value="">{{ L("بدون مورد", "No Supplier") }}</option>
+                        {% for s in suppliers %}
+                        <option value="{{ s.id }}" {{ 'selected' if t.supplier_id==s.id }}>{{ s.name }}</option>
+                        {% endfor %}
+                      </select>
+
+                      <input name="trip_date" type="date" value="{{ t.trip_date or '' }}" class="field-input">
+                      <input name="route" value="{{ t.route or '' }}" class="field-input">
+                      <input name="cost" type="number" step="0.01" value="{{ t.cost or 0 }}" class="field-input">
+                      <input name="sale_price" type="number" step="0.01" value="{{ t.sale_price or 0 }}" class="field-input">
+
+                      <select name="currency_id" class="field-select" onchange="autoFillExchangeRate('currency_id','edit_exchange_rate')">
+                        <option value="">{{ L("الأساسية", "Base") }}</option>
+                        {% for c in currencies %}
+                        <option value="{{ c.id }}" data-rate="{{ c.exchange_rate }}" {{ 'selected' if t.currency_id == c.id }}>{{ c.code }}</option>
+                        {% endfor %}
+                      </select>
+
+                      <input name="exchange_rate" id="edit_exchange_rate" type="number" step="0.000001" value="{{ t.exchange_rate|string if t.exchange_rate else '1.0' }}" class="field-input">
+
+                      <textarea name="notes" class="field-textarea full-row">{{ t.notes or '' }}</textarea>
+
+                      <button class="save-btn" type="submit">{{ L("حفظ", "Save") }}</button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if not transports %}
+              <tr>
+                <td colspan="11">
+                  <div class="empty-state">{{ L("لا توجد رحلات نقل مسجّلة بعد", "No transport trips registered yet") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-card side-card">
+      <div class="card-head">
+        <h2>{{ L("إضافة رحلة نقل", "Add Transport Trip") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="helper-box">
+          {{ L("أدخل بيانات المركبة والسائق والمورد والمسار، وسيتم احتساب الربح من الفرق بين سعر البيع والتكلفة.", "Enter vehicle, driver, supplier, and route data; profit will be calculated from the difference between sale price and cost.") }}
+        </div>
+
+        {% if has_permission(current_user, "transport.manage") %}
+<form method="post" action="/transportations/add" class="form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field-group">
+            <label>{{ L("نوع المركبة", "Vehicle Type") }}</label>
+            <input name="vehicle_type" placeholder="{{ L("نوع المركبة (باص/فان/سيارة)", "Vehicle Type (Bus/Van/Car)") }}" required class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("رقم اللوحة", "Plate No.") }}</label>
+            <input name="plate_number" placeholder="{{ L("رقم اللوحة", "Plate No.") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("اسم السائق", "Driver Name") }}</label>
+            <input name="driver_name" placeholder="{{ L("اسم السائق", "Driver Name") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("هاتف السائق", "Driver Phone") }}</label>
+            <input name="driver_phone" placeholder="{{ L("هاتف السائق", "Driver Phone") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("عدد المقاعد", "Seat Count") }}</label>
+            <input name="capacity" type="number" placeholder="{{ L("عدد المقاعد", "Seat Count") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("المورد", "Supplier") }}</label>
+            <select name="supplier_id" class="field-select">
+              <option value="">{{ L("المورد (اختياري)", "Supplier (Optional)") }}</option>
+              {% for s in suppliers %}
+              <option value="{{ s.id }}">{{ s.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("تاريخ الرحلة", "Trip Date") }}</label>
+            <input name="trip_date" type="date" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("المسار", "Route") }}</label>
+            <input name="route" placeholder="{{ L("المسار (من - إلى)", "Route (From - To)") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("التكلفة من المورد", "Cost from Supplier") }}</label>
+            <input name="cost" type="number" step="0.01" placeholder="{{ L("التكلفة من المورد", "Cost from Supplier") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("سعر البيع للعميل", "Sale Price to Customer") }}</label>
+            <input name="sale_price" type="number" step="0.01" placeholder="{{ L("سعر البيع للعميل", "Sale Price to Customer") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("العملة", "Currency") }}</label>
+            <select name="currency_id" class="field-select" onchange="autoFillExchangeRate('currency_id','exchange_rate')">
+              <option value="">{{ L("الأساسية", "Base") }}</option>
+              {% for c in currencies %}
+              <option value="{{ c.id }}" data-rate="{{ c.exchange_rate }}">{{ c.code }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("سعر الصرف", "Exchange Rate") }}</label>
+            <input name="exchange_rate" id="exchange_rate" type="number" step="0.000001" value="1.0" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("ملاحظات", "Notes") }}</label>
+            <textarea name="notes" placeholder="{{ L("ملاحظات", "Notes") }}" class="field-textarea" rows="2"></textarea>
+          </div>
+
+          <button class="save-btn" type="submit">{{ L("حفظ", "Save") }}</button>
+        </form>
+{% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

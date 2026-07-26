@@ -1,0 +1,169 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .v-page{max-width:1000px;margin:0 auto}
+  .v-page .card{background:#fff;border:1px solid #e8eee9;border-radius:26px;padding:24px;margin-bottom:18px;box-shadow:0 18px 45px rgba(15,23,42,0.045)}
+  .v-page .card h3{margin:0 0 16px;font-size:15px;font-weight:950;color:#172033}
+  .v-page .info-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:16px}
+  .v-page .info-item .label{color:#7b8798;font-size:11px;font-weight:800;margin-bottom:4px}
+  .v-page .info-item .value{font-size:16px;font-weight:700;color:#172033}
+  .v-page table{width:100%;border-collapse:collapse;font-size:13px}
+  .v-page th{background:#fbfdfc;color:#7b8798;padding:12px 10px;font-size:12px;font-weight:950;border-bottom:1px solid #e8eee9;white-space:nowrap}
+  .v-page td{padding:13px 10px;border-bottom:1px solid #edf2ef;color:#172033;vertical-align:middle}
+  .v-page tr:hover td{background:#fbfdfc}
+  .v-page .sb{display:inline-flex;align-items:center;justify-content:center;padding:5px 9px;border-radius:999px;font-size:11px;font-weight:950}
+  .v-page .bg-green{background:#eafff4;color:#11885a}
+  .v-page .bg-yellow{background:#fff7df;color:#986a00}
+  .v-page .bg-red{background:#fff0f2;color:#c7384c}
+  .v-page .money{font-weight:950;direction:ltr}
+  .v-page .sum-row{display:flex;gap:30px;flex-wrap:wrap;padding-top:16px;border-top:2px solid #e8eee9;margin-top:16px}
+  .v-page .sum-item{text-align:center}
+  .v-page .sum-item .l{color:#7b8798;font-size:11px;font-weight:800;margin-bottom:4px}
+  .v-page .sum-item .v{font-size:20px;font-weight:950;color:#172033}
+  .v-btn{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;font-size:14px;font-weight:800;border-radius:13px;border:none;cursor:pointer;text-decoration:none;transition:all .15s;white-space:nowrap}
+  .v-btn-outline{background:#fff;color:#64748b;border:2px solid #e2e8f0}
+  .v-btn-outline:hover{background:#f8fafc;color:#172033;border-color:#cbd5e1}
+  .v-btn-primary{background:#11885a;color:#fff}
+  .v-btn-primary:hover{background:#0d6e49}
+  .v-btn-danger{background:#ef5b6c;color:#fff}
+  .v-btn-danger:hover{background:#d14454}
+</style>
+
+{% set status_class = '' %}
+{% set status_text = '' %}
+{% if conf.status == 'confirmed' %}
+  {% set status_class = 'bg-green' %}
+  {% set status_text = L('مؤكد', 'Confirmed') %}
+{% elif conf.status == 'draft' %}
+  {% set status_class = 'bg-yellow' %}
+  {% set status_text = L('مسودة', 'Draft') %}
+{% elif conf.status == 'cancelled' %}
+  {% set status_class = 'bg-red' %}
+  {% set status_text = L('ملغي', 'Cancelled') %}
+{% else %}
+  {% set status_class = 'bg-yellow' %}
+  {% set status_text = conf.status %}
+{% endif %}
+
+<div class="v-page">
+  <div style="display:flex;justify-content:flex-end">
+    <a href="/suppliers/confirmations" class="v-btn v-btn-outline" style="margin-bottom:14px;padding:7px 16px;font-size:12px"><i class="bi bi-arrow-right"></i> {{ L("العودة", "Back") }}</a>
+  </div>
+  <h1 style="font-size:26px;font-weight:950;color:#172033;margin:0 0 4px">{{ L("تأكيد مورد", "Supplier Confirmation") }}</h1>
+  <p style="color:#7b8798;font-size:13px;margin:0 0 18px">{{ conf.confirmation_number }}</p>
+
+  <div class="card">
+    <h3>{{ L("معلومات التأكيد", "Confirmation Info") }}</h3>
+    <div class="info-grid">
+      <div class="info-item">
+        <div class="label">{{ L("المورد", "Supplier") }}</div>
+        <div class="value">{% if conf.supplier %}{{ conf.supplier.name }}{% else %}—{% endif %}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("التاريخ", "Date") }}</div>
+        <div class="value">{{ conf.confirmation_date }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("العملة", "Currency") }}</div>
+        <div class="value">{{ conf.currency.code if conf.currency else L("الأساسية", "Base") }}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("الحالة", "Status") }}</div>
+        <div class="value"><span class="sb {{ status_class }}">{{ status_text }}</span></div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("تاريخ الإنشاء", "Created") }}</div>
+        <div class="value">{% if conf.created_at %}{{ conf.created_at.strftime('%Y-%m-%d %H:%M') }}{% else %}—{% endif %}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("بواسطة", "Created by") }}</div>
+        <div class="value">{% if conf.created_by %}{{ conf.created_by }}{% else %}—{% endif %}</div>
+      </div>
+      <div class="info-item">
+        <div class="label">{{ L("تم التأكيد بواسطة", "Confirmed by") }}</div>
+        <div class="value">{% if conf.confirmed_by %}{{ conf.confirmed_by }}{% else %}—{% endif %}</div>
+      </div>
+    </div>
+    {% if conf.notes %}
+    <hr style="margin:16px 0;border-color:#e8eee9">
+    <div><strong style="color:#7b8798;font-size:11px">{{ L("ملاحظات", "Notes") }}</strong><div style="margin-top:4px;color:#172033">{{ conf.notes }}</div></div>
+    {% endif %}
+  </div>
+
+  <div class="card">
+    <h3>{{ L("بنود التأكيد", "Confirmation Lines") }} <span style="font-weight:400;color:#7b8798;font-size:13px">({{ conf.lines|length }})</span></h3>
+    <div style="overflow-x:auto">
+      <table>
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ L("رقم الحجز", "Booking #") }}</th>
+            <th>{{ L("الضيف", "Guest") }}</th>
+            <th>{{ L("الفندق", "Hotel") }}</th>
+            <th>{{ L("الوصول", "Check-in") }}</th>
+            <th>{{ L("المغادرة", "Check-out") }}</th>
+            <th>{{ L("تكلفة الحجز", "Booking Cost") }}</th>
+            <th>{{ L("التكلفة المؤكدة", "Confirmed Cost") }}</th>
+            <th>{{ L("الفرق", "Diff") }}</th>
+            <th>{{ L("ملاحظات", "Notes") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in conf.lines %}
+          {% set r = line.reservation %}
+          <tr>
+            <td style="color:#7b8798">{{ loop.index }}</td>
+            <td style="font-weight:700;color:#11885a">{% if r %}{{ r.booking_number }}{% else %}—{% endif %}</td>
+            <td>{% if r %}{{ r.guest_name }}{% else %}—{% endif %}</td>
+            <td>{% if r and r.hotel %}{{ r.hotel.name }}{% else %}—{% endif %}</td>
+            <td>{% if r %}{{ r.checkin_date }}{% else %}—{% endif %}</td>
+            <td>{% if r %}{{ r.checkout_date }}{% else %}—{% endif %}</td>
+            <td class="money">{% if r %}{{ r.stay_cost|c }}{% else %}0.00{% endif %}</td>
+            <td class="money" style="color:#1a56db">{{ line.confirmed_cost|c }}</td>
+            <td class="money">{% if r %}{{ (line.confirmed_cost - r.stay_cost)|c }}{% else %}{{ line.confirmed_cost|c }}{% endif %}</td>
+            <td style="color:#7b8798;font-size:12px">{% if line.notes %}{{ line.notes }}{% else %}—{% endif %}</td>
+          </tr>
+          {% endfor %}
+          {% if not conf.lines %}
+          <tr><td colspan="10" style="text-align:center;padding:32px;color:#7b8798">{{ L("لا توجد بنود", "No lines") }}</td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+    <div class="sum-row">
+      <div class="sum-item">
+        <div class="l">{{ L("إجمالي تكلفة الحجوزات", "Total Booking Cost") }}</div>
+        <div class="v" style="color:#7b8798">{{ total_expected|c }}</div>
+      </div>
+      <div class="sum-item">
+        <div class="l">{{ L("إجمالي التكلفة المؤكدة", "Total Confirmed Cost") }}</div>
+        <div class="v" style="color:#1a56db">{{ total_confirmed|c }}</div>
+      </div>
+      <div class="sum-item">
+        <div class="l">{{ L("إجمالي الفرق", "Total Difference") }}</div>
+        <div class="v">{% if total_diff > 0 %}<span style="color:#d14454">{{ total_diff|c }}</span>{% elif total_diff < 0 %}<span style="color:#11885a">{{ total_diff|c }}</span>{% else %}{{ total_diff|c }}{% endif %}</div>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:18px;justify-content:flex-end">
+    <a href="/suppliers/confirmations" class="v-btn v-btn-outline">
+      <i class="bi bi-arrow-right"></i> {{ L("العودة للقائمة", "Back to List") }}
+    </a>
+    {% if has_permission(current_user, "supplier_confirmations.manage") and conf.status == 'draft' %}
+    <form method="post" action="/suppliers/confirmations/{{ conf.id }}/confirm" style="display:inline">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="v-btn v-btn-primary">
+        <i class="bi bi-check-lg"></i> {{ L("تأكيد التأكيد", "Confirm") }}
+      </button>
+    </form>
+    <form method="post" action="/suppliers/confirmations/{{ conf.id }}/cancel" style="display:inline" onsubmit="return confirm('{{ L("إلغاء التأكيد؟", "Cancel confirmation?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="v-btn v-btn-danger">
+        <i class="bi bi-x-lg"></i> {{ L("إلغاء", "Cancel") }}
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

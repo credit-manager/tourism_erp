@@ -1,0 +1,722 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  @media print {
+    aside,
+    header,
+    .no-print {
+      display: none !important;
+    }
+
+    main,
+    .pro-main,
+    .content-wrap {
+      padding: 0 !important;
+      margin: 0 !important;
+    }
+
+    body {
+      background: #ffffff !important;
+    }
+
+    .reports-page {
+      padding: 0 !important;
+    }
+
+    .report-card,
+    .stat-card {
+      box-shadow: none !important;
+      border: 1px solid #ddd !important;
+      break-inside: avoid;
+    }
+
+    .reports-layout,
+    .reports-grid,
+    .reports-stats {
+      display: block !important;
+    }
+
+    .report-card,
+    .stat-card {
+      margin-bottom: 12px !important;
+    }
+  }
+
+  .reports-page {
+    --primary: #20b874;
+    --primary-dark: #11885a;
+    --primary-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f4c44d;
+    --yellow-soft: #fff8de;
+    --purple: #8a7cf7;
+    --purple-soft: #f4f1ff;
+    --red: #eb5d6c;
+    --red-soft: #fff1f3;
+    --dark: #10243e;
+    --dark-soft: #edf2f7;
+    --text: #182033;
+    --muted: #708093;
+    --border: #e4ebe6;
+    --card: #ffffff;
+    direction: inherit;
+  }
+
+  .reports-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 20px;
+  }
+
+  .reports-header h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .reports-header p {
+    margin: 6px 0 0;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .filter-card,
+  .report-card,
+  .stat-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: 0 14px 32px rgba(15, 23, 42, 0.04);
+  }
+
+  .filter-card {
+    padding: 18px 20px;
+    margin-bottom: 16px;
+  }
+
+  .filter-form {
+    display: flex;
+    align-items: end;
+    gap: 12px;
+    flex-wrap: wrap;
+  }
+
+  .field-group label {
+    display: block;
+    margin-bottom: 6px;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 900;
+  }
+
+  .field-input {
+    min-width: 170px;
+    height: 43px;
+    border: 1px solid #dde7e1;
+    border-radius: 14px;
+    background: #fff;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+    padding: 0 13px;
+  }
+
+  .field-input:focus {
+    outline: none;
+    border-color: var(--primary);
+    box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.1);
+  }
+
+  .action-btn {
+    min-height: 43px;
+    border: 0;
+    border-radius: 15px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 16px;
+    font-size: 13px;
+    font-weight: 950;
+    cursor: pointer;
+    transition: 0.16s ease;
+    white-space: nowrap;
+  }
+
+  .action-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.98);
+  }
+
+  .btn-filter {
+    background: linear-gradient(135deg, var(--lime), #b8c96a);
+    color: #172033;
+    box-shadow: 0 8px 16px rgba(103, 197, 80, 0.24);
+  }
+
+  .btn-excel {
+    background: var(--primary);
+    color: #fff;
+  }
+
+  .btn-print {
+    background: var(--dark);
+    color: #fff;
+  }
+
+  .period-line {
+    margin: 0 0 16px;
+    color: var(--muted);
+    font-size: 13px;
+    font-weight: 800;
+  }
+
+  .period-line span {
+    color: var(--text);
+    font-weight: 950;
+  }
+
+  .reports-stats {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .stat-card {
+    padding: 18px;
+    min-height: 118px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .stat-card.dark {
+    background: var(--dark);
+    border-color: var(--dark);
+  }
+
+  .stat-card::after {
+    content: "";
+    position: absolute;
+    left: -40px;
+    bottom: -45px;
+    width: 110px;
+    height: 110px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+  }
+
+  .stat-card.dark::after {
+    background: rgba(255, 255, 255, 0.08);
+  }
+
+  .stat-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .stat-icon.blue { background: var(--blue-soft); color: var(--blue); }
+  .stat-icon.yellow { background: var(--yellow-soft); color: #ab7700; }
+  .stat-icon.green { background: var(--primary-soft); color: var(--primary); }
+  .stat-icon.purple { background: var(--purple-soft); color: var(--purple); }
+  .stat-icon.red { background: var(--red-soft); color: var(--red); }
+  .stat-icon.dark { background: rgba(255, 255, 255, 0.12); color: #fff; }
+
+  .stat-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 850;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .stat-card.dark .stat-label {
+    color: #cbd5e1;
+  }
+
+  .stat-value {
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .stat-card.dark .stat-value {
+    color: #fff;
+  }
+
+  .stat-value.positive {
+    color: var(--primary-dark);
+  }
+
+  .stat-card.dark .stat-value.positive {
+    color: #77f0ad;
+  }
+
+  .stat-value.negative {
+    color: var(--red);
+  }
+
+  .stat-card.dark .stat-value.negative {
+    color: #fb7185;
+  }
+
+  .reports-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .card-head {
+    padding: 18px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .card-chip {
+    padding: 7px 11px;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: #fbfdfc;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 850;
+    white-space: nowrap;
+  }
+
+  .card-body {
+    padding: 16px 20px 20px;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+
+  .table-wrap::-webkit-scrollbar {
+    height: 10px;
+  }
+
+  .table-wrap::-webkit-scrollbar-thumb {
+    background: #d4ddd7;
+    border-radius: 999px;
+  }
+
+  .table-wrap::-webkit-scrollbar-track {
+    background: #f3f7f5;
+    border-radius: 999px;
+  }
+
+  .report-table {
+    width: 100%;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+
+  .report-table.wide {
+    min-width: 1050px;
+  }
+
+  .report-table th {
+    background: #f8fcfa;
+    color: var(--muted);
+    padding: 14px 10px;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    text-align: center;
+    white-space: nowrap;
+  }
+
+  .report-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    text-align: center;
+    white-space: nowrap;
+    color: var(--text);
+    vertical-align: middle;
+  }
+
+  .report-table tr:hover td {
+    background: #fbfefc;
+  }
+
+  .booking-number,
+  .hotel-name,
+  .category-name {
+    font-weight: 950;
+    color: var(--primary-dark);
+  }
+
+  .guest-name {
+    font-weight: 900;
+    color: var(--text);
+  }
+
+  .money {
+    direction: ltr;
+    font-weight: 900;
+  }
+
+  .money-green {
+    color: var(--primary-dark);
+    font-weight: 950;
+  }
+
+  .money-red {
+    color: var(--red);
+    font-weight: 950;
+  }
+
+  .money-purple {
+    color: var(--purple);
+    font-weight: 950;
+  }
+
+  .count-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 34px;
+    height: 28px;
+    padding: 0 10px;
+    border-radius: 999px;
+    background: var(--blue-soft);
+    color: #11885a;
+    font-size: 12px;
+    font-weight: 950;
+  }
+
+  .empty-state {
+    padding: 34px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1250px) {
+    .reports-stats {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .reports-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .reports-header,
+    .card-head,
+    .filter-form {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .reports-stats {
+      grid-template-columns: 1fr;
+    }
+
+    .field-input {
+      width: 100%;
+      min-width: 0;
+    }
+  }
+</style>
+
+<div class="reports-page">
+
+  <div class="reports-header">
+    <div>
+      <h1>{{ L("التقارير", "Reports") }}</h1>
+      <p>{{ L("ملخص مالي للفترة المحددة يشمل المبيعات، التكاليف، المصروفات، العمولات، وصافي الربح.", "Financial summary for specified period including sales, costs, expenses, commissions, and net profit.") }}</p>
+    </div>
+  </div>
+
+  <div class="filter-card no-print">
+    <form method="get" action="/reports" class="filter-form">
+      <div class="field-group">
+        <label>{{ L("من تاريخ", "From Date") }}</label>
+        <input type="date" name="date_from" value="{{ date_from }}" class="field-input">
+      </div>
+
+      <div class="field-group">
+        <label>{{ L("إلى تاريخ", "To Date") }}</label>
+        <input type="date" name="date_to" value="{{ date_to }}" class="field-input">
+      </div>
+
+      <button class="action-btn btn-filter" type="submit">
+        <i class="bi bi-funnel-fill"></i>
+        {{ L("تطبيق الفلتر", "Apply Filter") }}
+      </button>
+
+      <a href="/reports/export/excel?date_from={{ date_from }}&date_to={{ date_to }}" class="action-btn btn-excel">
+        <i class="bi bi-file-earmark-excel"></i>
+        {{ L("تصدير Excel", "Export Excel") }}
+      </a>
+
+      <button type="button" onclick="window.print()" class="action-btn btn-print">
+        <i class="bi bi-printer"></i>
+        {{ L("طباعة / PDF", "Print / PDF") }}
+      </button>
+    </form>
+  </div>
+
+  <div class="period-line">
+    {{ L("الفترة من", "Period From") }}
+    <span>{{ date_from }}</span>
+    {{ L("إلى", "To") }}
+    <span>{{ date_to }}</span>
+  </div>
+
+  <div class="reports-stats">
+    <div class="stat-card">
+      <div class="stat-icon blue">
+        <i class="bi bi-cash-stack"></i>
+      </div>
+      <div class="stat-label">{{ L("إجمالي المبيعات على العميل", "Total Customer Sales") }}</div>
+      <div class="stat-value">{{ "%.2f"|format(total_revenue or 0) }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon yellow">
+        <i class="bi bi-buildings"></i>
+      </div>
+      <div class="stat-label">{{ L("إجمالي تكلفة الإقامة للفنادق", "Total Accommodation Cost for Hotels") }}</div>
+      <div class="stat-value">{{ "%.2f"|format(total_hotel_cost or 0) }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon green">
+        <i class="bi bi-graph-up-arrow"></i>
+      </div>
+      <div class="stat-label">{{ L("الربح الإجمالي قبل العمولات والمصروفات", "Gross profit before commissions and expenses") }}</div>
+      <div class="stat-value">{{ "%.2f"|format(gross_profit or 0) }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple">
+        <i class="bi bi-people"></i>
+      </div>
+      <div class="stat-label">{{ L("إجمالي عمولات الموظفين", "Total Employee Commissions") }}</div>
+      <div class="stat-value">{{ "%.2f"|format(total_commissions or 0) }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon red">
+        <i class="bi bi-receipt"></i>
+      </div>
+      <div class="stat-label">{{ L("إجمالي المصروفات التشغيلية", "Total Operational Expenses") }}</div>
+      <div class="stat-value">{{ "%.2f"|format(total_expenses or 0) }}</div>
+    </div>
+
+    <div class="stat-card dark">
+      <div class="stat-icon dark">
+        <i class="bi bi-wallet2"></i>
+      </div>
+      <div class="stat-label">{{ L("صافي الربح", "Net Profit") }}</div>
+      <div class="stat-value {{ 'positive' if (net_profit or 0) >= 0 else 'negative' }}">
+        {{ "%.2f"|format(net_profit or 0) }}
+      </div>
+    </div>
+  </div>
+
+  <div class="reports-grid">
+    <div class="report-card">
+      <div class="card-head">
+        <h2>{{ L("المصروفات حسب التصنيف", "Expenses by Category") }}</h2>
+        <span class="card-chip">{{ expenses_by_category|length }} {{ L("تصنيف", "Category") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>{{ L("التصنيف", "Category") }}</th>
+                <th>{{ L("الإجمالي", "Total") }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for cat, amount in expenses_by_category.items() %}
+              <tr>
+                <td>
+                  <span class="category-name">{{ cat }}</span>
+                </td>
+                <td class="money-red">
+                  {{ "%.2f"|format(amount or 0) }}
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if not expenses_by_category %}
+              <tr>
+                <td colspan="2">
+                  <div class="empty-state">{{ L("لا توجد مصروفات في هذه الفترة", "No expenses in this period") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="report-card">
+      <div class="card-head">
+        <h2>{{ L("الأداء حسب الفندق", "Performance by Hotel") }}</h2>
+        <span class="card-chip">{{ hotel_breakdown|length }} {{ L("فندق", "Hotel") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="report-table">
+            <thead>
+              <tr>
+                <th>{{ L("الفندق", "Hotel") }}</th>
+                <th>{{ L("عدد الحجوزات", "Booking Count") }}</th>
+                <th>{{ L("المبيعات", "Sales") }}</th>
+                <th>{{ L("التكلفة", "Cost") }}</th>
+                <th>{{ L("الربح", "Profit") }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for name, row in hotel_breakdown.items() %}
+              <tr>
+                <td>
+                  <span class="hotel-name">{{ name }}</span>
+                </td>
+
+                <td>
+                  <span class="count-badge">{{ row.count }}</span>
+                </td>
+
+                <td class="money">
+                  {{ "%.2f"|format(row.revenue or 0) }}
+                </td>
+
+                <td class="money">
+                  {{ "%.2f"|format(row.cost or 0) }}
+                </td>
+
+                <td class="{{ 'money-green' if ((row.revenue or 0) - (row.cost or 0)) >= 0 else 'money-red' }}">
+                  {{ "%.2f"|format((row.revenue or 0) - (row.cost or 0)) }}
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if not hotel_breakdown %}
+              <tr>
+                <td colspan="5">
+                  <div class="empty-state">{{ L("لا توجد حجوزات في هذه الفترة", "No bookings in this period") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="report-card">
+    <div class="card-head">
+      <h2>{{ L("تفاصيل الحجوزات في الفترة المحددة", "Booking details in the specified period") }}</h2>
+      <span class="card-chip">{{ reservations|length }} {{ L("حجز", "Booking") }}</span>
+    </div>
+
+    <div class="card-body">
+      <div class="table-wrap">
+        <table class="report-table wide">
+          <thead>
+            <tr>
+              <th>{{ L("رقم الحجز", "Booking No.") }}</th>
+              <th>{{ L("التاريخ", "Date") }}</th>
+              <th>{{ L("النزيل", "Guest") }}</th>
+              <th>{{ L("الفندق", "Hotel") }}</th>
+              <th>{{ L("تكلفة الشركة", "Company Cost") }}</th>
+              <th>{{ L("تكلفة الإقامة", "Accommodation Cost") }}</th>
+              <th>{{ L("ربح الحجز", "Booking Profit") }}</th>
+              <th>{{ L("عمولة الموظف", "Employee Commission") }}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for r in reservations %}
+            <tr>
+              <td>
+                <span class="booking-number">{{ r.booking_number }}</span>
+              </td>
+
+              <td>{{ r.created_date }}</td>
+
+              <td>
+                <span class="guest-name">{{ r.customer.name if r.customer else r.guest_name }}</span>
+              </td>
+
+              <td>{{ r.hotel.name if r.hotel else '-' }}</td>
+
+              <td class="money">
+                {{ "%.2f"|format(r.company_cost or 0) }}
+              </td>
+
+              <td class="money">
+                {{ "%.2f"|format(r.stay_cost or 0) }}
+              </td>
+
+              <td class="{{ 'money-green' if (r.profit or 0) >= 0 else 'money-red' }}">
+                {{ "%.2f"|format(r.profit or 0) }}
+              </td>
+
+              <td class="money-purple">
+                {{ "%.2f"|format(r.employee_commission or 0) }}
+              </td>
+            </tr>
+            {% endfor %}
+
+            {% if not reservations %}
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">{{ L("لا توجد حجوزات في هذه الفترة", "No bookings in this period") }}</div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+{% endblock %}

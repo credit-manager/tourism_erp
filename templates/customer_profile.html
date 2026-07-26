@@ -1,0 +1,1359 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .customers-page {
+    --green: #20b874;
+    --green-dark: #11885a;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --purple: #8b7cf6;
+    --purple-soft: #f3f0ff;
+    --yellow: #f5c84c;
+    --yellow-soft: #fff7df;
+    --red: #ef5b6c;
+    --red-soft: #fff0f2;
+    --text: #172033;
+    --muted: #7b8798;
+    --border: #e8eee9;
+    direction: inherit;
+  }
+
+  .page-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 22px;
+  }
+
+  .page-head h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .page-head p {
+    margin-top: 7px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .customers-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 16px;
+    margin-bottom: 18px;
+  }
+
+  .customer-kpi,
+  .customer-card {
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.045);
+  }
+
+  .customer-kpi {
+    padding: 18px;
+    min-height: 120px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .customer-kpi::after {
+    content: "";
+    position: absolute;
+    left: -42px;
+    bottom: -48px;
+    width: 115px;
+    height: 115px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.06);
+  }
+
+  .kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 14px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-icon.green { background: var(--green-soft); color: var(--green); }
+  .kpi-icon.blue { background: var(--blue-soft); color: var(--blue); }
+  .kpi-icon.purple { background: var(--purple-soft); color: var(--purple); }
+  .kpi-icon.yellow { background: var(--yellow-soft); color: #b17a00; }
+
+  .kpi-label {
+    font-size: 12px;
+    color: var(--muted);
+    font-weight: 800;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .card-head {
+    padding: 18px 22px 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 14px;
+  }
+
+  .card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .card-body {
+    padding: 18px 22px 22px;
+  }
+
+  .customers-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+
+  .customers-table th {
+    background: #fbfdfc;
+    color: var(--muted);
+    padding: 13px 10px;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+  }
+
+  .customers-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+  }
+
+  .customers-table tr:hover td {
+    background: #fbfdfc;
+  }
+
+  .customer-name {
+    color: var(--green-dark);
+    font-weight: 950;
+  }
+
+  .soft-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 9px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 950;
+  }
+
+  .badge-b2b {
+    background: var(--blue-soft);
+    color: #11885a;
+  }
+
+  .badge-b2c {
+    background: #f1f5f9;
+    color: #64748b;
+  }
+
+  .empty-state {
+    padding: 32px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  .profile-info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 14px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 20px 24px;
+    margin-bottom: 18px;
+    box-shadow: 0 18px 45px rgba(15, 23, 42, 0.045);
+  }
+
+  .profile-info-item {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-width: 150px;
+    flex: 1 1 auto;
+  }
+
+  .profile-info-label {
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+  }
+
+  .profile-info-value {
+    font-size: 15px;
+    font-weight: 900;
+    color: var(--text);
+  }
+
+  .profile-table th,
+  .profile-table td {
+    text-align: center;
+  }
+
+  .profile-table .num-col {
+    direction: ltr;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .profile-table .num-header {
+    text-align: center;
+  }
+
+  .profile-card-body {
+    padding: 6px 4px 16px;
+  }
+
+  .field-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 14px;
+  }
+
+  .field-group {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .field-group label {
+    font-size: 11px;
+    font-weight: 900;
+    color: var(--muted);
+    letter-spacing: 0.3px;
+  }
+
+  .field-input,
+  .field-select,
+  .field-textarea {
+    width: 100%;
+    height: 40px;
+    padding: 0 14px;
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    background: #fbfdfc;
+    outline: none;
+    transition: border-color .15s;
+  }
+
+  .field-input:focus,
+  .field-select:focus,
+  .field-textarea:focus {
+    border-color: var(--green);
+  }
+
+  .field-textarea {
+    height: auto;
+    padding: 10px 14px;
+    resize: vertical;
+    min-height: 70px;
+  }
+
+  .field-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    height: 40px;
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+  }
+
+  .field-checkbox input[type="checkbox"] {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--green);
+  }
+
+  .save-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 22px;
+    border-radius: 14px;
+    font-size: 13px;
+    font-weight: 900;
+    border: none;
+    cursor: pointer;
+    transition: .15s;
+    background: var(--green);
+    color: #fff;
+    margin-top: 18px;
+  }
+
+  .save-btn:hover {
+    background: var(--green-dark);
+  }
+
+  .action-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 12px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 800;
+    border: none;
+    cursor: pointer;
+    transition: .15s;
+    text-decoration: none;
+  }
+
+  .action-btn.edit {
+    background: var(--green-soft);
+    color: var(--green-dark);
+  }
+
+  .action-btn.edit:hover {
+    background: var(--green);
+    color: #fff;
+  }
+
+  .action-btn.delete {
+    background: var(--red-soft);
+    color: var(--red);
+  }
+
+  .action-btn.delete:hover {
+    background: var(--red);
+    color: #fff;
+  }
+
+  .tabs-bar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    margin-bottom: 18px;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    padding: 6px;
+  }
+
+  .tab-btn {
+    padding: 10px 18px;
+    border-radius: 18px;
+    font-size: 13px;
+    font-weight: 900;
+    color: var(--muted);
+    text-decoration: none;
+    transition: .15s;
+  }
+
+  .tab-btn:hover {
+    background: var(--green-soft);
+    color: var(--green-dark);
+  }
+
+  .tab-btn-active {
+    background: var(--green-soft);
+    color: var(--green-dark);
+  }
+
+  .section-title {
+    font-size: 14px;
+    font-weight: 950;
+    color: var(--text);
+    margin-bottom: 14px;
+  }
+
+  .section-divider {
+    border: none;
+    border-top: 1px solid var(--border);
+    margin: 18px 0;
+  }
+
+  .timeline-entry {
+    display: flex;
+    gap: 14px;
+    padding: 14px 0;
+    border-bottom: 1px solid #edf2ef;
+  }
+
+  .timeline-entry:last-child {
+    border-bottom: none;
+  }
+
+  .timeline-icon {
+    width: 36px;
+    height: 36px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .timeline-icon.note { background: var(--green-soft); color: var(--green); }
+  .timeline-icon.call { background: var(--blue-soft); color: var(--blue); }
+  .timeline-icon.email { background: var(--purple-soft); color: var(--purple); }
+  .timeline-icon.meeting { background: var(--yellow-soft); color: #b17a00; }
+
+  .timeline-body {
+    flex: 1;
+    min-width: 0;
+  }
+
+  .timeline-body .content {
+    font-size: 13px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 4px;
+  }
+
+  .timeline-body .meta {
+    font-size: 11px;
+    color: var(--muted);
+  }
+
+  @media (max-width: 1100px) {
+    .customers-kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 700px) {
+    .customers-kpis {
+      grid-template-columns: 1fr;
+    }
+
+    .page-head,
+    .card-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .tabs-bar {
+      border-radius: 16px;
+    }
+
+    .tab-btn {
+      padding: 8px 12px;
+      font-size: 12px;
+    }
+  }
+</style>
+
+<div class="customers-page">
+
+  <div class="page-head">
+    <div>
+      <h1>{{ customer.name }}</h1>
+      <p>
+        <span class="soft-badge {{ 'badge-b2b' if customer.type == 'B2B' else 'badge-b2c' }}">{{ customer.type }}</span>
+        {% if customer.phone %} &middot; {{ customer.phone }}{% endif %}
+        {% if customer.email %} &middot; {{ customer.email }}{% endif %}
+      </p>
+    </div>
+    <div style="display:flex;gap:8px;flex-wrap:wrap">
+      <a href="/customers/{{ customer.id }}/statement" style="padding:10px 18px;border-radius:12px;font-weight:950;font-size:13px;border:0;cursor:pointer;background:#f0fdf4;color:#065f46;border:2px solid #86efac;text-decoration:none;display:inline-flex;align-items:center;gap:6px"><i class="bi bi-journal-text"></i> {{ L("كشف حساب", "Statement") }}</a>
+      <a href="/customers" style="padding:10px 18px;border-radius:12px;font-weight:950;font-size:13px;border:0;cursor:pointer;background:#f1f5f9;color:#475569;border:2px solid #cbd5e1;text-decoration:none;display:inline-flex;align-items:center;gap:6px">&larr; {{ L("رجوع", "Back") }}</a>
+    </div>
+  </div>
+
+  <div class="customers-kpis">
+    <div class="customer-kpi">
+      <div class="kpi-icon green"><i class="bi bi-person-fill"></i></div>
+      <div class="kpi-label">{{ L("إجمالي الحجوزات", "Total Reservations") }}</div>
+      <div class="kpi-value">{{ total_trips }}</div>
+    </div>
+    <div class="customer-kpi">
+      <div class="kpi-icon blue"><i class="bi bi-wallet2"></i></div>
+      <div class="kpi-label">{{ L("إجمالي المدفوع", "Total Paid") }}</div>
+      <div class="kpi-value num-col">{{ "%.0f"|format(total_spent) }}</div>
+    </div>
+    <div class="customer-kpi">
+      <div class="kpi-icon purple"><i class="bi bi-calendar-check"></i></div>
+      <div class="kpi-label">{{ L("الحجوزات القادمة", "Upcoming Trips") }}</div>
+      <div class="kpi-value">{{ upcoming_trips|length }}</div>
+    </div>
+    <div class="customer-kpi">
+      <div class="kpi-icon yellow"><i class="bi bi-clock-history"></i></div>
+      <div class="kpi-label">{{ L("الحجوزات السابقة", "Past Trips") }}</div>
+      <div class="kpi-value">{{ past_trips|length }}</div>
+    </div>
+  </div>
+
+  <div class="profile-info">
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("الهاتف", "Phone") }}</span>
+      <span class="profile-info-value">{{ customer.phone or "—" }}</span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("البريد الإلكتروني", "Email") }}</span>
+      <span class="profile-info-value">{{ customer.email or "—" }}</span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("النوع", "Type") }}</span>
+      <span class="profile-info-value">
+        <span class="soft-badge {{ 'badge-b2b' if customer.type == 'B2B' else 'badge-b2c' }}">{{ customer.type }}</span>
+      </span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("التصنيف", "Classification") }}</span>
+      <span class="profile-info-value">{{ {'vip': L('ممتاز', 'VIP'), 'gold': L('ذهبي', 'Gold'), 'silver': L('فضي', 'Silver'), 'regular': L('عادي', 'Regular')}.get(customer.classification, customer.classification or '—') }}</span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("المصدر", "Source") }}</span>
+      <span class="profile-info-value">{{ {'direct': L('مباشر', 'Direct'), 'facebook': L('فيسبوك', 'Facebook'), 'referral': L('توصية', 'Referral'), 'advertisement': L('إعلان', 'Advertisement'), 'walk_in': L('زيارة', 'Walk-in'), 'other': L('أخرى', 'Other')}.get(customer.source, customer.source or '—') }}</span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("الرصيد", "Balance") }}</span>
+      <span class="profile-info-value num-col">{{ "%.2f"|format(customer.balance or 0) }}</span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("حد الائتمان", "Credit Limit") }}</span>
+      <span class="profile-info-value num-col">{{ "%.2f"|format(customer.credit_limit or 0) }}</span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("شروط الدفع", "Payment Terms") }}</span>
+      <span class="profile-info-value">{{ {'due_on_receipt': L('عند الاستلام','Due on Receipt'), 'net_15': L('15 يوم','Net 15'), 'net_30': L('30 يوم','Net 30'), 'net_60': L('60 يوم','Net 60'), 'custom': L('مخصص','Custom')}.get(customer.payment_terms, customer.payment_terms or '—') }}</span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("مستوى المخاطرة", "Risk Level") }}</span>
+      <span class="profile-info-value">{{ {'low': L('منخفض', 'Low'), 'medium': L('متوسط', 'Medium'), 'high': L('مرتفع', 'High')}.get(customer.risk_level, customer.risk_level or '—') }}</span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("مدير الحساب", "Account Manager") }}</span>
+      <span class="profile-info-value">{{ customer.account_manager.name if customer.account_manager else "—" }}</span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("قيمة العميل الدورية", "CLV") }}</span>
+      <span class="profile-info-value num-col">{{ "%.2f"|format(customer.clv or 0) }}</span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("آخر اتصال", "Last Contact") }}</span>
+      <span class="profile-info-value">{{ customer.last_contact_date.strftime('%Y-%m-%d') if customer.last_contact_date else "—" }}</span>
+    </div>
+    <div class="profile-info-item">
+      <span class="profile-info-label">{{ L("طريقة التواصل المفضلة", "Preferred Contact") }}</span>
+      <span class="profile-info-value">{{ {'phone': L('هاتف', 'Phone'), 'email': L('إيميل', 'Email'), 'whatsapp': 'WhatsApp'}.get(customer.preferred_contact_method, customer.preferred_contact_method or '—') }}</span>
+    </div>
+  </div>
+
+  <div class="tabs-bar">
+    <a href="/customers/{{ customer.id }}?tab=basic" class="tab-btn {{ 'tab-btn-active' if current_tab == 'basic' }}">{{ L("البيانات", "Basic") }}</a>
+    <a href="/customers/{{ customer.id }}?tab=contacts" class="tab-btn {{ 'tab-btn-active' if current_tab == 'contacts' }}">{{ L("جهات الاتصال", "Contacts") }}</a>
+    <a href="/customers/{{ customer.id }}?tab=reservations" class="tab-btn {{ 'tab-btn-active' if current_tab == 'reservations' }}">{{ L("الحجوزات", "Reservations") }}</a>
+    <a href="/customers/{{ customer.id }}?tab=quotes" class="tab-btn {{ 'tab-btn-active' if current_tab == 'quotes' }}">{{ L("عروض الأسعار", "Quotes") }}</a>
+    <a href="/customers/{{ customer.id }}?tab=collections" class="tab-btn {{ 'tab-btn-active' if current_tab == 'collections' }}">{{ L("التحصيل", "Collections") }}</a>
+    <a href="/customers/{{ customer.id }}?tab=invoices" class="tab-btn {{ 'tab-btn-active' if current_tab == 'invoices' }}">{{ L("الفواتير", "Invoices") }}</a>
+    <a href="/customers/{{ customer.id }}?tab=documents" class="tab-btn {{ 'tab-btn-active' if current_tab == 'documents' }}">{{ L("المستندات", "Documents") }}</a>
+    <a href="/customers/{{ customer.id }}?tab=timeline" class="tab-btn {{ 'tab-btn-active' if current_tab == 'timeline' }}">{{ L("السجل الزمني", "Timeline") }}</a>
+    <a href="/customers/{{ customer.id }}?tab=tasks" class="tab-btn {{ 'tab-btn-active' if current_tab == 'tasks' }}">{{ L("المهام", "Tasks") }}</a>
+    <a href="/customers/{{ customer.id }}?tab=complaints" class="tab-btn {{ 'tab-btn-active' if current_tab == 'complaints' }}">{{ L("الشكاوى", "Complaints") }}</a>
+    <a href="/customers/{{ customer.id }}?tab=last_contact" class="tab-btn {{ 'tab-btn-active' if current_tab == 'last_contact' }}">{{ L("آخر اتصال", "Last Contact") }}</a>
+  </div>
+
+  {% if current_tab == 'basic' %}
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("تعديل بيانات العميل", "Edit Customer") }}</h2>
+    </div>
+    <div class="card-body">
+      <form action="/customers/{{ customer.id }}/edit" method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field-grid">
+          <div class="field-group">
+            <label>{{ L("الاسم", "Name") }} *</label>
+            <input type="text" name="name" class="field-input" value="{{ customer.name }}" required>
+          </div>
+          <div class="field-group">
+            <label>{{ L("النوع", "Type") }}</label>
+            <select name="type" class="field-select">
+              <option value="B2C" {{ 'selected' if customer.type == 'B2C' }}>B2C</option>
+              <option value="B2B" {{ 'selected' if customer.type == 'B2B' }}>B2B</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>{{ L("الهاتف", "Phone") }}</label>
+            <input type="text" name="phone" class="field-input" value="{{ customer.phone or '' }}">
+          </div>
+          <div class="field-group">
+            <label>{{ L("البريد الإلكتروني", "Email") }}</label>
+            <input type="email" name="email" class="field-input" value="{{ customer.email or '' }}">
+          </div>
+          <div class="field-group">
+            <label>{{ L("العنوان", "Address") }}</label>
+            <input type="text" name="address" class="field-input" value="{{ customer.address or '' }}">
+          </div>
+          <div class="field-group">
+            <label>{{ L("المدينة", "City") }}</label>
+            <input type="text" name="city" class="field-input" value="{{ customer.city or '' }}">
+          </div>
+          <div class="field-group">
+            <label>{{ L("الجنسية", "Nationality") }}</label>
+            <input type="text" name="nationality" class="field-input" value="{{ customer.nationality or '' }}">
+          </div>
+          <div class="field-group">
+            <label>{{ L("الجنس", "Gender") }}</label>
+            <select name="gender" class="field-select">
+              <option value="" {{ 'selected' if not customer.gender }}></option>
+              <option value="male" {{ 'selected' if customer.gender == 'male' }}>{{ L("ذكر", "Male") }}</option>
+              <option value="female" {{ 'selected' if customer.gender == 'female' }}>{{ L("أنثى", "Female") }}</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>{{ L("تاريخ الميلاد", "Date of Birth") }}</label>
+            <input type="date" name="date_of_birth" class="field-input" value="{{ customer.date_of_birth.strftime('%Y-%m-%d') if customer.date_of_birth else '' }}">
+          </div>
+          <div class="field-group">
+            <label>{{ L("رقم الجواز", "Passport No.") }}</label>
+            <input type="text" name="passport_no" class="field-input" value="{{ customer.passport_no or '' }}">
+          </div>
+          <div class="field-group">
+            <label>{{ L("التصنيف", "Classification") }}</label>
+            <select name="classification" class="field-select">
+              <option value="" {{ 'selected' if not customer.classification }}></option>
+              {% for c in classifications %}
+              <option value="{{ c }}" {{ 'selected' if customer.classification == c }}>{{ {'vip': L('ممتاز', 'VIP'), 'gold': L('ذهبي', 'Gold'), 'silver': L('فضي', 'Silver'), 'regular': L('عادي', 'Regular')}.get(c, c) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group">
+            <label>{{ L("المصدر", "Source") }}</label>
+            <select name="source" class="field-select">
+              <option value="" {{ 'selected' if not customer.source }}></option>
+              {% for s in sources %}
+              <option value="{{ s }}" {{ 'selected' if customer.source == s }}>{{ {'direct': L('مباشر', 'Direct'), 'facebook': L('فيسبوك', 'Facebook'), 'referral': L('توصية', 'Referral'), 'advertisement': L('إعلان', 'Advertisement'), 'walk_in': L('زيارة', 'Walk-in'), 'other': L('أخرى', 'Other')}.get(s, s) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group">
+            <label>{{ L("مدير الحساب", "Account Manager") }}</label>
+            <select name="account_manager_id" class="field-select">
+              <option value="0" {{ 'selected' if not customer.account_manager_id }}>—</option>
+              {% for e in employees %}
+              <option value="{{ e.id }}" {{ 'selected' if customer.account_manager_id == e.id }}>{{ e.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group">
+            <label>{{ L("حد الائتمان", "Credit Limit") }}</label>
+            <input type="number" step="0.01" name="credit_limit" class="field-input" value="{{ customer.credit_limit or '' }}">
+          </div>
+          <div class="field-group">
+            <label>{{ L("شروط الدفع", "Payment Terms") }}</label>
+            <select name="payment_terms" class="field-select">
+              <option value="due_on_receipt" {{ 'selected' if customer.payment_terms == 'due_on_receipt' }}>{{ L("عند الاستلام", "Due on Receipt") }}</option>
+              <option value="net_15" {{ 'selected' if customer.payment_terms == 'net_15' }}>{{ L("15 يوم", "Net 15") }}</option>
+              <option value="net_30" {{ 'selected' if customer.payment_terms == 'net_30' }}>{{ L("30 يوم", "Net 30") }}</option>
+              <option value="net_60" {{ 'selected' if customer.payment_terms == 'net_60' }}>{{ L("60 يوم", "Net 60") }}</option>
+              <option value="custom" {{ 'selected' if customer.payment_terms == 'custom' }}>{{ L("مخصص", "Custom") }}</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>{{ L("مستوى المخاطرة", "Risk Level") }}</label>
+            <select name="risk_level" class="field-select">
+              <option value="" {{ 'selected' if not customer.risk_level }}></option>
+              {% for r in risk_levels %}
+              <option value="{{ r }}" {{ 'selected' if customer.risk_level == r }}>{{ {'low': L('منخفض', 'Low'), 'medium': L('متوسط', 'Medium'), 'high': L('مرتفع', 'High')}.get(r, r) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group">
+            <label>{{ L("طريقة التواصل المفضلة", "Preferred Contact") }}</label>
+            <select name="preferred_contact_method" class="field-select">
+              <option value="" {{ 'selected' if not customer.preferred_contact_method }}></option>
+              {% for m in contact_methods %}
+              <option value="{{ m }}" {{ 'selected' if customer.preferred_contact_method == m }}>{{ {'phone': L('هاتف', 'Phone'), 'email': L('إيميل', 'Email'), 'whatsapp': 'WhatsApp'}.get(m, m) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+        </div>
+        <button type="submit" class="save-btn"><i class="bi bi-check-lg"></i> {{ L("حفظ التعديلات", "Save Changes") }}</button>
+      </form>
+
+      <hr class="section-divider">
+
+      <h3 class="section-title">{{ L("ملاحظات العميل", "Customer Notes") }}</h3>
+      <form action="/customers/{{ customer.id }}/notes" method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field-group" style="max-width:600px;">
+          <textarea name="notes" class="field-textarea" rows="4">{{ customer.notes or '' }}</textarea>
+        </div>
+        <button type="submit" class="save-btn"><i class="bi bi-check-lg"></i> {{ L("حفظ الملاحظات", "Save Notes") }}</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_tab == 'contacts' %}
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("إضافة جهة اتصال", "Add Contact") }}</h2>
+    </div>
+    <div class="card-body">
+      <form action="/customers/{{ customer.id }}/contacts/add" method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field-grid">
+          <div class="field-group">
+            <label>{{ L("الاسم", "Name") }} *</label>
+            <input type="text" name="name" class="field-input" required>
+          </div>
+          <div class="field-group">
+            <label>{{ L("الهاتف", "Phone") }}</label>
+            <input type="text" name="phone" class="field-input">
+          </div>
+          <div class="field-group">
+            <label>{{ L("البريد الإلكتروني", "Email") }}</label>
+            <input type="email" name="email" class="field-input">
+          </div>
+          <div class="field-group">
+            <label>{{ L("المسمى الوظيفي", "Job Title") }}</label>
+            <input type="text" name="job_title" class="field-input">
+          </div>
+          <div class="field-group">
+            <label>&nbsp;</label>
+            <div class="field-checkbox">
+              <input type="checkbox" name="is_primary" value="1">
+              <span>{{ L("جهة اتصال رئيسية", "Primary Contact") }}</span>
+            </div>
+          </div>
+          <div class="field-group" style="grid-column:1/-1;">
+            <label>{{ L("ملاحظات", "Notes") }}</label>
+            <textarea name="notes" class="field-textarea" rows="2"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="save-btn"><i class="bi bi-plus-lg"></i> {{ L("إضافة", "Add") }}</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("جهات الاتصال", "Contacts") }}</h2>
+      <span style="font-size:13px;color:var(--muted);">{{ contacts|length }}</span>
+    </div>
+    <div class="profile-card-body overflow-x-auto">
+      {% if contacts %}
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th>{{ L("الاسم", "Name") }}</th>
+            <th>{{ L("الهاتف", "Phone") }}</th>
+            <th>{{ L("البريد", "Email") }}</th>
+            <th>{{ L("المسمى", "Job Title") }}</th>
+            <th>{{ L("رئيسي", "Primary") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for c in contacts %}
+          <tr>
+            <td>{{ c.name }}</td>
+            <td>{{ c.phone or "—" }}</td>
+            <td>{{ c.email or "—" }}</td>
+            <td>{{ c.job_title or "—" }}</td>
+            <td>
+              {% if c.is_primary %}
+                <span class="soft-badge badge-b2b">{{ L("رئيسي", "Primary") }}</span>
+              {% else %}
+                <span style="color:var(--muted);">—</span>
+              {% endif %}
+            </td>
+            <td style="display:flex;gap:6px;">
+              <form action="/customers/contacts/{{ c.id }}/edit" method="GET" style="display:inline;">
+                <button type="submit" class="action-btn edit"><i class="bi bi-pencil"></i></button>
+              </form>
+              <form action="/customers/contacts/{{ c.id }}/delete" method="POST" style="display:inline;" onsubmit="return confirm('{{ L("هل أنت متأكد من الحذف؟", "Are you sure you want to delete?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="action-btn delete"><i class="bi bi-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">{{ L("لا توجد جهات اتصال مسجلة", "No contacts recorded") }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_tab == 'reservations' %}
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("الحجوزات المرتبطة", "Linked Reservations") }}</h2>
+      <span style="font-size:13px;color:var(--muted);">{{ matched|length }} {{ L("حجز", "reservation(s)") }}</span>
+    </div>
+    <div class="profile-card-body overflow-x-auto">
+      {% if matched %}
+      <table class="customers-table profile-table" id="profileTable">
+        <thead>
+          <tr>
+            <th>#</th>
+            <th>{{ L("رقم الحجز", "Booking No.") }}</th>
+            <th>{{ L("الفندق", "Hotel") }}</th>
+            <th>{{ L("تاريخ الوصول", "Check-in") }}</th>
+            <th>{{ L("المغادرة", "Check-out") }}</th>
+            <th class="num-header">{{ L("المبلغ", "Amount") }}</th>
+            <th class="num-header">{{ L("المسدد", "Paid") }}</th>
+            <th class="num-header">{{ L("المتبقي", "Remaining") }}</th>
+            <th>{{ L("الحالة", "Status") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for r in matched %}
+          <tr>
+            <td>{{ loop.index }}</td>
+            <td><a href="/reservations/{{ r.id }}/edit" style="color:var(--green-dark);font-weight:850;">{{ r.booking_number }}</a></td>
+            <td>{{ r.hotel.name if r.hotel else "-" }}</td>
+            <td>{{ r.checkin_date }}</td>
+            <td>{{ r.checkout_date }}</td>
+            <td class="num-col">{{ "%.2f"|format(r.company_cost or 0) }}</td>
+            <td class="num-col">{{ "%.2f"|format(r.paid_to_office or 0) }}</td>
+            <td class="num-col {{ 'text-red-600' if (r.remaining_to_office or 0) > 0 }}">{{ "%.2f"|format(r.remaining_to_office or 0) }}</td>
+            <td><span class="soft-badge {{ 'badge-b2b' if r.is_paid_in_full else 'badge-b2c' }}">{{ L("مسدد", "Paid") if r.is_paid_in_full else L("مفتوح", "Open") }}</span></td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">{{ L("لا توجد حجوزات مرتبطة بهذا العميل", "No reservations linked to this customer") }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_tab == 'quotes' %}
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("إضافة عرض سعر", "Add Quote") }}</h2>
+    </div>
+    <div class="card-body">
+      <form action="/customers/{{ customer.id }}/quotes/add" method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field-grid">
+          <div class="field-group">
+            <label>{{ L("المبلغ الإجمالي", "Total Amount") }}</label>
+            <input type="number" step="0.01" name="total_amount" class="field-input" required>
+          </div>
+          <div class="field-group">
+            <label>{{ L("الحالة", "Status") }}</label>
+            <select name="status" class="field-select">
+              {% for s in quote_statuses %}
+              <option value="{{ s }}">{{ {'draft': L('مسودة', 'Draft'), 'sent': L('مرسل', 'Sent'), 'accepted': L('مقبول', 'Accepted'), 'rejected': L('مرفوض', 'Rejected')}.get(s, s) }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group">
+            <label>{{ L("صالح حتى", "Valid Until") }}</label>
+            <input type="date" name="valid_until" class="field-input">
+          </div>
+          <div class="field-group" style="grid-column:1/-1;">
+            <label>{{ L("ملاحظات", "Notes") }}</label>
+            <textarea name="notes" class="field-textarea" rows="2"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="save-btn"><i class="bi bi-plus-lg"></i> {{ L("إضافة", "Add") }}</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("عروض الأسعار", "Quotes") }}</h2>
+      <span style="font-size:13px;color:var(--muted);">{{ quotes|length }}</span>
+    </div>
+    <div class="profile-card-body overflow-x-auto">
+      {% if quotes %}
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th>{{ L("رقم العرض", "Quote No.") }}</th>
+            <th>{{ L("التاريخ", "Date") }}</th>
+            <th class="num-header">{{ L("المبلغ", "Amount") }}</th>
+            <th>{{ L("الحالة", "Status") }}</th>
+            <th>{{ L("صالح حتى", "Valid Until") }}</th>
+            <th>{{ L("ملاحظات", "Notes") }}</th>
+            <th>{{ L("أنشأه", "Created By") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for q in quotes %}
+          <tr>
+            <td>{{ q.quote_number }}</td>
+            <td>{{ q.date.strftime('%Y-%m-%d') if q.date else "—" }}</td>
+            <td class="num-col">{{ "%.2f"|format(q.total_amount or 0) }}</td>
+            <td>
+              {% set qs = {'accepted': L('مقبول', 'Accepted'), 'rejected': L('مرفوض', 'Rejected'), 'sent': L('مرسل', 'Sent'), 'draft': L('مسودة', 'Draft')} %}
+              {% if q.status == 'accepted' %}
+                <span class="soft-badge badge-b2b">{{ qs[q.status] }}</span>
+              {% elif q.status == 'rejected' %}
+                <span class="soft-badge" style="background:var(--red-soft);color:var(--red);">{{ qs[q.status] }}</span>
+              {% elif q.status == 'sent' %}
+                <span class="soft-badge" style="background:var(--purple-soft);color:var(--purple);">{{ qs[q.status] }}</span>
+              {% elif q.status == 'draft' %}
+                <span class="soft-badge" style="background:#f1f5f9;color:#64748b;">{{ qs[q.status] }}</span>
+              {% else %}
+                <span class="soft-badge" style="background:var(--yellow-soft);color:#b17a00;">{{ qs.get(q.status, q.status) }}</span>
+              {% endif %}
+            </td>
+            <td>{{ q.valid_until.strftime('%Y-%m-%d') if q.valid_until else "—" }}</td>
+            <td>{{ q.notes or "—" }}</td>
+            <td>{{ q.created_by.name if q.created_by else "—" }}</td>
+            <td>
+              <form action="/customers/quotes/{{ q.id }}/edit" method="GET" style="display:inline;">
+                <button type="submit" class="action-btn edit"><i class="bi bi-pencil"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">{{ L("لا توجد عروض أسعار", "No quotes yet") }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_tab == 'collections' %}
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("التحصيل", "Collections") }}</h2>
+      <span style="font-size:13px;color:var(--muted);">{{ collections|length }}</span>
+    </div>
+    <div class="profile-card-body overflow-x-auto">
+      {% if collections %}
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th>{{ L("رقم التحصيل", "Collection No.") }}</th>
+            <th>{{ L("التاريخ", "Date") }}</th>
+            <th class="num-header">{{ L("المبلغ الإجمالي", "Total Amount") }}</th>
+            <th class="num-header">{{ L("المخصم", "Allocated") }}</th>
+            <th class="num-header">{{ L("غير مخصم", "Unallocated") }}</th>
+            <th>{{ L("ملاحظات", "Notes") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for col in collections %}
+          <tr>
+            <td>{{ col.collection_number }}</td>
+            <td>{{ col.date.strftime('%Y-%m-%d') if col.date else "—" }}</td>
+            <td class="num-col">{{ "%.2f"|format(col.total_amount or 0) }}</td>
+            <td class="num-col">{{ "%.2f"|format(col.allocated_amount or 0) }}</td>
+            <td class="num-col">{{ "%.2f"|format(col.unallocated_amount or 0) }}</td>
+            <td>{{ col.notes or "—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">{{ L("لا توجد تسجيلات تحصيل", "No collections recorded") }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_tab == 'invoices' %}
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("الفواتير", "Invoices") }}</h2>
+    </div>
+    <div class="card-body">
+      <div class="empty-state">{{ L("قيد التطوير", "Coming Soon") }}</div>
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_tab == 'documents' %}
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("المستندات", "Documents") }}</h2>
+      <span style="font-size:13px;color:var(--muted);">{{ docs|length }}</span>
+    </div>
+    <div class="profile-card-body overflow-x-auto">
+      {% if docs %}
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th>{{ L("اسم المستند", "Document Name") }}</th>
+            <th>{{ L("النوع", "Type") }}</th>
+            <th>{{ L("رقم الحجز", "Reservation") }}</th>
+            <th>{{ L("تاريخ الإنشاء", "Created At") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for d in docs %}
+          <tr>
+            <td>{{ d.doc_name }}</td>
+            <td>{{ d.doc_type }}</td>
+            <td>
+              {% if d.reservation_id %}
+                <a href="/reservations/{{ d.reservation_id }}/edit" style="color:var(--green-dark);font-weight:850;">{{ d.reservation_id }}</a>
+              {% else %}
+                —
+              {% endif %}
+            </td>
+            <td>{{ d.created_at.strftime('%Y-%m-%d %H:%M') if d.created_at else "—" }}</td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">{{ L("لا توجد مستندات", "No documents found") }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_tab == 'timeline' %}
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("إضافة نشاط", "Add Activity") }}</h2>
+    </div>
+    <div class="card-body">
+      <form action="/customers/{{ customer.id }}/timeline/add" method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field-grid">
+          <div class="field-group">
+            <label>{{ L("النوع", "Type") }}</label>
+            <select name="type" class="field-select">
+              <option value="note">{{ L("ملاحظة", "Note") }}</option>
+              <option value="call">{{ L("مكالمة", "Call") }}</option>
+              <option value="email">{{ L("بريد إلكتروني", "Email") }}</option>
+              <option value="meeting">{{ L("اجتماع", "Meeting") }}</option>
+            </select>
+          </div>
+          <div class="field-group" style="grid-column:1/-1;">
+            <label>{{ L("المحتوى", "Content") }}</label>
+            <textarea name="content" class="field-textarea" rows="3" required></textarea>
+          </div>
+        </div>
+        <button type="submit" class="save-btn"><i class="bi bi-plus-lg"></i> {{ L("إضافة", "Add") }}</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("السجل الزمني", "Timeline") }}</h2>
+    </div>
+    <div class="card-body">
+      {% if timeline %}
+        {% for t in timeline %}
+        <div class="timeline-entry">
+          <div class="timeline-icon {{ t.type }}">
+            {% if t.type == 'note' %}<i class="bi bi-sticky"></i>
+            {% elif t.type == 'call' %}<i class="bi bi-telephone"></i>
+            {% elif t.type == 'email' %}<i class="bi bi-envelope"></i>
+            {% elif t.type == 'meeting' %}<i class="bi bi-calendar-event"></i>
+            {% else %}<i class="bi bi-chat-dots"></i>
+            {% endif %}
+          </div>
+          <div class="timeline-body">
+            <div class="content">{{ t.content }}</div>
+            <div class="meta">
+              {{ t.type }}
+              {% if t.reference_type %} &middot; {{ t.reference_type }} #{{ t.reference_id }}{% endif %}
+              {% if t.created_by %} &middot; {{ t.created_by.name }}{% endif %}
+              &middot; {{ t.created_at.strftime('%Y-%m-%d %H:%M') if t.created_at else "" }}
+            </div>
+          </div>
+        </div>
+        {% endfor %}
+      {% else %}
+      <div class="empty-state">{{ L("لا يوجد سجل بعد", "No timeline entries yet") }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_tab == 'tasks' %}
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("إضافة مهمة", "Add Task") }}</h2>
+    </div>
+    <div class="card-body">
+      <form action="/customers/{{ customer.id }}/tasks/add" method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field-grid">
+          <div class="field-group">
+            <label>{{ L("العنوان", "Title") }} *</label>
+            <input type="text" name="title" class="field-input" required>
+          </div>
+          <div class="field-group">
+            <label>{{ L("تاريخ الاستحقاق", "Due Date") }}</label>
+            <input type="date" name="due_date" class="field-input">
+          </div>
+          <div class="field-group">
+            <label>{{ L("الأولوية", "Priority") }}</label>
+            <select name="priority" class="field-select">
+              <option value="low">{{ L("منخفضة", "Low") }}</option>
+              <option value="normal" selected>{{ L("عادية", "Normal") }}</option>
+              <option value="high">{{ L("مرتفعة", "High") }}</option>
+              <option value="urgent">{{ L("عاجلة", "Urgent") }}</option>
+            </select>
+          </div>
+          <div class="field-group">
+            <label>{{ L("المسؤول", "Assigned To") }}</label>
+            <select name="assigned_to_id" class="field-select">
+              <option value="">—</option>
+              {% for e in employees %}
+              <option value="{{ e.id }}">{{ e.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group" style="grid-column:1/-1;">
+            <label>{{ L("الوصف", "Description") }}</label>
+            <textarea name="description" class="field-textarea" rows="2"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="save-btn"><i class="bi bi-plus-lg"></i> {{ L("إضافة", "Add") }}</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("المهام", "Tasks") }}</h2>
+      <span style="font-size:13px;color:var(--muted);">{{ tasks|length }}</span>
+    </div>
+    <div class="profile-card-body overflow-x-auto">
+      {% if tasks %}
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th>{{ L("العنوان", "Title") }}</th>
+            <th>{{ L("الوصف", "Description") }}</th>
+            <th>{{ L("الاستحقاق", "Due Date") }}</th>
+            <th>{{ L("الحالة", "Status") }}</th>
+            <th>{{ L("الأولوية", "Priority") }}</th>
+            <th>{{ L("المسؤول", "Assigned To") }}</th>
+            <th>{{ L("تاريخ الإنشاء", "Created At") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for t in tasks %}
+          <tr>
+            <td>{{ t.title }}</td>
+            <td>{{ (t.description[:40] + "...") if t.description and t.description|length > 40 else (t.description or "—") }}</td>
+            <td>{{ t.due_date.strftime('%Y-%m-%d') if t.due_date else "—" }}</td>
+            <td>
+              {% set ts = {'pending': L('معلقة', 'Pending'), 'in_progress': L('قيد التنفيذ', 'In Progress'), 'completed': L('مكتملة', 'Completed'), 'cancelled': L('ملغية', 'Cancelled')} %}
+              {% if t.status == 'completed' %}
+                <span class="soft-badge badge-b2b">{{ ts[t.status] }}</span>
+              {% elif t.status == 'in_progress' %}
+                <span class="soft-badge" style="background:var(--yellow-soft);color:#b17a00;">{{ ts[t.status] }}</span>
+              {% elif t.status == 'cancelled' %}
+                <span class="soft-badge" style="background:var(--red-soft);color:var(--red);">{{ ts[t.status] }}</span>
+              {% elif t.status == 'pending' %}
+                <span class="soft-badge" style="background:#f1f5f9;color:#64748b;">{{ ts[t.status] }}</span>
+              {% else %}
+                {{ ts.get(t.status, t.status or "—") }}
+              {% endif %}
+            </td>
+            <td>
+              {% set tp = {'urgent': L('عاجل', 'Urgent'), 'high': L('عالية', 'High'), 'low': L('منخفضة', 'Low'), 'normal': L('عادية', 'Normal')} %}
+              {% if t.priority == 'urgent' %}
+                <span class="soft-badge" style="background:var(--red-soft);color:var(--red);">{{ tp[t.priority] }}</span>
+              {% elif t.priority == 'high' %}
+                <span class="soft-badge" style="background:var(--yellow-soft);color:#b17a00;">{{ tp[t.priority] }}</span>
+              {% elif t.priority == 'low' %}
+                <span class="soft-badge" style="background:#f1f5f9;color:#64748b;">{{ tp[t.priority] }}</span>
+              {% else %}
+                <span class="soft-badge" style="background:var(--green-soft);color:var(--green-dark);">{{ tp.get(t.priority, t.priority or L('عادية', 'Normal')) }}</span>
+              {% endif %}
+            </td>
+            <td>{{ t.assigned_to.name if t.assigned_to else "—" }}</td>
+            <td>{{ t.created_at.strftime('%Y-%m-%d') if t.created_at else "—" }}</td>
+            <td style="display:flex;gap:6px;">
+              <form action="/customers/tasks/{{ t.id }}/edit" method="GET" style="display:inline;">
+                <button type="submit" class="action-btn edit"><i class="bi bi-pencil"></i></button>
+              </form>
+              <form action="/customers/tasks/{{ t.id }}/delete" method="POST" style="display:inline;" onsubmit="return confirm('{{ L("هل أنت متأكد من الحذف؟", "Are you sure you want to delete?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="action-btn delete"><i class="bi bi-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">{{ L("لا توجد مهام مسجلة", "No tasks recorded") }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_tab == 'complaints' %}
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("إضافة شكوى", "Add Complaint") }}</h2>
+    </div>
+    <div class="card-body">
+      <form action="/customers/{{ customer.id }}/complaints/add" method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field-grid">
+          <div class="field-group">
+            <label>{{ L("الموضوع", "Subject") }} *</label>
+            <input type="text" name="subject" class="field-input" required>
+          </div>
+          <div class="field-group" style="grid-column:1/-1;">
+            <label>{{ L("الوصف", "Description") }}</label>
+            <textarea name="description" class="field-textarea" rows="3"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="save-btn"><i class="bi bi-plus-lg"></i> {{ L("إضافة", "Add") }}</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("الشكاوى", "Complaints") }}</h2>
+      <span style="font-size:13px;color:var(--muted);">{{ complaints|length }}</span>
+    </div>
+    <div class="profile-card-body overflow-x-auto">
+      {% if complaints %}
+      <table class="customers-table">
+        <thead>
+          <tr>
+            <th>{{ L("الموضوع", "Subject") }}</th>
+            <th>{{ L("الوصف", "Description") }}</th>
+            <th>{{ L("الحالة", "Status") }}</th>
+            <th>{{ L("الحل", "Resolution") }}</th>
+            <th>{{ L("تاريخ الإنشاء", "Created At") }}</th>
+            <th>{{ L("تاريخ الحل", "Resolved At") }}</th>
+            <th>{{ L("أنشأه", "Created By") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for comp in complaints %}
+          <tr>
+            <td>{{ comp.subject }}</td>
+            <td>{{ (comp.description[:40] + "...") if comp.description and comp.description|length > 40 else (comp.description or "—") }}</td>
+            <td>
+              {% set cs = {'open': L('مفتوحة', 'Open'), 'in_progress': L('قيد المعالجة', 'In Progress'), 'resolved': L('تم الحل', 'Resolved'), 'closed': L('مغلقة', 'Closed')} %}
+              {% if comp.status == 'resolved' %}
+                <span class="soft-badge badge-b2b">{{ cs[comp.status] }}</span>
+              {% elif comp.status == 'in_progress' %}
+                <span class="soft-badge" style="background:var(--yellow-soft);color:#b17a00;">{{ cs[comp.status] }}</span>
+              {% elif comp.status == 'closed' %}
+                <span class="soft-badge" style="background:#f1f5f9;color:#64748b;">{{ cs[comp.status] }}</span>
+              {% else %}
+                <span class="soft-badge" style="background:var(--red-soft);color:var(--red);">{{ cs.get(comp.status, comp.status or L('مفتوحة', 'Open')) }}</span>
+              {% endif %}
+            </td>
+            <td>{{ comp.resolution or "—" }}</td>
+            <td>{{ comp.created_at.strftime('%Y-%m-%d') if comp.created_at else "—" }}</td>
+            <td>{{ comp.resolved_at.strftime('%Y-%m-%d') if comp.resolved_at else "—" }}</td>
+            <td>{{ comp.created_by.name if comp.created_by else "—" }}</td>
+            <td style="display:flex;gap:6px;">
+              <form action="/customers/complaints/{{ comp.id }}/edit" method="GET" style="display:inline;">
+                <button type="submit" class="action-btn edit"><i class="bi bi-pencil"></i></button>
+              </form>
+              <form action="/customers/complaints/{{ comp.id }}/delete" method="POST" style="display:inline;" onsubmit="return confirm('{{ L("هل أنت متأكد من الحذف؟", "Are you sure you want to delete?") }}')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="action-btn delete"><i class="bi bi-trash"></i></button>
+              </form>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+      {% else %}
+      <div class="empty-state">{{ L("لا توجد شكاوى مسجلة", "No complaints recorded") }}</div>
+      {% endif %}
+    </div>
+  </div>
+  {% endif %}
+
+  {% if current_tab == 'last_contact' %}
+  <div class="customer-card" style="margin-bottom:18px;">
+    <div class="card-head">
+      <h2>{{ L("تسجيل آخر اتصال", "Log Last Contact") }}</h2>
+    </div>
+    <div class="card-body">
+      <form action="/customers/{{ customer.id }}/last-contact" method="POST">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="field-grid">
+          <div class="field-group">
+            <label>{{ L("تاريخ آخر اتصال", "Last Contact Date") }}</label>
+            <input type="date" name="last_contact_date" class="field-input" value="{{ today if today else '' }}">
+          </div>
+          <div class="field-group">
+            <label>{{ L("طريقة التواصل", "Contact Method") }}</label>
+            <select name="preferred_contact_method" class="field-select">
+              <option value="" {{ 'selected' if not customer.preferred_contact_method }}></option>
+              {% for m in contact_methods %}
+              <option value="{{ m }}" {{ 'selected' if customer.preferred_contact_method == m }}>{{ m }}</option>
+              {% endfor %}
+            </select>
+          </div>
+          <div class="field-group" style="grid-column:1/-1;">
+            <label>{{ L("ملاحظات", "Notes") }}</label>
+            <textarea name="notes" class="field-textarea" rows="3"></textarea>
+          </div>
+        </div>
+        <button type="submit" class="save-btn"><i class="bi bi-check-lg"></i> {{ L("حفظ", "Save") }}</button>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+</div>
+
+<script>
+function filterTable(input, tableId) {
+  const filter = input.value.toLowerCase();
+  const rows = document.getElementById(tableId).getElementsByTagName('tr');
+  for (let i = 1; i < rows.length; i++) {
+    const text = rows[i].textContent.toLowerCase();
+    rows[i].style.display = text.includes(filter) ? '' : 'none';
+  }
+}
+</script>
+
+{% endblock %}

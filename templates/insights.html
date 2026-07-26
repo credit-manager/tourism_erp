@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+  .ins-page{--brass:#b8873b;--teal:#0e6b64;--text:#16202e;--muted:#736a58;--border:#e6ddc8;}
+  .ins-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);font-family:"El Messiri","Cairo",sans-serif;}
+  .ins-header p{margin:6px 0 22px;color:var(--muted);font-size:13px;font-weight:800;}
+  .card-box{background:#fff;border:1px solid var(--border);border-radius:24px;box-shadow:0 12px 28px rgba(16,24,38,.05);padding:22px;margin-bottom:22px;}
+  .card-box h2{font-size:16px;font-weight:900;color:var(--text);margin:0 0 4px;font-family:"El Messiri","Cairo",sans-serif;display:flex;align-items:center;gap:8px;}
+  .card-box .sub{font-size:12px;color:var(--muted);font-weight:700;margin:0 0 16px;}
+  .kpi-row{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:12px;margin-bottom:18px;}
+  .kpi-mini{background:#f7f3ea;border-radius:14px;padding:14px 16px;}
+  .kpi-mini .l{font-size:11px;font-weight:900;color:var(--muted);text-transform:uppercase;margin-bottom:4px;}
+  .kpi-mini .v{font-size:19px;font-weight:950;color:var(--text);}
+  table{width:100%;border-collapse:collapse;font-size:13px;}
+  th{text-align:start;padding:9px 8px;color:var(--muted);font-size:11px;font-weight:900;text-transform:uppercase;border-bottom:1px solid var(--border);}
+  td{padding:9px 8px;border-bottom:1px solid var(--border);font-weight:700;}
+  .dup-badge{background:#fbeeec;color:#8a332d;padding:3px 10px;border-radius:999px;font-size:11px;font-weight:900;}
+  .empty-ok{text-align:center;padding:30px;color:var(--muted);}
+  .empty-ok i{font-size:28px;color:#0a4f4a;display:block;margin-bottom:8px;}
+  canvas{max-height:280px;}
+</style>
+
+<div class="ins-page">
+  <div class="ins-header">
+    <h1><i class="bi bi-graph-up-arrow"></i> {{ L("التحليلات الذكية", "Insights") }}</h1>
+    <p>{{ L("قواعد كشف واقعية وتوقعات مبنية على بيانات فعلية — كل رقم قابل للتتبع لمصدره، مفيش صندوق أسود.", "Real detection rules and data-driven projections — every number traces back to its source, no black box.") }}</p>
+  </div>
+
+  <div class="card-box">
+    <h2><i class="bi bi-graph-up"></i> {{ L("توقع التدفق النقدي (8 أسابيع)", "Cash Flow Forecast (8 weeks)") }}</h2>
+    <p class="sub">{{ L("مبني على متوسط صافي حركة الخزنة في آخر 8 أسابيع + المستحقات الفعلية غير المحصّلة/المسدّدة.", "Based on the average net treasury movement over the last 8 weeks + actual outstanding receivables/payables.") }}</p>
+
+    <div class="kpi-row">
+      <div class="kpi-mini">
+        <div class="l">{{ L("متوسط الاتجاه الأسبوعي", "Avg Weekly Trend") }}</div>
+        <div class="v">{{ "%.0f"|format(forecast.avg_weekly_net_historical) }}</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="l">{{ L("مستحق على العملاء (AR)", "Outstanding AR") }}</div>
+        <div class="v" style="color:#0a4f4a">{{ "%.0f"|format(forecast.total_ar_outstanding) }}</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="l">{{ L("مستحق للموردين (AP)", "Outstanding AP") }}</div>
+        <div class="v" style="color:#8a332d">{{ "%.0f"|format(forecast.total_ap_outstanding) }}</div>
+      </div>
+      <div class="kpi-mini">
+        <div class="l">{{ L("أسابيع تاريخية مستخدمة", "History Weeks Used") }}</div>
+        <div class="v">{{ forecast.history_weeks_used }}</div>
+      </div>
+    </div>
+
+    <canvas id="cashFlowChart"></canvas>
+  </div>
+
+  <div class="card-box">
+    <h2><i class="bi bi-shield-exclamation"></i> {{ L("اشتباه دفعات مكررة", "Duplicate Payment Alerts") }}</h2>
+    <p class="sub">{{ L("عمليتين لنفس الجهة، بمبلغ متقارب (±1)، خلال 3 أيام من بعض — محتاجين مراجعة يدوية، مش إلغاء تلقائي.", "Two transactions for the same party, similar amount (±1), within 3 days — need manual review, not auto-cancellation.") }}</p>
+
+    {% if duplicates %}
+    <table>
+      <thead>
+        <tr>
+          <th>{{ L("النوع", "Type") }}</th>
+          <th>{{ L("العملية الأولى", "First") }}</th>
+          <th>{{ L("العملية الثانية", "Second") }}</th>
+          <th>{{ L("الفرق بالأيام", "Days Apart") }}</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in duplicates %}
+        <tr>
+          <td>{{ L(d.label_ar, d.label_en) }}</td>
+          <td>#{{ d.a_ref }} — {{ d.a_date }} — {{ "%.2f"|format(d.a_amount) }}</td>
+          <td>#{{ d.b_ref }} — {{ d.b_date }} — {{ "%.2f"|format(d.b_amount) }}</td>
+          <td>{{ d.days_apart }}</td>
+          <td><span class="dup-badge"><i class="bi bi-exclamation-triangle-fill"></i> {{ L("راجعها", "Review") }}</span></td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+    {% else %}
+    <div class="empty-ok">
+      <i class="bi bi-check-circle-fill"></i>
+      {{ L("مفيش اشتباه دفعات مكررة دلوقتي.", "No suspected duplicate payments right now.") }}
+    </div>
+    {% endif %}
+  </div>
+</div>
+
+<script>
+  const weeks = {{ forecast.weeks | map(attribute='week_start') | map('string') | list | tojson }};
+  const projected = {{ forecast.weeks | map(attribute='projected_net') | map('float') | list | tojson }};
+  const running = {{ forecast.weeks | map(attribute='running_balance_change') | map('float') | list | tojson }};
+
+  new Chart(document.getElementById('cashFlowChart'), {
+    type: 'bar',
+    data: {
+      labels: weeks,
+      datasets: [
+        {
+          label: '{{ L("صافي متوقع/أسبوع", "Projected Net/Week") }}',
+          data: projected,
+          backgroundColor: projected.map(v => v >= 0 ? 'rgba(14,107,100,0.55)' : 'rgba(176,70,63,0.55)'),
+          borderRadius: 6,
+        },
+        {
+          label: '{{ L("الرصيد التراكمي المتوقع", "Cumulative Projected") }}',
+          data: running,
+          type: 'line',
+          borderColor: '#b8873b',
+          backgroundColor: 'rgba(184,135,59,0.1)',
+          tension: 0.3,
+          fill: false,
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: { legend: { position: 'bottom' } },
+      scales: { y: { grid: { color: 'rgba(115,106,88,0.1)' } }, x: { grid: { display: false } } }
+    }
+  });
+</script>
+{% endblock %}

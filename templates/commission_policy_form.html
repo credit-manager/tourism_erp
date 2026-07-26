@@ -1,0 +1,133 @@
+{% extends "base.html" %}
+{% block content %}
+<style>
+  .cp-form{max-width:820px;margin:0 auto;--text:#172033;--border:#e0e8e4;--card:#fff}
+  .cp-form .page-head{margin-bottom:27px}
+  .cp-form .page-head h1{margin:0;font-size:28px;font-weight:950;color:var(--text)}
+  .cp-form .page-head p{margin-top:7px;font-size:13px;color:#7b8798}
+  .cp-form .card{border:1px solid var(--border);border-radius:26px;box-shadow:0 18px 45px rgba(15,23,42,0.045);overflow:hidden}
+  .cp-form .card-body{padding:32px}
+  .cp-form .grid{display:grid;grid-template-columns:1fr 1fr;gap:20px 24px}
+  .cp-form .full{grid-column:1/-1}
+  .cp-form .field{display:flex;flex-direction:column;gap:5px}
+  .cp-form .field label{font-size:12px;font-weight:950;color:#364153}
+  .cp-form .field .hint{font-size:11px;color:#7b8798;margin-top:1px}
+  .cp-form .field input,.cp-form .field select,.cp-form .field textarea{padding:10px 14px;border:1.5px solid var(--border);border-radius:12px;font-size:14px;transition:all .2s;background:#fff;font-family:inherit}
+  .cp-form .field input:focus,.cp-form .field select:focus,.cp-form .field textarea:focus{outline:none;border-color:#11885a;box-shadow:0 0 0 3px rgba(17,136,90,0.10)}
+  .cp-form .field input[type=number]{direction:ltr;text-align:right !important}
+  .cp-form .field textarea{min-height:70px;resize:vertical}
+  .cp-form .checkbox-row{display:flex;align-items:center;gap:9px;padding:6px 0}
+  .cp-form .checkbox-row input[type=checkbox]{width:18px;height:18px;accent-color:#11885a;margin:0;cursor:pointer}
+  .cp-form .checkbox-row label{font-size:13px;font-weight:800;cursor:pointer;margin:0}
+  .cp-form .actions{display:flex;justify-content:flex-end;gap:10px;margin-top:27px;padding-top:22px;border-top:1px solid var(--border)}
+  .cp-form .actions .btn{display:inline-flex;align-items:center;gap:7px;padding:11px 24px;border-radius:14px;font-size:14px;font-weight:900;border:none;cursor:pointer;text-decoration:none;transition:all .2s;min-height:40px}
+  .cp-form .actions .btn-primary{background:linear-gradient(135deg,#11885a,#0d6e49);color:#fff;box-shadow:0 8px 20px rgba(17,136,90,0.25)}
+  .cp-form .actions .btn-primary:hover{transform:translateY(-2px);box-shadow:0 12px 28px rgba(17,136,90,0.35)}
+  .cp-form .actions .btn-secondary{background:#f1f5f9;border:1.5px solid var(--border);color:#364153}
+  .cp-form .actions .btn-secondary:hover{background:#e2e8ef}
+</style>
+<div class="cp-form">
+  <div class="page-head">
+    <h1>{{ L("إضافة سياسة عمولة", "Commission Policy") if not policy else L("تعديل سياسة عمولة", "Edit Policy") }}</h1>
+    <p>{{ L("تحديد قاعدة حساب العمولة", "Define commission calculation rule") }}</p>
+  </div>
+  <div class="card">
+    <div class="card-body">
+      <form method="post">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div class="grid">
+          <div class="field full">
+            <label>{{ L("اسم السياسة", "Policy Name") }}</label>
+            <input name="name" required value="{{ policy.name if policy else '' }}" placeholder="{{ L('مثال: عمولة مندوب حجز', 'e.g. Booking Rep Commission') }}">
+          </div>
+          <div class="field">
+            <label>{{ L("أساس الحساب", "Commission Base") }}</label>
+            <select name="commission_base">
+              {% set cb = policy.commission_base if policy else 'profit' %}
+              <option value="sale_price" {{ 'selected' if cb == 'sale_price' else '' }}>{{ L("سعر البيع", "Sale Price") }}</option>
+              <option value="profit" {{ 'selected' if cb == 'profit' else '' }}>{{ L("الربح", "Profit") }}</option>
+              <option value="net_profit" {{ 'selected' if cb == 'net_profit' else '' }}>{{ L("صافي الربح", "Net Profit") }}</option>
+              <option value="collected_amount" {{ 'selected' if cb == 'collected_amount' else '' }}>{{ L("المبلغ المحصل", "Collected Amount") }}</option>
+            </select>
+            <div class="hint">{{ L("القيمة التي تحسب العمولة بناءً عليها", "Value on which commission is calculated") }}</div>
+          </div>
+          <div class="field">
+            <label>{{ L("شرط الاستحقاق", "Eligibility") }}</label>
+            <select name="eligibility">
+              {% set el = policy.eligibility if policy else 'on_booking' %}
+              <option value="on_booking" {{ 'selected' if el == 'on_booking' else '' }}>{{ L("عند الحجز", "On Booking") }}</option>
+              <option value="on_check_in" {{ 'selected' if el == 'on_check_in' else '' }}>{{ L("عند الدخول", "On Check-in") }}</option>
+              <option value="on_full_payment" {{ 'selected' if el == 'on_full_payment' else '' }}>{{ L("عند السداد الكامل", "On Full Payment") }}</option>
+              <option value="on_collection" {{ 'selected' if el == 'on_collection' else '' }}>{{ L("عند التحصيل", "On Collection") }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>{{ L("الدور", "Role") }}</label>
+            <select name="role">
+              {% set rl = policy.role if policy else 'reservation_rep' %}
+              <option value="reservation_rep" {{ 'selected' if rl == 'reservation_rep' else '' }}>{{ L("مندوب حجز", "Reservation Rep") }}</option>
+              <option value="travel_agent" {{ 'selected' if rl == 'travel_agent' else '' }}>{{ L("وكيل سفر", "Travel Agent") }}</option>
+              <option value="sales_rep" {{ 'selected' if rl == 'sales_rep' else '' }}>{{ L("مندوب مبيعات", "Sales Rep") }}</option>
+              <option value="marketing_rep" {{ 'selected' if rl == 'marketing_rep' else '' }}>{{ L("مندوب تسويق", "Marketing Rep") }}</option>
+              <option value="ops_supplier" {{ 'selected' if rl == 'ops_supplier' else '' }}>{{ L("مورد منفذ", "Operator") }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>{{ L("نوع العمولة", "Rate Type") }}</label>
+            <select name="rate_type">
+              {% set rt = policy.rate_type if policy else 'percentage' %}
+              <option value="percentage" {{ 'selected' if rt == 'percentage' else '' }}>{{ L("نسبة مئوية", "Percentage") }}</option>
+              <option value="fixed" {{ 'selected' if rt == 'fixed' else '' }}>{{ L("قيمة ثابتة", "Fixed Amount") }}</option>
+            </select>
+          </div>
+          <div class="field">
+            <label>{{ L("القيمة", "Rate Value") }}</label>
+            <input type="number" step="0.01" min="0" name="rate_value" value="{{ policy.rate_value if policy else '0' }}" required>
+          </div>
+          <div class="field">
+            <label>{{ L("الحد الأدنى", "Min Amount") }}</label>
+            <input type="number" step="0.01" min="0" name="min_amount" value="{{ policy.min_amount if policy else '0' }}">
+            <div class="hint">{{ L("0 = بدون حد", "0 = no limit") }}</div>
+          </div>
+          <div class="field">
+            <label>{{ L("الحد الأقصى", "Max Amount") }}</label>
+            <input type="number" step="0.01" min="0" name="max_amount" value="{{ policy.max_amount if policy else '0' }}">
+            <div class="hint">{{ L("0 = بدون حد", "0 = no limit") }}</div>
+          </div>
+          <div class="field">
+            <label>{{ L("ساري من", "Valid From") }}</label>
+            <input type="date" name="valid_from" value="{{ policy.valid_from if policy else '' }}">
+          </div>
+          <div class="field">
+            <label>{{ L("ساري إلى", "Valid Until") }}</label>
+            <input type="date" name="valid_until" value="{{ policy.valid_until if policy else '' }}">
+          </div>
+          <div class="field">
+            <label>{{ L("تأثير الإلغاء", "Cancellation Effect") }}</label>
+            <select name="cancellation_effect">
+              {% set ce = policy.cancellation_effect if policy else 'forfeit' %}
+              <option value="forfeit" {{ 'selected' if ce == 'forfeit' else '' }}>{{ L("إلغاء العمولة", "Forfeit Commission") }}</option>
+              <option value="clawback" {{ 'selected' if ce == 'clawback' else '' }}>{{ L("استرداد العمولة", "Clawback") }}</option>
+              <option value="partial" {{ 'selected' if ce == 'partial' else '' }}>{{ L("عمولة جزئية", "Partial") }}</option>
+            </select>
+          </div>
+          <div class="field full">
+            <label>{{ L("ينطبق على (منتجات)", "Applies To (Products)") }}</label>
+            <textarea name="applies_to" placeholder="{{ L('خدمة1,خدمة2 - اترك فارغاً للجميع', 'Service1,Service2 - leave empty for all') }}">{{ policy.applies_to if policy else '' }}</textarea>
+            <div class="hint">{{ L("أسماء الخدمات مفصولة بفاصلة", "Comma-separated service names") }}</div>
+          </div>
+          <div class="field full checkbox-row">
+            <input type="hidden" name="is_active" value="0">
+            <input type="checkbox" name="is_active" value="1" {{ 'checked' if not policy or policy.is_active else '' }}>
+            <label>{{ L("السياسة نشطة", "Policy is active") }}</label>
+          </div>
+        </div>
+        <div class="actions">
+          <a href="/settings/commission-policies" class="btn btn-secondary">{{ L("إلغاء", "Cancel") }}</a>
+          <button class="btn btn-primary">{{ L("حفظ السياسة", "Save Policy") }}</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+{% endblock %}

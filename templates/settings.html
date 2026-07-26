@@ -1,0 +1,1027 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .settings-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --blue:#bfd175;
+    --blue-soft:#f4fce8;
+    --yellow:#f4c44d;
+    --yellow-soft:#fff8de;
+    --purple:#8a7cf7;
+    --purple-soft:#f4f1ff;
+    --red:#eb5d6c;
+    --red-soft:#fff1f3;
+    --orange:#f59e0b;
+    --orange-soft:#fff7ed;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --card:#ffffff;
+    direction: inherit;
+  }
+
+  .settings-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:20px;
+  }
+
+  .settings-header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .settings-header p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .audit-link{
+    min-height:43px;
+    border:0;
+    border-radius:15px;
+    background:linear-gradient(135deg,var(--lime),#b8c96a);
+    color:#172033;
+    font-size:13px;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    padding:10px 16px;
+    cursor:pointer;
+    box-shadow:0 8px 16px rgba(103, 197, 80,.24);
+    transition:.16s ease;
+    white-space:nowrap;
+  }
+
+  .audit-link:hover{
+    transform:translateY(-1px);
+    filter:brightness(.98);
+  }
+
+  .error-alert{
+    display:flex;
+    align-items:flex-start;
+    gap:10px;
+    padding:14px 16px;
+    border-radius:18px;
+    border:1px solid #ffd7dd;
+    background:var(--red-soft);
+    color:#b42336;
+    font-size:13px;
+    font-weight:850;
+    line-height:1.8;
+    margin-bottom:16px;
+  }
+
+  .settings-stats{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+
+  .stat-card,
+  .main-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);
+  }
+
+  .stat-card{
+    padding:18px;
+    min-height:118px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    left:-40px;
+    bottom:-45px;
+    width:110px;
+    height:110px;
+    border-radius:999px;
+    background:rgba(26,86,219,.06);
+  }
+
+  .stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    margin-bottom:12px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-icon.green{ background:var(--primary-soft); color:var(--primary); }
+  .stat-icon.blue{ background:var(--blue-soft); color:var(--blue); }
+  .stat-icon.purple{ background:var(--purple-soft); color:var(--purple); }
+  .stat-icon.yellow{ background:var(--yellow-soft); color:#ab7700; }
+
+  .stat-label{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:850;
+    margin-bottom:5px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-value{
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+    direction:ltr;
+    text-align:right;
+    position:relative;
+    z-index:1;
+  }
+
+  .role-card{
+    margin-bottom:18px;
+  }
+
+  .settings-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1.7fr) minmax(340px,.9fr);
+    gap:18px;
+    align-items:start;
+  }
+
+  .settings-layout + .settings-layout{
+    margin-top:18px;
+  }
+
+  .card-head{
+    padding:18px 20px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+
+  .card-head h2{
+    margin:0;
+    font-size:16px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .card-chip{
+    padding:7px 11px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:#fbfdfc;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:850;
+    white-space:nowrap;
+  }
+
+  .card-body{
+    padding:16px 20px 20px;
+  }
+
+  .helper-box{
+    padding:13px 14px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:linear-gradient(135deg,var(--primary-soft),#fff);
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.8;
+    margin-bottom:14px;
+  }
+
+  .table-wrap{
+    overflow-x:auto;
+    padding-bottom:6px;
+  }
+
+  .table-wrap::-webkit-scrollbar{
+    height:10px;
+  }
+
+  .table-wrap::-webkit-scrollbar-thumb{
+    background:#d4ddd7;
+    border-radius:999px;
+  }
+
+  .table-wrap::-webkit-scrollbar-track{
+    background:#f3f7f5;
+    border-radius:999px;
+  }
+
+  .modern-table{
+    width:100%;
+    min-width:900px;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13px;
+  }
+
+  .modern-table.roles-table{
+    min-width:700px;
+  }
+
+  .modern-table.currencies-table{
+    min-width:850px;
+  }
+
+  .modern-table th{
+    background:#f8fcfa;
+    color:var(--muted);
+    padding:14px 10px;
+    font-size:12px;
+    font-weight:950;
+    border-bottom:1px solid var(--border);
+    text-align:center;
+    white-space:nowrap;
+  }
+
+  .modern-table td{
+    padding:14px 10px;
+    border-bottom:1px solid #edf2ef;
+    text-align:center;
+    white-space:nowrap;
+    color:var(--text);
+    vertical-align:middle;
+  }
+
+  .modern-table tr:hover td{
+    background:#fbfefc;
+  }
+
+  .role-name,
+  .user-name,
+  .currency-code{
+    font-weight:950;
+    color:var(--primary-dark);
+  }
+
+  .full-name{
+    font-weight:850;
+    color:var(--text);
+  }
+
+  .description-cell{
+    white-space:normal !important;
+    text-align:right !important;
+    line-height:1.8;
+    color:var(--muted) !important;
+  }
+
+  .badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .badge-purple{
+    background:var(--purple-soft);
+    color:var(--purple);
+  }
+
+  .badge-green{
+    background:#eafff4;
+    color:var(--primary-dark);
+  }
+
+  .badge-red{
+    background:var(--red-soft);
+    color:#c7384c;
+  }
+
+  .badge-gray{
+    background:#f1f5f9;
+    color:#64748b;
+  }
+
+  .badge-blue{
+    background:var(--blue-soft);
+    color:#11885a;
+  }
+
+  .actions{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    flex-wrap:nowrap;
+  }
+
+  .text-action{
+    min-height:34px;
+    border-radius:11px;
+    border:1px solid var(--border);
+    background:#fff;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+    padding:7px 10px;
+    cursor:pointer;
+    transition:.15s ease;
+    font-size:12px;
+    font-weight:900;
+    white-space:nowrap;
+    box-shadow:0 6px 14px rgba(15,23,42,.05);
+  }
+
+  .text-action:hover{
+    transform:translateY(-1px);
+    background:#fbfefc;
+  }
+
+  .text-action.permissions{ color:var(--purple); }
+  .text-action.edit{ color:#11885a; }
+  .text-action.delete{ color:var(--red); }
+
+  .icon-action{
+    width:34px;
+    height:34px;
+    border-radius:11px;
+    border:1px solid #dde7e1;
+    background:#fff;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.15s ease;
+    box-shadow:0 6px 14px rgba(15,23,42,.05);
+  }
+
+  .icon-action:hover{
+    transform:translateY(-1px);
+    background:#fbfefc;
+  }
+
+  .icon-action.view{ color:#f59e0b; }
+  .icon-action.edit{ color:#11885a; }
+  .icon-action.delete{ color:var(--red); }
+
+  .edit-row td{
+    background:#fbfdfc !important;
+    padding:0 10px 16px !important;
+  }
+
+  .edit-box{
+    margin-top:4px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:#fff;
+    padding:14px;
+  }
+
+  .edit-form{
+    display:grid;
+    grid-template-columns:repeat(5,minmax(0,1fr));
+    gap:10px;
+    align-items:start;
+  }
+
+  .currency-edit-form{
+    display:grid;
+    grid-template-columns:1fr 100px 160px 120px;
+    gap:10px;
+    align-items:start;
+  }
+
+  .form-grid{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .field-group label{
+    display:block;
+    margin-bottom:6px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .field-input,
+  .field-select{
+    width:100%;
+    border:1px solid #dde7e1;
+    border-radius:14px;
+    background:#fff;
+    color:var(--text);
+    font-size:13px;
+    font-weight:700;
+    padding:0 13px;
+    height:43px;
+  }
+
+  .field-input:focus,
+  .field-select:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(26,86,219,.1);
+  }
+
+  .save-btn{
+    width:100%;
+    min-height:43px;
+    border:0;
+    border-radius:15px;
+    background:linear-gradient(135deg,var(--lime),#b8c96a);
+    color:#172033;
+    font-size:13px;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    cursor:pointer;
+    box-shadow:0 8px 16px rgba(103, 197, 80,.24);
+    transition:.16s ease;
+  }
+
+  .save-btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(.98);
+  }
+
+  .side-card{
+    position:sticky;
+    top:18px;
+  }
+
+  .money{
+    direction:ltr;
+    font-weight:900;
+  }
+
+  .currency-note{
+    margin-top:14px;
+    padding:13px 14px;
+    border-radius:16px;
+    background:#fbfdfc;
+    border:1px solid var(--border);
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.8;
+  }
+
+  .empty-state{
+    padding:34px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  @media (max-width:1250px){
+    .settings-stats{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .settings-layout{
+      grid-template-columns:1fr;
+    }
+
+    .side-card{
+      position:static;
+    }
+
+    .edit-form{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .currency-edit-form{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .edit-form button,
+    .currency-edit-form button{
+      grid-column:1 / -1;
+    }
+  }
+
+  @media (max-width:700px){
+    .settings-header,
+    .card-head{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .settings-stats,
+    .edit-form,
+    .currency-edit-form{
+      grid-template-columns:1fr;
+    }
+
+    .actions{
+      flex-wrap:wrap;
+    }
+  }
+</style>
+
+{% set ns = namespace(active_users=0, inactive_users=0, base_currency='') %}
+{% for u in users %}
+  {% if u.is_active %}
+    {% set ns.active_users = ns.active_users + 1 %}
+  {% else %}
+    {% set ns.inactive_users = ns.inactive_users + 1 %}
+  {% endif %}
+{% endfor %}
+
+{% for c in currencies %}
+  {% if c.is_base %}
+    {% set ns.base_currency = c.code %}
+  {% endif %}
+{% endfor %}
+
+<div class="settings-page">
+
+  <div class="settings-header">
+    <div>
+      <h1>{{ L("الإعدادات", "Settings") }}</h1>
+      <p>{{ L("إدارة المستخدمين، الأدوار، الصلاحيات، سجل العمليات، والعملات داخل النظام.", "Manage users, roles, permissions, operations log, and currencies within the system.") }}</p>
+    </div>
+
+    <a href="/settings/audit-log" class="audit-link">
+      <i class="bi bi-clock-history"></i>
+      {{ L("عرض سجل تتبع كل العمليات", "View Full Operations Audit Log") }}
+    </a>
+  </div>
+
+  {% if request.query_params.get('error') %}
+  <div class="error-alert">
+    <i class="bi bi-exclamation-triangle-fill"></i>
+    <div>{{ request.query_params.get('error') }}</div>
+  </div>
+  {% endif %}
+
+  <div class="settings-stats">
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="bi bi-people"></i></div>
+      <div class="stat-label">{{ L("إجمالي المستخدمين", "Total Users") }}</div>
+      <div class="stat-value">{{ users|length }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="bi bi-person-check"></i></div>
+      <div class="stat-label">{{ L("مستخدمين مفعّلين", "Active Users") }}</div>
+      <div class="stat-value">{{ ns.active_users }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="bi bi-currency-exchange"></i></div>
+      <div class="stat-label">{{ L("عدد العملات", "Currency Count") }}</div>
+      <div class="stat-value">{{ currencies|length }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon yellow"><i class="bi bi-star-fill"></i></div>
+      <div class="stat-label">{{ L("العملة الأساسية", "Base Currency") }}</div>
+      <div class="stat-value">{{ ns.base_currency or '-' }}</div>
+    </div>
+  </div>
+
+  <div class="main-card role-card">
+    <div class="card-head">
+      <h2>{{ L("جدول الأدوار والصلاحيات", "Roles & Permissions Table") }}</h2>
+      <span class="card-chip">Roles</span>
+    </div>
+
+    <div class="card-body">
+      <div class="table-wrap">
+        <table class="modern-table roles-table">
+          <thead>
+            <tr>
+              <th>{{ L("الدور", "Role") }}</th>
+              <th>{{ L("الوصف", "Description") }}</th>
+            </tr>
+          </thead>
+
+          <tbody>
+            <tr>
+              <td>
+                <span class="role-name">{{ L("مدير النظام (admin)", "System Admin") }}</span>
+              </td>
+              <td class="description-cell">
+                {{ L("صلاحية كاملة على كل الموديولات: إضافة، تعديل، حذف، الرواتب، الإعدادات.", "Full access to all modules: add, edit, delete, payroll, settings.") }}
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <span class="role-name">{{ L("محاسب (accountant)", "Accountant") }}</span>
+              </td>
+              <td class="description-cell">
+                {{ L("الخزنة، المصروفات، الموردين، الفنادق، الموظفين عرض فقط، الرواتب عرض فقط. لا يملك حذف حجوزات أو إدارة موظفين.", "Treasury, Expenses, Suppliers, Hotels, Employees view only, Salaries view only. Cannot delete bookings or manage employees.") }}
+              </td>
+            </tr>
+
+            <tr>
+              <td>
+                <span class="role-name">{{ L("موظف حجوزات (reservations)", "Reservations Staff") }}</span>
+              </td>
+              <td class="description-cell">
+                {{ L("إضافة وتعديل الحجوزات والعملاء والفنادق عرض فقط، بدون صلاحية حذف، وبدون الوصول للخزنة أو الرواتب أو الموظفين.", "Add and edit bookings, customers view only, hotels view only, no delete permission, no access to treasury, salaries, or employees.") }}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="settings-layout">
+
+    <div class="main-card">
+      <div class="card-head">
+        <h2>{{ L("المستخدمين", "Users") }}</h2>
+        <span class="card-chip">{{ users|length }} {{ L("مستخدم", "User") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="modern-table">
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>{{ L("اسم المستخدم", "Username") }}</th>
+                <th>{{ L("الاسم بالكامل", "Full Name") }}</th>
+                <th>{{ L("الدور", "Role") }}</th>
+                <th>{{ L("الموظف المرتبط", "Linked Employee") }}</th>
+                <th>{{ L("الحالة", "Status") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for u in users %}
+              <tr>
+                <td>{{ u.id }}</td>
+
+                <td>
+                  <span class="user-name">{{ u.username }}</span>
+                </td>
+
+                <td>
+                  <span class="full-name">{{ u.full_name or '-' }}</span>
+                </td>
+
+                <td>
+                  <span class="badge badge-purple">{{ ROLE_LABELS.get(u.role, u.role) }}</span>
+                </td>
+
+                <td>{{ u.employee.name if u.employee else '-' }}</td>
+
+                <td>
+                  {% if u.is_active %}
+                    <span class="badge badge-green">{{ L("مفعّل", "Enabled") }}</span>
+                  {% else %}
+                    <span class="badge badge-red">{{ L("معطّل", "Disabled") }}</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  <div class="actions">
+                    <a href="/settings/users/{{ u.id }}/permissions" class="text-action permissions">
+                      <i class="bi bi-shield-lock"></i>
+                      {{ L("صلاحيات دقيقة", "Granular Permissions") }}
+                    </a>
+
+                    <button
+                      type="button"
+                      onclick="document.getElementById('edit-{{ u.id }}').classList.toggle('hidden')"
+                      class="text-action edit"
+                    >
+                      <i class="bi bi-pencil-square"></i>
+                      {{ L("تعديل", "Edit") }}
+                    </button>
+
+                    <form method="post" action="/settings/users/{{ u.id }}/delete" onsubmit="return confirm('تأكيد حذف المستخدم؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="text-action delete" type="submit">
+                        <i class="bi bi-trash"></i>
+                        {{ L("حذف", "Delete") }}
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+
+              <tr id="edit-{{ u.id }}" class="hidden edit-row">
+                <td colspan="7">
+                  <div class="edit-box">
+                    <form method="post" action="/settings/users/{{ u.id }}/edit" class="edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input name="full_name" value="{{ u.full_name or '' }}" placeholder="{{ L("الاسم بالكامل", "Full Name") }}" class="field-input">
+
+                      <select name="role" class="field-select">
+                        <option value="admin" {{ 'selected' if u.role=='admin' }}>{{ L("مدير النظام", "System Admin") }}</option>
+                        <option value="accountant" {{ 'selected' if u.role=='accountant' }}>{{ L("محاسب", "Accountant") }}</option>
+                        <option value="reservations" {{ 'selected' if u.role=='reservations' }}>{{ L("موظف حجوزات", "Reservations Staff") }}</option>
+                      </select>
+
+                      <select name="employee_id" class="field-select">
+                        <option value="">{{ L("بدون ربط بموظف", "Without Employee Link") }}</option>
+                        {% for e in employees %}
+                        <option value="{{ e.id }}" {{ 'selected' if u.employee_id==e.id }}>
+                          {{ e.name }}
+                        </option>
+                        {% endfor %}
+                      </select>
+
+                      <select name="is_active" class="field-select">
+                        <option value="1" {{ 'selected' if u.is_active }}>{{ L("مفعّل", "Enabled") }}</option>
+                        <option value="0" {{ 'selected' if not u.is_active }}>{{ L("معطّل", "Disabled") }}</option>
+                      </select>
+
+                      <input name="password" type="password" placeholder="{{ L("كلمة مرور جديدة (اختياري)", "New Password (Optional)") }}" class="field-input">
+
+                      <button class="save-btn" type="submit">
+                        {{ L("حفظ", "Save") }}
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if not users %}
+              <tr>
+                <td colspan="7">
+                  <div class="empty-state">{{ L("لا يوجد مستخدمين بعد", "No users yet") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-card side-card">
+      <div class="card-head">
+        <h2>{{ L("إضافة مستخدم جديد", "Add New User") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="helper-box">
+          {{ L("أنشئ مستخدم جديد وحدد الدور الخاص به، ويمكن ربطه بموظف من الموظفين المسجلين.", "Create a new user and set their role; can be linked to a registered employee.") }}
+        </div>
+
+        <form method="post" action="/settings/users/add" class="form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field-group">
+            <label>{{ L("اسم المستخدم", "Username") }}</label>
+            <input name="username" placeholder="{{ L("اسم المستخدم (للدخول)", "Username (for login)") }}" required class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("كلمة المرور", "Password") }}</label>
+            <input name="password" type="password" placeholder="{{ L("كلمة المرور", "Password") }}" required class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("الاسم بالكامل", "Full Name") }}</label>
+            <input name="full_name" placeholder="{{ L("الاسم بالكامل", "Full Name") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("الدور", "Role") }}</label>
+            <select name="role" class="field-select">
+              <option value="reservations">{{ L("موظف حجوزات", "Reservations Staff") }}</option>
+              <option value="accountant">{{ L("محاسب", "Accountant") }}</option>
+              <option value="admin">{{ L("مدير النظام", "System Admin") }}</option>
+
+            </select>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("الموظف المرتبط", "Linked Employee") }}</label>
+            <select name="employee_id" class="field-select">
+              <option value="">{{ L("ربط بموظف (اختياري)", "Link to Employee (Optional)") }}</option>
+              {% for e in employees %}
+              <option value="{{ e.id }}">{{ e.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <button class="save-btn" type="submit">
+            {{ L("إنشاء المستخدم", "Create User") }}
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="settings-layout">
+
+    <div class="main-card">
+      <div class="card-head">
+        <h2>{{ L("العملات Multi-Currency", "Multi-Currency") }}</h2>
+        <span class="card-chip">{{ currencies|length }} {{ L("عملة", "Currency") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="modern-table currencies-table">
+            <thead>
+              <tr>
+                <th>{{ L("الكود", "Code") }}</th>
+                <th>{{ L("الاسم", "Name") }}</th>
+                <th>{{ L("الرمز", "Code") }}</th>
+                <th>{{ L("سعر الصرف لعملة الأساس", "Exchange Rate for Base Currency") }}</th>
+                <th>{{ L("الحالة", "Status") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for c in currencies %}
+              <tr>
+                <td>
+                  <span class="currency-code">{{ c.code }}</span>
+                </td>
+
+                <td>{{ c.name or '-' }}</td>
+
+                <td>{{ c.symbol or '-' }}</td>
+
+                <td class="money">{{ c.exchange_rate }}</td>
+
+                <td>
+                  {% if c.is_base %}
+                    <span class="badge badge-purple">{{ L("العملة الأساسية", "Base Currency") }}</span>
+                  {% else %}
+                    <span class="badge badge-gray">{{ L("فرعية", "Sub") }}</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  <div class="actions">
+                    {% if not c.is_base %}
+                    <form method="post" action="/settings/currencies/{{ c.id }}/set-base" onsubmit="return confirm('تعيين هذه العملة كأساسية؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="icon-action view" type="submit" title="تعيين كأساسية">
+                        <i class="bi bi-star-fill"></i>
+                      </button>
+                    </form>
+
+                    <button
+                      type="button"
+                      onclick="document.getElementById('cedit-{{ c.id }}').classList.toggle('hidden')"
+                      class="icon-action edit"
+                      title="تعديل"
+                    >
+                      <i class="bi bi-pencil-fill"></i>
+                    </button>
+
+                    <form method="post" action="/settings/currencies/{{ c.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="icon-action delete" type="submit" title="حذف">
+                        <i class="bi bi-trash-fill"></i>
+                      </button>
+                    </form>
+                    {% endif %}
+                  </div>
+                </td>
+              </tr>
+
+              {% if not c.is_base %}
+              <tr id="cedit-{{ c.id }}" class="hidden edit-row">
+                <td colspan="6">
+                  <div class="edit-box">
+                    <form method="post" action="/settings/currencies/{{ c.id }}/edit" class="currency-edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input name="name" value="{{ c.name or '' }}" class="field-input" placeholder="{{ L("اسم العملة", "Currency Name") }}">
+                      <input name="symbol" value="{{ c.symbol or '' }}" class="field-input" placeholder="{{ L("الرمز", "Symbol") }}">
+                      <input name="exchange_rate" type="number" step="0.0001" value="{{ c.exchange_rate }}" class="field-input" placeholder="{{ L("سعر الصرف", "Exchange Rate") }}">
+                      <button class="save-btn" type="submit">
+                        {{ L("حفظ", "Save") }}
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endif %}
+              {% endfor %}
+
+              {% if not currencies %}
+              <tr>
+                <td colspan="6">
+                  <div class="empty-state">{{ L("لا توجد عملات بعد", "No currencies yet") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+
+        <div class="currency-note">
+          {{ L("سعر الصرف = كام وحدة من العملة الأساسية تساوي وحدة واحدة من هذه العملة.
+          الخزنة حالياً مرتبطة بعملة لكل حساب — توسعة العملات لباقي الموديولات مثل الحجوزات والتقارير هي الخطوة التالية الطبيعية.", "Exchange rate = how many units of base currency equal one unit of this currency.
+          Treasury is currently linked to a currency per account — extending currencies to other modules like bookings and reports is the natural next step.") }}
+        </div>
+      </div>
+    </div>
+
+    <div class="main-card side-card">
+      <div class="card-head">
+        <h2>{{ L("إضافة عملة جديدة", "Add New Currency") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="helper-box">
+          {{ L("أضف كود العملة واسمها ورمزها وسعر الصرف بالنسبة للعملة الأساسية الحالية.", "Add currency code, name, symbol and exchange rate relative to the current base currency.") }}
+        </div>
+
+        <form method="post" action="/settings/currencies/add" class="form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field-group">
+            <label>{{ L("كود العملة", "Currency Code") }}</label>
+            <input name="code" placeholder="{{ L("الكود (مثال: USD)", "Code (e.g. USD)") }}" required class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("اسم العملة", "Currency Name") }}</label>
+            <input name="name" placeholder="{{ L("اسم العملة", "Currency Name") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("الرمز", "Code") }}</label>
+            <input name="symbol" placeholder="{{ L("الرمز (مثال: $)", "Symbol (e.g. $)") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("سعر الصرف لعملة الأساس", "Exchange Rate for Base Currency") }}</label>
+            <input name="exchange_rate" type="number" step="0.0001" placeholder="{{ L("سعر الصرف لعملة الأساس", "Exchange Rate (Base Currency)") }}" required class="field-input">
+          </div>
+
+          <button class="save-btn" type="submit">
+            {{ L("حفظ العملة", "Save Currency") }}
+          </button>
+        </form>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+  <div class="settings-layout" style="margin-top:18px">
+    <div class="main-card">
+      <div class="card-head">
+        <h2>{{ L("سياسات العمولات", "Commission Policies") }}</h2>
+        <span class="card-chip">Commission</span>
+      </div>
+      <div class="card-body">
+        <div style="padding:13px 14px;border-radius:16px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:12px;line-height:1.8;margin-bottom:14px">
+          {{ L("تحديد قواعد عمولة قابلة لإعادة الاستخدام لكل دور (مندوب حجز، وكيل سفر، مندوب مبيعات...) بأساس حساب مرن واستحقاق حسب الحالة.", "Define reusable commission rules per role (booking rep, travel agent, sales rep...) with flexible calculation base and eligibility.") }}
+        </div>
+        <div style="display:flex;justify-content:flex-end">
+          <a href="/settings/commission-policies" style="display:inline-flex;align-items:center;gap:8px;padding:11px 22px;border-radius:14px;font-size:14px;font-weight:900;border:none;cursor:pointer;text-decoration:none;background:linear-gradient(135deg,#11885a,#0d6e49);color:#fff;box-shadow:0 8px 20px rgba(17,136,90,0.25);transition:all .2s;min-height:42px">
+            <i class="bi bi-gear-fill"></i>
+            {{ L("إدارة سياسات العمولات", "Manage Commission Policies") }}
+          </a>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-card side-card">
+      <div class="card-head">
+        <h2>{{ L("سياسة جديدة", "New Policy") }}</h2>
+      </div>
+      <div class="card-body">
+        <div style="padding:13px 14px;border-radius:16px;border:1px solid var(--border);background:#fff;color:var(--muted);font-size:12px;line-height:1.8;margin-bottom:14px">
+          {{ L("أنشئ سياسة عمولة تحدد تلقائياً قيمة العمولة المستحقة عند الحجز حسب الدور وأساس الربح.", "Create a commission policy that automatically determines the commission amount on booking based on role and profit base.") }}
+        </div>
+        <a href="/settings/commission-policies/add" style="display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:11px 22px;border-radius:14px;font-size:14px;font-weight:900;border:none;cursor:pointer;text-decoration:none;background:linear-gradient(135deg,#11885a,#0d6e49);color:#fff;box-shadow:0 8px 20px rgba(17,136,90,0.25);transition:all .2s;min-height:42px">
+          <i class="bi bi-plus-circle"></i>
+          {{ L("إنشاء سياسة جديدة", "Create New Policy") }}
+        </a>
+      </div>
+    </div>
+  </div>
+
+{% endblock %}

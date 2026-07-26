@@ -1,0 +1,157 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .sh-page{
+    --primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --yellow:#f4c44d;--yellow-soft:#fff8de;
+    --red:#eb5d6c;--red-soft:#fff1f3;
+    --purple:#8a7cf7;--purple-soft:#f4f1ff;
+    --text:#182033;--muted:#708093;--border:#e4ebe6;
+    direction:inherit;
+  }
+  .sh-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:6px;flex-wrap:wrap;}
+  .sh-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);}
+  .sh-header p{margin:6px 0 0;color:var(--muted);font-size:13px;font-weight:700;}
+  .sh-header .btn{min-height:42px;border-radius:14px;font-weight:900;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;border:0;cursor:pointer;transition:.18s ease;white-space:nowrap;text-decoration:none;letter-spacing:.2px;}
+  .sh-header .btn-lime{background:linear-gradient(135deg,#c9dd6e,#b3c45f);color:#1a2a16;box-shadow:0 8px 18px rgba(172,197,80,.32);}
+  .sh-header .btn:hover{transform:translateY(-1px);filter:brightness(.97);}
+
+  .kpi-row{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:16px 0 18px;}
+  .kpi-card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:14px 16px;display:flex;align-items:center;gap:12px;}
+  .kpi-icon{width:40px;height:40px;border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;}
+  .kpi-icon.g{background:var(--primary-soft);color:var(--primary);}
+  .kpi-icon.y{background:var(--yellow-soft);color:#986a00;}
+  .kpi-icon.r{background:var(--red-soft);color:#c7384c;}
+  .kpi-info{flex:1;min-width:0;}
+  .kpi-info .lbl{font-size:11px;font-weight:850;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .kpi-info .val{font-size:20px;font-weight:950;color:var(--text);direction:ltr;text-align:right;}
+
+  .main-card{background:#fff;border:1px solid var(--border);border-radius:22px;overflow:hidden;margin-bottom:18px;}
+  .card-head{padding:16px 20px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .card-head h2{margin:0;font-size:15px;font-weight:950;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .card-head h2 i{color:var(--primary);}
+  .card-chip{padding:5px 11px;border:1px solid var(--border);border-radius:999px;background:#fbfdfc;color:var(--muted);font-size:11px;font-weight:850;white-space:nowrap;}
+  .card-body{padding:16px 20px 20px;}
+
+  .tbl-scroll{overflow-x:auto;padding-bottom:4px;}
+  .tbl-scroll::-webkit-scrollbar{height:8px;}
+  .tbl-scroll::-webkit-scrollbar-thumb{background:#d4ddd7;border-radius:999px;}
+  .tbl-scroll::-webkit-scrollbar-track{background:#f3f7f5;border-radius:999px;}
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
+  .tbl th{background:#f8fcfa;color:var(--muted);padding:11px 8px;font-size:11px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;}
+  .tbl td{padding:12px 8px;border-bottom:1px solid #edf2ef;text-align:center;color:var(--text);vertical-align:middle;}
+  .tbl tr:hover td{background:#fbfefc;}
+
+  .shift-name{color:var(--primary-dark);font-weight:950;font-size:13.5px;}
+  .time-cell{display:inline-flex;align-items:center;gap:6px;background:#f6faf8;border:1px solid var(--border);border-radius:999px;padding:4px 12px;font-weight:800;color:var(--text);direction:ltr;font-size:12.5px;}
+  .time-arrow{color:var(--primary);font-weight:900;}
+
+  .soft-badge{display:inline-flex;align-items:center;justify-content:center;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap;}
+  .badge-green{background:#eafff4;color:var(--primary-dark);}
+  .badge-gray{background:#f1f5f9;color:#64748b;}
+
+  .act-cell{display:flex;gap:7px;justify-content:center;align-items:center;}
+  .btn{min-height:36px;border-radius:11px;font-weight:900;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 13px;border:0;cursor:pointer;transition:.18s ease;text-decoration:none;white-space:nowrap;letter-spacing:.2px;}
+  .btn-green{background:linear-gradient(135deg,#2ec182,#11885a);color:#fff;box-shadow:0 6px 14px rgba(32,184,116,.26);}
+  .btn-red{background:linear-gradient(135deg,#f16476,#c7384c);color:#fff;box-shadow:0 6px 14px rgba(199,56,76,.26);}
+  .btn:hover{transform:translateY(-1px);filter:brightness(.97);}
+  .act-form{margin:0;display:inline-flex;}
+
+  .empty-msg{padding:34px 20px;text-align:center;color:var(--muted);font-size:13px;font-weight:800;}
+
+  .err-box{background:var(--red-soft);border:1px solid var(--red);color:#c7384c;padding:12px 18px;border-radius:16px;margin-bottom:16px;font-weight:800;display:flex;align-items:center;gap:10px;}
+  .ok-box{background:var(--primary-soft);border:1px solid var(--primary);color:var(--primary-dark);padding:12px 18px;border-radius:16px;margin-bottom:16px;font-weight:800;display:flex;align-items:center;gap:10px;}
+
+  @media(max-width:1100px){.kpi-row{grid-template-columns:1fr;}}
+  @media(max-width:700px){.sh-header,.card-head{flex-direction:column;align-items:stretch;}.act-cell{flex-direction:column;}}
+</style>
+
+<div class="sh-page">
+
+{% if request.query_params.get('error') == 'not_found' %}
+<div class="err-box"><i class="bi bi-exclamation-triangle-fill"></i> {{ L("الوردية غير موجودة.", "Shift not found.") }}</div>
+{% endif %}
+{% if request.query_params.get('saved') == '1' %}
+<div class="ok-box"><i class="bi bi-check-circle-fill"></i> {{ L("تم حفظ الوردية بنجاح.", "Shift saved successfully.") }}</div>
+{% endif %}
+{% if request.query_params.get('deleted') == '1' %}
+<div class="ok-box"><i class="bi bi-check-circle-fill"></i> {{ L("تم حذف الوردية بنجاح.", "Shift deleted successfully.") }}</div>
+{% endif %}
+
+<div class="sh-header">
+  <div>
+    <h1>{{ L("الورديات", "Shifts") }}</h1>
+    <p>{{ L("إدارة أوقات العمل ونوبات الموظفين", "Manage work schedules and employee shifts") }}</p>
+  </div>
+  <a href="/shifts/add" class="btn btn-lime"><i class="bi bi-plus-lg"></i> {{ L("إضافة وردية", "Add Shift") }}</a>
+</div>
+
+<div class="kpi-row">
+  <div class="kpi-card">
+    <div class="kpi-icon g"><i class="bi bi-arrow-left-right"></i></div>
+    <div class="kpi-info"><div class="lbl">{{ L("إجمالي الورديات", "Total Shifts") }}</div><div class="val">{{ shifts|length }}</div></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon y"><i class="bi bi-check2-circle"></i></div>
+    <div class="kpi-info"><div class="lbl">{{ L("ورديات نشطة", "Active Shifts") }}</div><div class="val">{{ shifts|selectattr('is_active')|list|length }}</div></div>
+  </div>
+  <div class="kpi-card">
+    <div class="kpi-icon r"><i class="bi bi-pause-circle"></i></div>
+    <div class="kpi-info"><div class="lbl">{{ L("ورديات متوقفة", "Inactive Shifts") }}</div><div class="val">{{ shifts|rejectattr('is_active')|list|length }}</div></div>
+  </div>
+</div>
+
+<div class="main-card">
+  <div class="card-head">
+    <h2><i class="bi bi-list-ul"></i> {{ L("قائمة الورديات", "Shifts List") }}</h2>
+    <span class="card-chip">{{ shifts|length }} {{ L("وردية", "shifts") }}</span>
+  </div>
+  <div class="card-body">
+    <div class="tbl-scroll">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>{{ L("الاسم", "Name") }}</th>
+            <th>{{ L("وقت البداية", "Start Time") }}</th>
+            <th>{{ L("وقت النهاية", "End Time") }}</th>
+            <th>{{ L("الحالة", "Status") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for s in shifts %}
+          <tr>
+            <td><span class="shift-name">{{ s.name }}</span></td>
+            <td><span class="time-cell">{{ s.start_time.strftime("%H:%M") }} <span class="time-arrow">→</span> {{ s.end_time.strftime("%H:%M") }}</span></td>
+            <td><span class="time-cell">{{ s.end_time.strftime("%H:%M") }}</span></td>
+            <td>
+              {% if s.is_active %}
+                <span class="soft-badge badge-green"><i class="bi bi-check-circle-fill"></i> {{ L("نشطة", "Active") }}</span>
+              {% else %}
+                <span class="soft-badge badge-gray"><i class="bi bi-pause-fill"></i> {{ L("متوقفة", "Inactive") }}</span>
+              {% endif %}
+            </td>
+            <td>
+              <div class="act-cell">
+                <a href="/shifts/{{ s.id }}/edit" class="btn btn-green"><i class="bi bi-pencil"></i> {{ L("تعديل", "Edit") }}</a>
+                <form method="post" action="/shifts/{{ s.id }}/delete" class="act-form" onsubmit="return confirm('{{ L("هل تريد حذف هذه الوردية؟", "Delete this shift?") }}')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-red"><i class="bi bi-trash"></i> {{ L("حذف", "Delete") }}</button>
+                </form>
+              </div>
+            </td>
+          </tr>
+          {% endfor %}
+          {% if not shifts %}
+          <tr><td colspan="5"><div class="empty-msg"><i class="bi bi-inboxes"></i><br>{{ L("لا توجد ورديات مسجلة بعد", "No shifts recorded yet") }}</div></td></tr>
+          {% endif %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

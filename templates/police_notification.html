@@ -1,0 +1,669 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .police-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --blue:#bfd175;
+    --blue-soft:#f4fce8;
+    --yellow:#f4c44d;
+    --yellow-soft:#fff8de;
+    --purple:#8a7cf7;
+    --purple-soft:#f4f1ff;
+    --red:#eb5d6c;
+    --red-soft:#fff1f3;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --card:#ffffff;
+    direction: inherit;
+  }
+
+  .police-header{
+    display:flex;
+    justify-content:space-between;
+    align-items:flex-start;
+    gap:18px;
+    margin-bottom:20px;
+  }
+
+  .police-header h1{
+    margin:0;
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .police-header p{
+    margin:6px 0 0;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  .police-stats{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:14px;
+    margin-bottom:18px;
+  }
+
+  .stat-card,
+  .main-card{
+    background:var(--card);
+    border:1px solid var(--border);
+    border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);
+  }
+
+  .stat-card{
+    padding:18px;
+    min-height:118px;
+    position:relative;
+    overflow:hidden;
+  }
+
+  .stat-card::after{
+    content:"";
+    position:absolute;
+    left:-40px;
+    bottom:-45px;
+    width:110px;
+    height:110px;
+    border-radius:999px;
+    background:rgba(26,86,219,.06);
+  }
+
+  .stat-icon{
+    width:44px;
+    height:44px;
+    border-radius:16px;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    font-size:19px;
+    margin-bottom:12px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-icon.green{ background:var(--primary-soft); color:var(--primary); }
+  .stat-icon.blue{ background:var(--blue-soft); color:var(--blue); }
+  .stat-icon.yellow{ background:var(--yellow-soft); color:#ab7700; }
+  .stat-icon.purple{ background:var(--purple-soft); color:var(--purple); }
+
+  .stat-label{
+    font-size:12px;
+    color:var(--muted);
+    font-weight:850;
+    margin-bottom:5px;
+    position:relative;
+    z-index:1;
+  }
+
+  .stat-value{
+    font-size:28px;
+    font-weight:950;
+    color:var(--text);
+    direction:ltr;
+    text-align:right;
+    position:relative;
+    z-index:1;
+  }
+
+  .police-layout{
+    display:grid;
+    grid-template-columns:minmax(0,1.7fr) minmax(340px,.9fr);
+    gap:18px;
+    align-items:start;
+  }
+
+  .card-head{
+    padding:18px 20px 0;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:10px;
+  }
+
+  .card-head h2{
+    margin:0;
+    font-size:16px;
+    font-weight:950;
+    color:var(--text);
+  }
+
+  .card-chip{
+    padding:7px 11px;
+    border:1px solid var(--border);
+    border-radius:999px;
+    background:#fbfdfc;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:850;
+    white-space:nowrap;
+  }
+
+  .card-body{
+    padding:16px 20px 20px;
+  }
+
+  .table-wrap{
+    overflow-x:auto;
+    padding-bottom:6px;
+  }
+
+  .table-wrap::-webkit-scrollbar{
+    height:10px;
+  }
+
+  .table-wrap::-webkit-scrollbar-thumb{
+    background:#d4ddd7;
+    border-radius:999px;
+  }
+
+  .table-wrap::-webkit-scrollbar-track{
+    background:#f3f7f5;
+    border-radius:999px;
+  }
+
+  .police-table{
+    width:100%;
+    min-width:1050px;
+    border-collapse:separate;
+    border-spacing:0;
+    font-size:13px;
+  }
+
+  .police-table th{
+    background:#f8fcfa;
+    color:var(--muted);
+    padding:14px 10px;
+    font-size:12px;
+    font-weight:950;
+    border-bottom:1px solid var(--border);
+    text-align:center;
+    white-space:nowrap;
+  }
+
+  .police-table td{
+    padding:14px 10px;
+    border-bottom:1px solid #edf2ef;
+    text-align:center;
+    white-space:nowrap;
+    color:var(--text);
+    vertical-align:middle;
+  }
+
+  .police-table tr:hover td{
+    background:#fbfefc;
+  }
+
+  .leader-name{
+    font-weight:950;
+    color:var(--primary-dark);
+  }
+
+  .hotel-name{
+    font-weight:900;
+    color:var(--text);
+  }
+
+  .count-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    min-width:34px;
+    height:28px;
+    padding:0 10px;
+    border-radius:999px;
+    background:var(--blue-soft);
+    color:#11885a;
+    font-size:12px;
+    font-weight:950;
+  }
+
+  .status-badge{
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    padding:5px 10px;
+    border-radius:999px;
+    font-size:11px;
+    font-weight:950;
+    white-space:nowrap;
+  }
+
+  .status-sent{
+    background:#eafff4;
+    color:var(--primary-dark);
+  }
+
+  .status-pending{
+    background:var(--yellow-soft);
+    color:#9b6a00;
+  }
+
+  .actions{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:6px;
+  }
+
+  .action-btn{
+    width:34px;
+    height:34px;
+    border-radius:11px;
+    border:1px solid #dde7e1;
+    background:#fff;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:.15s ease;
+    box-shadow:0 6px 14px rgba(15,23,42,.05);
+  }
+
+  .action-btn:hover{
+    transform:translateY(-1px);
+    background:#fbfefc;
+  }
+
+  .action-btn.edit{ color:#11885a; }
+  .action-btn.delete{ color:var(--red); }
+
+  .edit-row td{
+    background:#fbfdfc !important;
+    padding:0 10px 16px !important;
+  }
+
+  .edit-box{
+    margin-top:4px;
+    border:1px solid var(--border);
+    border-radius:18px;
+    background:#fff;
+    padding:14px;
+  }
+
+  .edit-form{
+    display:grid;
+    grid-template-columns:repeat(4,minmax(0,1fr));
+    gap:10px;
+    align-items:start;
+  }
+
+  .side-card{
+    position:sticky;
+    top:18px;
+  }
+
+  .helper-box{
+    padding:13px 14px;
+    border-radius:16px;
+    border:1px solid var(--border);
+    background:linear-gradient(135deg,var(--primary-soft),#fff);
+    color:var(--muted);
+    font-size:12px;
+    line-height:1.8;
+    margin-bottom:14px;
+  }
+
+  .form-grid{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+  }
+
+  .field-group label{
+    display:block;
+    margin-bottom:6px;
+    color:var(--muted);
+    font-size:12px;
+    font-weight:900;
+  }
+
+  .date-grid{
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+
+  .field-input,
+  .field-select,
+  .field-textarea{
+    width:100%;
+    border:1px solid #dde7e1;
+    border-radius:14px;
+    background:#fff;
+    color:var(--text);
+    font-size:13px;
+    font-weight:700;
+    padding:0 13px;
+    height:43px;
+  }
+
+  .field-textarea{
+    min-height:82px;
+    height:auto;
+    resize:vertical;
+    padding-top:10px;
+  }
+
+  .field-input:focus,
+  .field-select:focus,
+  .field-textarea:focus{
+    outline:none;
+    border-color:var(--primary);
+    box-shadow:0 0 0 4px rgba(26,86,219,.1);
+  }
+
+  .save-btn{
+    width:100%;
+    min-height:43px;
+    border:0;
+    border-radius:15px;
+    background:linear-gradient(135deg,var(--lime),#b8c96a);
+    color:#172033;
+    font-size:13px;
+    font-weight:950;
+    display:inline-flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    cursor:pointer;
+    box-shadow:0 8px 16px rgba(103, 197, 80,.24);
+    transition:.16s ease;
+  }
+
+  .save-btn:hover{
+    transform:translateY(-1px);
+    filter:brightness(.98);
+  }
+
+  .empty-state{
+    padding:34px 20px;
+    text-align:center;
+    color:var(--muted);
+    font-size:13px;
+  }
+
+  @media (max-width: 1250px){
+    .police-stats{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .police-layout{
+      grid-template-columns:1fr;
+    }
+
+    .side-card{
+      position:static;
+    }
+
+    .edit-form{
+      grid-template-columns:repeat(2,minmax(0,1fr));
+    }
+
+    .edit-form .full-row,
+    .edit-form button{
+      grid-column:1 / -1;
+    }
+  }
+
+  @media (max-width: 700px){
+    .police-header,
+    .card-head{
+      flex-direction:column;
+      align-items:stretch;
+    }
+
+    .police-stats,
+    .edit-form,
+    .date-grid{
+      grid-template-columns:1fr;
+    }
+  }
+</style>
+
+{% set ns = namespace(sent=0, pending=0, tourists=0) %}
+{% for n in notifications %}
+  {% set ns.tourists = ns.tourists + (n.tourists_count or 0) %}
+  {% if n.status == 'sent' %}
+    {% set ns.sent = ns.sent + 1 %}
+  {% else %}
+    {% set ns.pending = ns.pending + 1 %}
+  {% endif %}
+{% endfor %}
+
+<div class="police-page">
+
+  <div class="police-header">
+    <div>
+      <h1>{{ L("إخطار الشرطة", "Police Notification") }}</h1>
+      <p>{{ L("تسجيل ومتابعة إخطارات الشرطة الخاصة بالمجموعات والنزلاء والفنادق وتواريخ الوصول.", "Log and track police notifications for groups, guests, hotels and arrival dates.") }}</p>
+    </div>
+  </div>
+
+  <div class="police-stats">
+    <div class="stat-card">
+      <div class="stat-icon green"><i class="bi bi-shield-check"></i></div>
+      <div class="stat-label">{{ L("إجمالي الإخطارات", "Total Notifications") }}</div>
+      <div class="stat-value">{{ notifications|length }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon blue"><i class="bi bi-people"></i></div>
+      <div class="stat-label">{{ L("إجمالي الأفراد", "Total Individuals") }}</div>
+      <div class="stat-value">{{ ns.tourists }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon yellow"><i class="bi bi-hourglass-split"></i></div>
+      <div class="stat-label">{{ L("قيد الإخطار", "Pending Notification") }}</div>
+      <div class="stat-value">{{ ns.pending }}</div>
+    </div>
+
+    <div class="stat-card">
+      <div class="stat-icon purple"><i class="bi bi-check-circle"></i></div>
+      <div class="stat-label">{{ L("تم الإخطار", "Notified") }}</div>
+      <div class="stat-value">{{ ns.sent }}</div>
+    </div>
+  </div>
+
+  <div class="police-layout">
+
+    <div class="main-card">
+      <div class="card-head">
+        <h2>{{ L("إخطارات الشرطة", "Police Notifications") }}</h2>
+        <span class="card-chip">{{ notifications|length }} {{ L("إخطار", "Notification") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="police-table">
+            <thead>
+              <tr>
+                <th>{{ L("رئيس المجموعة", "Group Leader") }}</th>
+                <th>{{ L("الجنسية", "Nationality") }}</th>
+                <th>{{ L("العدد", "Count") }}</th>
+                <th>{{ L("الفندق", "Hotel") }}</th>
+                <th>{{ L("تاريخ الوصول", "Check-in Date") }}</th>
+                <th>{{ L("تاريخ الإخطار", "Notification Date") }}</th>
+                <th>{{ L("الحالة", "Status") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for n in notifications %}
+              <tr>
+                <td>
+                  <span class="leader-name">{{ n.group_leader }}</span>
+                </td>
+
+                <td>{{ n.nationality or '-' }}</td>
+
+                <td>
+                  <span class="count-badge">{{ n.tourists_count or 0 }}</span>
+                </td>
+
+                <td>
+                  <span class="hotel-name">{{ n.hotel.name if n.hotel else '-' }}</span>
+                </td>
+
+                <td>{{ n.arrival_date or '-' }}</td>
+                <td>{{ n.notification_date or '-' }}</td>
+
+                <td>
+                  {% if n.status == 'sent' %}
+                    <span class="status-badge status-sent">{{ L("تم الإخطار", "Notified") }}</span>
+                  {% else %}
+                    <span class="status-badge status-pending">{{ L("قيد الإخطار", "Pending Notification") }}</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  <div class="actions">
+                    <button
+                      type="button"
+                      onclick="document.getElementById('edit-{{ n.id }}').classList.toggle('hidden')"
+                      class="action-btn edit"
+                      title="تعديل"
+                    >
+                      <i class="bi bi-pencil-square"></i>
+                    </button>
+
+                    {% if has_permission(current_user, "police.manage") %}
+<form method="post" action="/police-notification/{{ n.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="action-btn delete" type="submit" title="حذف">
+                        <i class="bi bi-trash"></i>
+                      </button>
+                    </form>
+{% endif %}
+                  </div>
+                </td>
+              </tr>
+
+              <tr id="edit-{{ n.id }}" class="hidden edit-row">
+                <td colspan="8">
+                  <div class="edit-box">
+                    {% if has_permission(current_user, "police.manage") %}
+<form method="post" action="/police-notification/{{ n.id }}/edit" class="edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input name="group_leader" value="{{ n.group_leader }}" required class="field-input">
+                      <input name="nationality" value="{{ n.nationality or '' }}" class="field-input">
+                      <input name="tourists_count" type="number" value="{{ n.tourists_count or 1 }}" class="field-input">
+
+                      <select name="hotel_id" class="field-select">
+                        <option value="">{{ L("بدون فندق", "No Hotel") }}</option>
+                        {% for h in hotels %}
+                        <option value="{{ h.id }}" {{ 'selected' if n.hotel_id==h.id }}>
+                          {{ h.name }}
+                        </option>
+                        {% endfor %}
+                      </select>
+
+                      <input name="arrival_date" type="date" value="{{ n.arrival_date or '' }}" class="field-input">
+                      <input name="notification_date" type="date" value="{{ n.notification_date or '' }}" class="field-input">
+
+                      <select name="status" class="field-select">
+                        <option value="pending" {{ 'selected' if n.status=='pending' }}>{{ L("قيد الإخطار", "Pending Notification") }}</option>
+                        <option value="sent" {{ 'selected' if n.status=='sent' }}>{{ L("تم الإخطار", "Notified") }}</option>
+                      </select>
+
+                      <textarea name="notes" class="field-textarea full-row">{{ n.notes or '' }}</textarea>
+
+                      <button class="save-btn" type="submit">
+                        {{ L("حفظ", "Save") }}
+                      </button>
+                    </form>
+{% endif %}
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if not notifications %}
+              <tr>
+                <td colspan="8">
+                  <div class="empty-state">{{ L("لا توجد إخطارات مسجّلة بعد", "No notifications registered yet") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="main-card side-card">
+      <div class="card-head">
+        <h2>{{ L("إضافة إخطار جديد", "Add New Notification") }}</h2>
+      </div>
+
+      <div class="card-body">
+        <div class="helper-box">
+          {{ L("أضف بيانات رئيس المجموعة أو النزيل، الجنسية، العدد، الفندق، وتاريخ الوصول وتاريخ الإخطار.", "Add group leader or guest data, nationality, count, hotel, and arrival and notification dates.") }}
+        </div>
+
+        {% if has_permission(current_user, "police.manage") %}
+<form method="post" action="/police-notification/add" class="form-grid">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+          <div class="field-group">
+            <label>{{ L("اسم رئيس المجموعة / النزيل", "Group Leader / Guest Name") }}</label>
+            <input name="group_leader" placeholder="{{ L("اسم رئيس المجموعة / النزيل", "Group Leader / Guest Name") }}" required class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("الجنسية", "Nationality") }}</label>
+            <input name="nationality" placeholder="{{ L("الجنسية", "Nationality") }}" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("عدد السياح", "Tourist Count") }}</label>
+            <input name="tourists_count" type="number" placeholder="{{ L("عدد السياح", "Tourist Count") }}" value="1" class="field-input">
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("الفندق", "Hotel") }}</label>
+            <select name="hotel_id" class="field-select">
+              <option value="">{{ L("الفندق (اختياري)", "Hotel (Optional)") }}</option>
+              {% for h in hotels %}
+              <option value="{{ h.id }}">{{ h.name }}</option>
+              {% endfor %}
+            </select>
+          </div>
+
+          <div class="date-grid">
+            <div class="field-group">
+              <label>{{ L("تاريخ الوصول", "Check-in Date") }}</label>
+              <input name="arrival_date" type="date" class="field-input">
+            </div>
+
+            <div class="field-group">
+              <label>{{ L("تاريخ الإخطار", "Notification Date") }}</label>
+              <input name="notification_date" type="date" class="field-input">
+            </div>
+          </div>
+
+          <div class="field-group">
+            <label>{{ L("ملاحظات", "Notes") }}</label>
+            <textarea name="notes" placeholder="{{ L("ملاحظات", "Notes") }}" class="field-textarea" rows="2"></textarea>
+          </div>
+
+          <button class="save-btn" type="submit">
+            {{ L("حفظ", "Save") }}
+          </button>
+        </form>
+{% endif %}
+      </div>
+    </div>
+
+  </div>
+</div>
+
+{% endblock %}

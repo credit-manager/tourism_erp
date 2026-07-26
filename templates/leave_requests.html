@@ -1,0 +1,163 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .lr-page{
+    --primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --yellow:#f4c44d;--yellow-soft:#fff8de;
+    --red:#eb5d6c;--red-soft:#fff1f3;
+    --purple:#8a7cf7;--purple-soft:#f4f1ff;
+    --text:#182033;--muted:#708093;--border:#e4ebe6;
+    direction:inherit;
+  }
+  .lr-header{display:flex;justify-content:space-between;align-items:flex-start;gap:18px;margin-bottom:6px;flex-wrap:wrap;}
+  .lr-header h1{margin:0;font-size:26px;font-weight:950;color:var(--text);}
+  .lr-header p{margin:6px 0 0;color:var(--muted);font-size:13px;font-weight:700;}
+  .lr-header .btn{min-height:42px;border-radius:14px;font-weight:900;font-size:13px;display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:0 18px;border:0;cursor:pointer;transition:.18s ease;white-space:nowrap;text-decoration:none;letter-spacing:.2px;}
+  .lr-header .btn-lime{background:linear-gradient(135deg,#c9dd6e,#b3c45f);color:#1a2a16;box-shadow:0 8px 18px rgba(172,197,80,.32);}
+  .lr-header .btn:hover{transform:translateY(-1px);filter:brightness(.97);}
+
+  .filter-bar{display:flex;gap:10px;align-items:center;flex-wrap:wrap;background:#fff;border:1px solid var(--border);border-radius:18px;padding:12px 14px;margin-bottom:18px;width:fit-content;}
+  .filter-bar select{height:42px;border:1.5px solid #dde7e1;border-radius:12px;padding:0 12px;font-size:13px;background:#fafefc;color:var(--text);}
+  .filter-bar select:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(32,184,116,.1);}
+  .filter-bar .btn-add{background:linear-gradient(135deg,#c4d86b,#b8c96a);color:#172033;display:inline-flex;align-items:center;gap:8px;padding:0 18px;min-height:42px;border:0;border-radius:14px;font-weight:900;font-size:13px;cursor:pointer;box-shadow:0 8px 16px rgba(216,240,106,.22);}
+  .filter-bar .btn-add:hover{filter:brightness(.98);transform:translateY(-1px);}
+  .filter-bar .chip{font-size:11px;font-weight:850;color:var(--muted);background:#fbfdfc;border:1px solid var(--border);border-radius:999px;padding:5px 11px;}
+
+  .main-card{background:#fff;border:1px solid var(--border);border-radius:22px;overflow:hidden;}
+  .card-head{padding:16px 20px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .card-head h2{margin:0;font-size:15px;font-weight:950;color:var(--text);display:flex;align-items:center;gap:8px;}
+  .card-head h2 i{color:var(--primary);}
+  .card-body{padding:16px 20px 20px;}
+
+  .tbl-scroll{overflow-x:auto;padding-bottom:4px;}
+  .tbl-scroll::-webkit-scrollbar{height:8px;}
+  .tbl-scroll::-webkit-scrollbar-thumb{background:#d4ddd7;border-radius:999px;}
+  .tbl-scroll::-webkit-scrollbar-track{background:#f3f7f5;border-radius:999px;}
+  .tbl{width:100%;border-collapse:separate;border-spacing:0;font-size:13px;}
+  .tbl th{background:#f8fcfa;color:var(--muted);padding:11px 8px;font-size:11px;font-weight:950;border-bottom:1px solid var(--border);text-align:center;white-space:nowrap;}
+  .tbl td{padding:12px 8px;border-bottom:1px solid #edf2ef;text-align:center;color:var(--text);vertical-align:middle;}
+  .tbl tr:hover td{background:#fbfefc;}
+
+  .emp-name{color:var(--primary-dark);font-weight:950;font-size:13.5px;}
+  .type-badge{display:inline-flex;align-items:center;gap:6px;background:#f6faf8;border:1px solid var(--border);border-radius:999px;padding:4px 11px;font-weight:850;color:var(--text);font-size:12px;}
+  .date-cell{direction:ltr;text-align:center;font-weight:800;font-size:12.5px;white-space:nowrap;}
+  .reason-cell{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--muted);font-size:12px;}
+
+  .soft-badge{display:inline-flex;align-items:center;justify-content:center;gap:5px;padding:4px 11px;border-radius:999px;font-size:11px;font-weight:950;white-space:nowrap;}
+  .badge-green{background:#eafff4;color:var(--primary-dark);}
+  .badge-yellow{background:var(--yellow-soft);color:#986a00;}
+  .badge-red{background:var(--red-soft);color:#c7384c;}
+  .badge-gray{background:#f1f5f9;color:#64748b;}
+
+  .act-cell{display:flex;gap:7px;justify-content:center;align-items:center;}
+  .btn{min-height:36px;border-radius:11px;font-weight:900;font-size:12px;display:inline-flex;align-items:center;justify-content:center;gap:6px;padding:0 13px;border:0;cursor:pointer;transition:.18s ease;text-decoration:none;white-space:nowrap;letter-spacing:.2px;}
+  .btn-green{background:linear-gradient(135deg,#2ec182,#11885a);color:#fff;box-shadow:0 6px 14px rgba(32,184,116,.26);}
+  .btn-red{background:linear-gradient(135deg,#f16476,#c7384c);color:#fff;box-shadow:0 6px 14px rgba(199,56,76,.26);}
+  .btn:hover{transform:translateY(-1px);filter:brightness(.97);}
+  .act-form{margin:0;display:inline-flex;}
+
+  .empty-msg{padding:34px 20px;text-align:center;color:var(--muted);font-size:13px;font-weight:800;}
+
+  @media(max-width:1100px){.filter-bar{width:100%;}}
+  @media(max-width:700px){.lr-header,.card-head{flex-direction:column;align-items:stretch;}.act-cell{flex-direction:column;}}
+</style>
+
+<div class="lr-page">
+
+{% if request.query_params.get('saved') == '1' %}
+<div class="ok-box" style="background:var(--primary-soft);border:1px solid var(--primary);color:var(--primary-dark);padding:12px 18px;border-radius:16px;margin-bottom:16px;font-weight:800;display:flex;align-items:center;gap:10px;"><i class="bi bi-check-circle-fill"></i> {{ L("تم حفظ طلب الإجازة بنجاح.", "Leave request saved successfully.") }}</div>
+{% endif %}
+{% if request.query_params.get('updated') == '1' %}
+<div class="ok-box" style="background:var(--primary-soft);border:1px solid var(--primary);color:var(--primary-dark);padding:12px 18px;border-radius:16px;margin-bottom:16px;font-weight:800;display:flex;align-items:center;gap:10px;"><i class="bi bi-check-circle-fill"></i> {{ L("تم تحديث حالة الطلب.", "Request status updated.") }}</div>
+{% endif %}
+
+<div class="lr-header">
+  <div>
+    <h1>{{ L("طلبات الإجازة", "Leave Requests") }}</h1>
+    <p>{{ L("عرض واعتماد طلبات إجازة الموظفين", "View and approve employee leave requests") }}</p>
+  </div>
+  <a href="/leave-requests/add" class="btn btn-lime"><i class="bi bi-plus-lg"></i> {{ L("طلب إجازة جديد", "New Leave Request") }}</a>
+</div>
+
+<form method="get" action="/leave-requests" class="filter-bar">
+  <select name="status">
+    <option value="">{{ L("الكل", "All") }}</option>
+    <option value="pending" {{ 'selected' if filter_status=='pending' }}>{{ L("قيد الانتظار", "Pending") }}</option>
+    <option value="approved" {{ 'selected' if filter_status=='approved' }}>{{ L("معتمدة", "Approved") }}</option>
+    <option value="rejected" {{ 'selected' if filter_status=='rejected' }}>{{ L("مرفوضة", "Rejected") }}</option>
+  </select>
+  <button class="btn-add"><i class="bi bi-funnel"></i> {{ L("تصفية", "Filter") }}</button>
+  {% if filter_status %}<span class="chip">{{ LEAVE_STATUSES.get(filter_status, filter_status) }}</span>{% endif %}
+</form>
+
+<div class="main-card">
+  <div class="card-head">
+    <h2><i class="bi bi-list-ul"></i> {{ L("قائمة الطلبات", "Requests List") }}</h2>
+    <span class="chip" style="padding:5px 11px;border:1px solid var(--border);border-radius:999px;background:#fbfdfc;color:var(--muted);font-size:11px;font-weight:850;">{{ requests|length }} {{ L("طلب", "request") }}</span>
+  </div>
+  <div class="card-body">
+    <div class="tbl-scroll">
+      <table class="tbl">
+        <thead>
+          <tr>
+            <th>{{ L("الموظف", "Employee") }}</th>
+            <th>{{ L("النوع", "Type") }}</th>
+            <th>{{ L("من", "From") }}</th>
+            <th>{{ L("إلى", "To") }}</th>
+            <th>{{ L("الأيام", "Days") }}</th>
+            <th>{{ L("السبب", "Reason") }}</th>
+            <th>{{ L("الحالة", "Status") }}</th>
+            <th>{{ L("تاريخ الطلب", "Date") }}</th>
+            <th>{{ L("إجراءات", "Actions") }}</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for lr in requests %}
+          {% set days = (lr.end_date - lr.start_date).days + 1 %}
+          <tr>
+            <td><span class="emp-name">{{ lr.employee.name }}</span></td>
+            <td><span class="type-badge"><i class="bi bi-tag"></i> {{ LEAVE_TYPES.get(lr.leave_type, lr.leave_type) }}</span></td>
+            <td><span class="date-cell">{{ lr.start_date }}</span></td>
+            <td><span class="date-cell">{{ lr.end_date }}</span></td>
+            <td><span style="font-weight:950;">{{ days }}</span></td>
+            <td class="reason-cell" title="{{ lr.reason or '' }}">{{ lr.reason[:30] if lr.reason else '—' }}</td>
+            <td>
+              {% if lr.status == 'pending' %}
+                <span class="soft-badge badge-yellow"><i class="bi bi-hourglass-split"></i> {{ L("قيد الانتظار", "Pending") }}</span>
+              {% elif lr.status == 'approved' %}
+                <span class="soft-badge badge-green"><i class="bi bi-check-circle-fill"></i> {{ L("معتمدة", "Approved") }}</span>
+              {% elif lr.status == 'rejected' %}
+                <span class="soft-badge badge-red"><i class="bi bi-x-circle-fill"></i> {{ L("مرفوضة", "Rejected") }}</span>
+              {% endif %}
+            </td>
+            <td><span class="date-cell">{{ lr.created_at.strftime("%Y-%m-%d") if lr.created_at else '—' }}</span></td>
+            <td>
+              <div class="act-cell">
+                {% if lr.status == 'pending' and has_permission(current_user, "leaves.approve") %}
+                <form method="post" action="/leave-requests/{{ lr.id }}/approve" class="act-form" onsubmit="return confirm('{{ L("اعتماد الإجازة؟", "Approve leave?") }}')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-green"><i class="bi bi-check2"></i> {{ L("اعتماد", "Approve") }}</button>
+                </form>
+                <form method="post" action="/leave-requests/{{ lr.id }}/reject" class="act-form" onsubmit="return confirm('{{ L("رفض الإجازة؟", "Reject leave?") }}')">
+                  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <button class="btn btn-red"><i class="bi bi-x-lg"></i> {{ L("رفض", "Reject") }}</button>
+                </form>
+                {% else %}
+                <span class="soft-badge badge-gray">—</span>
+                {% endif %}
+              </div>
+            </td>
+          </tr>
+          {% else %}
+          <tr><td colspan="9"><div class="empty-msg"><i class="bi bi-inboxes"></i><br>{{ L("لا توجد طلبات إجازة", "No leave requests") }}</div></td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div>
+{% endblock %}

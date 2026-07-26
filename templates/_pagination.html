@@ -1,0 +1,35 @@
+{% macro pagination_bar(p, base_url) %}
+{% if p and p.total_pages > 1 %}
+{% set start = [1, p.page-2] | sort | last %}
+{% set end = [p.total_pages, p.page+2] | sort | first %}
+<div class="pagination-wrap" style="display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:14px;flex-wrap:wrap;">
+  <span style="color:var(--muted);font-size:12px;font-weight:850;">
+    {{ L("صفحة", "Page") }} {{ p.page }} {{ L("من", "of") }} {{ p.total_pages }} ({{ p.total }})
+  </span>
+  <div style="display:flex;align-items:center;gap:6px;">
+    {% if p.has_prev %}
+    <a href="{{ base_url }}&page=1" class="page-btn">&laquo;</a>
+    <a href="{{ base_url }}&page={{ p.prev_page }}" class="page-btn">&lsaquo;</a>
+    {% endif %}
+    {% for n in range(start, end + 1) %}
+    <a href="{{ base_url }}&page={{ n }}" class="page-btn {{ 'page-active' if n == p.page }}">{{ n }}</a>
+    {% endfor %}
+    {% if p.has_next %}
+    <a href="{{ base_url }}&page={{ p.next_page }}" class="page-btn">&rsaquo;</a>
+    <a href="{{ base_url }}&page={{ p.total_pages }}" class="page-btn">&raquo;</a>
+    {% endif %}
+  </div>
+</div>
+<style>
+  .page-btn {
+    display:inline-flex;align-items:center;justify-content:center;
+    min-width:36px;height:36px;border-radius:10px;
+    border:1px solid var(--border);background:#fff;
+    color:var(--text);font-size:13px;font-weight:850;
+    text-decoration:none;transition:.15s ease;
+  }
+  .page-btn:hover {background:var(--green-soft);border-color:#a3d96b;}
+  .page-active {background:var(--green) !important;color:#fff !important;border-color:var(--green) !important;}
+</style>
+{% endif %}
+{% endmacro %}

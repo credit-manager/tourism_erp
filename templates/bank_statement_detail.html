@@ -1,0 +1,278 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .detail-page{
+    --primary:#20b874;--primary-dark:#11885a;--primary-soft:#edf9f3;
+    --lime:#bfd175;--text:#182033;--muted:#708093;--border:#e4ebe6;--card:#ffffff;
+  }
+  .hero-card{
+    background:var(--card);border:1px solid var(--border);border-radius:26px;
+    box-shadow:0 18px 45px rgba(15,23,42,.045);padding:22px 26px;
+    margin-bottom:18px;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;
+  }
+  .hero-main{display:flex;align-items:center;gap:15px;}
+  .hero-icon{
+    width:56px;height:56px;border-radius:18px;
+    background:linear-gradient(135deg,var(--primary-soft),var(--lime));
+    color:var(--primary-dark);display:inline-flex;align-items:center;
+    justify-content:center;font-size:24px;flex-shrink:0;
+  }
+  .hero-title{margin:0;font-size:24px;font-weight:950;color:var(--text);}
+  .hero-meta{margin-top:6px;display:flex;flex-wrap:wrap;gap:8px;font-size:12px;color:var(--muted);font-weight:800;}
+  .back-link{
+    min-height:42px;display:inline-flex;align-items:center;gap:8px;
+    padding:10px 18px;border-radius:14px;background:#fbfdfc;
+    border:1px solid var(--border);color:var(--text);font-size:13px;
+    font-weight:950;text-decoration:none;transition:.15s ease;
+  }
+  .back-link:hover{background:var(--primary-soft);color:var(--primary-dark);}
+  .status-badge{
+    display:inline-flex;padding:5px 12px;border-radius:999px;font-size:12px;font-weight:950;
+  }
+  .status-imported{background:#f0f2f5;color:#708093;}
+  .status-matched{background:#edf9f3;color:#11885a;}
+  .status-reconciled{background:#e3f2fd;color:#1565c0;}
+  .status-unmatched{background:#fff8de;color:#b89a2a;}
+  .status-duplicate{background:#fff1f3;color:#d14454;}
+  .status-bank_fee{background:#f3e8ff;color:#7c3aed;}
+  .main-card{
+    background:var(--card);border:1px solid var(--border);border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);margin-bottom:18px;
+  }
+  .card-head{padding:18px 22px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .card-head h2{margin:0;font-size:16px;font-weight:950;color:var(--text);}
+  .card-chip{
+    padding:6px 12px;border:1px solid var(--border);border-radius:999px;
+    background:#fbfdfc;color:var(--muted);font-size:11px;font-weight:850;
+  }
+  .card-body{padding:16px 22px 22px;}
+  .summary-grid{
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:18px;
+  }
+  .summary-box{
+    padding:16px;border-radius:14px;text-align:center;border:1px solid var(--border);background:#fafcfa;
+  }
+  .summary-label{font-size:11px;font-weight:850;color:var(--muted);margin-bottom:6px;}
+  .summary-value{font-size:18px;font-weight:950;}
+  .summary-value.green{color:#11885a;}
+  .summary-value.red{color:#d14454;}
+  .summary-value.amber{color:#b89a2a;}
+  .summary-value.purple{color:#7c3aed;}
+  .tab-bar{display:flex;gap:4px;margin-bottom:16px;flex-wrap:wrap;}
+  .tab-btn{
+    padding:8px 16px;border-radius:12px;border:1px solid var(--border);background:#fff;
+    font-size:12px;font-weight:900;cursor:pointer;transition:.12s ease;color:var(--muted);
+  }
+  .tab-btn.active{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .tab-btn:hover{transform:translateY(-1px);}
+  .table-wrap{overflow-x:auto;}
+  .txn-table{
+    width:100%;min-width:900px;border-collapse:separate;border-spacing:0;font-size:13px;
+  }
+  .txn-table th{
+    background:#f8fcfa;color:var(--muted);padding:13px 10px;font-size:12px;
+    font-weight:950;border-bottom:1px solid var(--border);text-align:center;
+  }
+  .txn-table td{
+    padding:13px 10px;border-bottom:1px solid #edf2ef;text-align:center;color:var(--text);vertical-align:middle;
+  }
+  .txn-table tr:hover td{background:#fbfefc;}
+  .money{direction:ltr;font-family:'Courier New',monospace;font-weight:900;}
+  .money-red{color:#d14454;}
+  .money-green{color:#11885a;}
+  .match-form{display:flex;gap:6px;align-items:center;flex-wrap:wrap;justify-content:center;}
+  .match-form select{max-width:160px;}
+  .v-btn{
+    min-height:36px;border:1px solid var(--border);border-radius:12px;background:#fff;
+    color:var(--muted);font-size:12px;font-weight:900;padding:6px 14px;cursor:pointer;
+    transition:.12s ease;text-decoration:none;display:inline-flex;align-items:center;gap:5px;
+  }
+  .v-btn:hover{transform:translateY(-1px);}
+  .v-btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+  .v-btn-danger{background:#eb5d6c;color:#fff;border-color:#eb5d6c;}
+  .v-btn-outline{background:transparent;}
+  .v-btn-small{padding:4px 10px;font-size:11px;min-height:30px;}
+  .empty-state{padding:34px;text-align:center;color:var(--muted);font-size:13px;}
+  @media(max-width:700px){.hero-card{flex-direction:column;align-items:stretch;}}
+</style>
+
+<div class="detail-page">
+<div class="hero-card">
+  <div class="hero-main">
+    <div class="hero-icon"><i class="bi bi-bank"></i></div>
+    <div>
+      <h1 class="hero-title">{{ L("كشف حساب", "Statement") }} #{{ statement.id }}</h1>
+      <div class="hero-meta">
+        <span><i class="bi bi-building"></i> {{ statement.account.name if statement.account else '-' }}</span>
+        <span><i class="bi bi-calendar-range"></i> {{ statement.period_start }} → {{ statement.period_end }}</span>
+        <span class="status-badge status-{{ statement.status }}">
+          {{ {'imported':'مستورد','matched':'مطابق','reconciled':'مسوى'}.get(statement.status, statement.status) }}
+        </span>
+      </div>
+    </div>
+  </div>
+  <a href="/treasury/bank" class="back-link"><i class="bi bi-arrow-right"></i> {{ L("رجوع", "Back") }}</a>
+</div>
+
+<div class="main-card">
+  <div class="card-body">
+    <div class="summary-grid">
+      <div class="summary-box">
+        <div class="summary-label">{{ L("الرصيد الافتتاحي", "Opening") }}</div>
+        <div class="summary-value">{{ "%.2f"|format(statement.opening_balance) }}</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">{{ L("الرصيد الختامي", "Closing") }}</div>
+        <div class="summary-value">{{ "%.2f"|format(statement.closing_balance) }}</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">{{ L("مطابق", "Matched") }}</div>
+        <div class="summary-value green">{{ summary.matched }}</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">{{ L("غير مطابق", "Unmatched") }}</div>
+        <div class="summary-value red">{{ summary.unmatched }}</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">{{ L("مكرر", "Duplicates") }}</div>
+        <div class="summary-value amber">{{ summary.duplicates }}</div>
+      </div>
+      <div class="summary-box">
+        <div class="summary-label">{{ L("رسوم بنكية", "Bank Fees") }}</div>
+        <div class="summary-value purple">{{ summary.bank_fees }}</div>
+      </div>
+    </div>
+
+    {% if has_permission(request.state.user, 'treasury.manage') and statement.status != 'reconciled' %}
+    <form method="post" action="/treasury/bank/{{ statement.id }}/reconcile" style="text-align:center;margin-top:4px;">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button class="v-btn v-btn-primary" type="submit" onclick="return confirm('{{ L("تأكيد تسوية الكشف؟", "Confirm reconcile?") }}')">
+        <i class="bi bi-check2-circle"></i> {{ L("تسوية الكشف", "Reconcile Statement") }}
+      </button>
+    </form>
+    {% endif %}
+  </div>
+</div>
+
+<div class="main-card">
+  <div class="card-head">
+    <h2>{{ L("حركات كشف الحساب", "Statement Transactions") }}</h2>
+  </div>
+  <div class="card-body">
+    <div class="tab-bar">
+      <button class="tab-btn active" onclick="showTab('all',this)">{{ L("الكل", "All") }}</button>
+      <button class="tab-btn" onclick="showTab('matched',this)">{{ L("مطابق", "Matched") }} ({{ matched|length }})</button>
+      <button class="tab-btn" onclick="showTab('unmatched',this)">{{ L("غير مطابق", "Unmatched") }} ({{ unmatched|length }})</button>
+    </div>
+
+    <div id="tab-all" class="tab-content">
+      <div class="table-wrap">
+        <table class="txn-table">
+          <thead>
+            <tr>
+              <th>{{ L("التاريخ", "Date") }}</th>
+              <th>{{ L("الوصف", "Description") }}</th>
+              <th>{{ L("المرجع", "Reference") }}</th>
+              <th>{{ L("مدين", "Debit") }}</th>
+              <th>{{ L("دائن", "Credit") }}</th>
+              <th>{{ L("الرصيد", "Balance") }}</th>
+              <th>{{ L("حالة المطابقة", "Match") }}</th>
+              <th>{{ L("إجراءات", "Actions") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for bt in matched %}
+            <tr class="row-matched">
+              <td>{{ bt.date }}</td>
+              <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;">{{ bt.description or '-' }}</td>
+              <td style="font-weight:800;">{{ bt.reference or '-' }}</td>
+              <td class="money money-red">{{ "%.2f"|format(bt.debit) if bt.debit > 0 else '-' }}</td>
+              <td class="money money-green">{{ "%.2f"|format(bt.credit) if bt.credit > 0 else '-' }}</td>
+              <td class="money">{{ "%.2f"|format(bt.balance) if bt.balance else '-' }}</td>
+              <td><span class="status-badge status-matched">{{ L("مطابق", "Matched") }}</span></td>
+              <td>
+                {% if has_permission(request.state.user, 'treasury.manage') %}
+                <form method="post" action="/treasury/bank/{{ statement.id }}/unmatch" class="match-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                  <input type="hidden" name="bank_txn_id" value="{{ bt.id }}">
+                  <button class="v-btn v-btn-outline v-btn-small" type="submit">{{ L("إلغاء", "Unmatch") }}</button>
+                </form>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+            {% for bt in unmatched %}
+            <tr class="row-unmatched">
+              <td>{{ bt.date }}</td>
+              <td style="max-width:180px;overflow:hidden;text-overflow:ellipsis;">{{ bt.description or '-' }}</td>
+              <td style="font-weight:800;">{{ bt.reference or '-' }}</td>
+              <td class="money money-red">{{ "%.2f"|format(bt.debit) if bt.debit > 0 else '-' }}</td>
+              <td class="money money-green">{{ "%.2f"|format(bt.credit) if bt.credit > 0 else '-' }}</td>
+              <td class="money">{{ "%.2f"|format(bt.balance) if bt.balance else '-' }}</td>
+              <td>
+                <span class="status-badge status-{{ bt.match_status }}">
+                  {{ {'unmatched':'غير مطابق','duplicate':'مكرر','bank_fee':'رسوم بنكية','difference':'فرق'}.get(bt.match_status, bt.match_status) }}
+                </span>
+              </td>
+              <td>
+                {% if has_permission(request.state.user, 'treasury.manage') %}
+                <div class="match-form">
+                  <form method="post" action="/treasury/bank/{{ statement.id }}/match" class="match-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="bank_txn_id" value="{{ bt.id }}">
+                    <select name="txn_id" required class="field-input" style="width:auto;min-width:120px;height:32px;font-size:11px;">
+                      <option value="">{{ L("اختر حركة...", "Select txn...") }}</option>
+                      {% for txn in internal_txns %}
+                      <option value="{{ txn.id }}">#{{ txn.id }} {{ txn.date }} {{ "%.2f"|format(txn.amount) }} {{ txn.description[:30] }}</option>
+                      {% endfor %}
+                    </select>
+                    <button class="v-btn v-btn-primary v-btn-small" type="submit"><i class="bi bi-link"></i></button>
+                  </form>
+                  <form method="post" action="/treasury/bank/{{ statement.id }}/mark-fee" class="match-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="bank_txn_id" value="{{ bt.id }}">
+                    <input name="notes" placeholder="{{ L('رسوم بنكية', 'Bank fee') }}" class="field-input" style="width:80px;height:32px;font-size:11px;">
+                    <button class="v-btn v-btn-outline v-btn-small" type="submit" title="{{ L('تحديد كرسوم بنكية', 'Mark as bank fee') }}">
+                      <i class="bi bi-currency-dollar"></i>
+                    </button>
+                  </form>
+                  {% if bt.match_status == "bank_fee" %}
+                  <form method="post" action="/treasury/bank/{{ statement.id }}/create-fee-entry" class="match-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="bank_txn_id" value="{{ bt.id }}">
+                    <button class="v-btn v-btn-primary v-btn-small" type="submit" title="{{ L('إنشاء قيد رسوم', 'Create fee entry') }}">
+                      <i class="bi bi-journal-plus"></i>
+                    </button>
+                  </form>
+                  {% endif %}
+                </div>
+                {% endif %}
+              </td>
+            </tr>
+            {% endfor %}
+            {% if not matched and not unmatched %}
+            <tr><td colspan="8"><div class="empty-state">{{ L("لا توجد حركات", "No transactions") }}</div></td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+
+<script>
+function showTab(tab, btn) {
+  document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  var rows = document.querySelectorAll('.row-matched, .row-unmatched');
+  rows.forEach(function(r) {
+    if (tab === 'all') { r.style.display = ''; }
+    else if (tab === 'matched' && r.classList.contains('row-matched')) { r.style.display = ''; }
+    else if (tab === 'unmatched' && r.classList.contains('row-unmatched')) { r.style.display = ''; }
+    else { r.style.display = 'none'; }
+  });
+}
+</script>
+{% endblock %}

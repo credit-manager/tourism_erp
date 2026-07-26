@@ -1,0 +1,188 @@
+{% extends "base.html" %}
+{% block content %}
+
+{% if request.query_params.get('error') %}
+<div id="top-error" style="background:#fff0f2;border:1px solid #ffd7dd;border-radius:16px;padding:14px 20px;margin-bottom:18px;color:#d14454;font-size:14px;font-weight:700;">
+  {{ request.query_params.get('error') }}
+</div>
+{% endif %}
+
+<style>
+  .bank-page{
+    --primary:#20b874;
+    --primary-dark:#11885a;
+    --primary-soft:#edf9f3;
+    --lime:#bfd175;
+    --text:#182033;
+    --muted:#708093;
+    --border:#e4ebe6;
+    --card:#ffffff;
+  }
+  .page-header{
+    display:flex;justify-content:space-between;align-items:flex-start;gap:18px;
+    margin-bottom:20px;flex-wrap:wrap;
+  }
+  .page-header h1{margin:0;font-size:28px;font-weight:950;color:var(--text);}
+  .page-header p{margin:7px 0 0;color:var(--muted);font-size:13px;font-weight:800;}
+  .main-card{
+    background:var(--card);border:1px solid var(--border);border-radius:24px;
+    box-shadow:0 14px 32px rgba(15,23,42,.04);margin-bottom:18px;
+  }
+  .card-head{padding:18px 20px 0;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;}
+  .card-head h2{margin:0;font-size:16px;font-weight:950;color:var(--text);}
+  .card-chip{
+    padding:7px 11px;border:1px solid var(--border);border-radius:999px;
+    background:#fbfdfc;color:var(--muted);font-size:12px;font-weight:850;
+  }
+  .card-body{padding:16px 20px 20px;}
+  .import-form{
+    display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;align-items:end;
+  }
+  .import-form .full-width{grid-column:1 / -1;}
+  .field-label{font-size:12px;font-weight:850;color:var(--muted);margin-bottom:4px;}
+  .field-input{
+    width:100%;border:1px solid #dde7e1;border-radius:14px;background:#fff;
+    color:var(--text);font-size:13px;font-weight:700;padding:0 13px;height:43px;
+  }
+  .field-input[type="file"]{padding-top:8px;height:auto;}
+  .save-btn{
+    width:100%;min-height:43px;border:0;border-radius:15px;
+    background:linear-gradient(135deg,var(--lime),#b8c96a);color:#172033;
+    font-size:13px;font-weight:950;display:inline-flex;align-items:center;
+    justify-content:center;gap:8px;cursor:pointer;
+    box-shadow:0 8px 16px rgba(103,197,80,.24);transition:.16s ease;
+  }
+  .save-btn:hover{transform:translateY(-1px);filter:brightness(.98);}
+  .table-wrap{overflow-x:auto;padding-bottom:6px;}
+  .bank-table{
+    width:100%;min-width:800px;border-collapse:separate;border-spacing:0;font-size:13px;
+  }
+  .bank-table th{
+    background:#f8fcfa;color:var(--muted);padding:14px 10px;font-size:12px;
+    font-weight:950;border-bottom:1px solid var(--border);text-align:center;
+  }
+  .bank-table td{
+    padding:14px 10px;border-bottom:1px solid #edf2ef;text-align:center;
+    color:var(--text);vertical-align:middle;
+  }
+  .bank-table tr:hover td{background:#fbfefc;}
+  .status-badge{
+    display:inline-flex;padding:4px 10px;border-radius:999px;font-size:11px;font-weight:950;
+  }
+  .status-imported{background:#f0f2f5;color:#708093;}
+  .status-matched{background:#edf9f3;color:#11885a;}
+  .status-reconciled{background:#e3f2fd;color:#1565c0;}
+  .empty-state{padding:34px 20px;text-align:center;color:var(--muted);font-size:13px;}
+  .v-btn{
+    min-height:34px;border:1px solid var(--border);border-radius:12px;background:#fff;
+    color:var(--muted);font-size:12px;font-weight:900;padding:6px 12px;cursor:pointer;
+    transition:.12s ease;text-decoration:none;display:inline-flex;align-items:center;gap:5px;
+  }
+  .v-btn:hover{transform:translateY(-1px);}
+  .v-btn-primary{background:var(--primary);color:#fff;border-color:var(--primary);}
+  @media(max-width:900px){.import-form{grid-template-columns:1fr;}}
+</style>
+
+<div class="bank-page">
+  <div class="page-header">
+    <div>
+      <h1>{{ L("تسوية كشوفات البنك", "Bank Reconciliation") }}</h1>
+      <p>{{ L("استيراد كشف الحساب البنكي ومطابقته مع حركات الخزنة", "Import bank statement and match with treasury transactions") }}</p>
+    </div>
+  </div>
+
+  {% if has_permission(request.state.user, 'treasury.manage') %}
+  <div class="main-card">
+    <div class="card-head">
+      <h2>{{ L("استيراد كشف حساب جديد", "Import New Statement") }}</h2>
+      <span class="card-chip">{{ L("CSV أو Excel", "CSV or Excel") }}</span>
+    </div>
+    <div class="card-body">
+      <form method="post" action="/treasury/bank/import" enctype="multipart/form-data" class="import-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+        <div>
+          <div class="field-label">{{ L("الحساب البنكي", "Bank Account") }}</div>
+          <select name="account_id" required class="field-input">
+            <option value="">{{ L("اختر الحساب...", "Select account...") }}</option>
+            {% for a in accounts %}
+            <option value="{{ a.id }}">{{ a.name }}</option>
+            {% endfor %}
+          </select>
+        </div>
+        <div>
+          <div class="field-label">{{ L("بداية الفترة", "Period Start") }}</div>
+          <input name="period_start" type="date" class="field-input">
+        </div>
+        <div>
+          <div class="field-label">{{ L("نهاية الفترة", "Period End") }}</div>
+          <input name="period_end" type="date" class="field-input">
+        </div>
+        <div class="full-width">
+          <div class="field-label">{{ L("ملف كشف الحساب", "Statement File") }}</div>
+          <input name="file" type="file" accept=".csv,.xls,.xlsx" required class="field-input">
+        </div>
+        <div class="full-width">
+          <button class="save-btn" type="submit">
+            <i class="bi bi-upload"></i> {{ L("استيراد ومطابقة", "Import & Match") }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+  {% endif %}
+
+  <div class="main-card">
+    <div class="card-head">
+      <h2>{{ L("كشوفات الحساب", "Bank Statements") }}</h2>
+      <span class="card-chip">{{ statements|length }}</span>
+    </div>
+    <div class="card-body">
+      <div class="table-wrap">
+        <table class="bank-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>{{ L("الحساب", "Account") }}</th>
+              <th>{{ L("الفترة", "Period") }}</th>
+              <th>{{ L("الرصيد الافتتاحي", "Opening") }}</th>
+              <th>{{ L("الرصيد الختامي", "Closing") }}</th>
+              <th>{{ L("الحالة", "Status") }}</th>
+              <th>{{ L("التاريخ", "Date") }}</th>
+              <th>{{ L("إجراءات", "Actions") }}</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for s in statements %}
+            <tr>
+              <td style="font-weight:950;">#{{ s.id }}</td>
+              <td class="acct-name">{{ s.account.name if s.account else '-' }}</td>
+              <td>{{ s.period_start }} → {{ s.period_end }}</td>
+              <td class="money">{{ "%.2f"|format(s.opening_balance) }}</td>
+              <td class="money">{{ "%.2f"|format(s.closing_balance) }}</td>
+              <td>
+                <span class="status-badge status-{{ s.status }}">
+                  {{ {'imported':'مستورد','matched':'مطابق','reconciled':'مسوى'}.get(s.status, s.status) }}
+                </span>
+              </td>
+              <td>{{ s.created_at.strftime('%Y-%m-%d') if s.created_at else '-' }}</td>
+              <td>
+                <a href="/treasury/bank/{{ s.id }}" class="v-btn v-btn-primary">
+                  <i class="bi bi-eye"></i> {{ L("فتح", "Open") }}
+                </a>
+              </td>
+            </tr>
+            {% endfor %}
+            {% if not statements %}
+            <tr>
+              <td colspan="8">
+                <div class="empty-state">{{ L("لا توجد كشوفات بعد", "No statements yet") }}</div>
+              </td>
+            </tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+{% endblock %}

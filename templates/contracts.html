@@ -1,0 +1,791 @@
+{% extends "base.html" %}
+{% block content %}
+
+<style>
+  .contracts-page {
+    --green: #20b874;
+    --green-dark: #148a58;
+    --green-soft: #edf9f3;
+    --lime: #bfd175;
+    --blue: #bfd175;
+    --blue-soft: #f4fce8;
+    --yellow: #f4c54b;
+    --yellow-soft: #fff8df;
+    --red: #eb5d6c;
+    --red-soft: #fff1f3;
+    --purple: #8a7cf7;
+    --purple-soft: #f4f1ff;
+    --text: #172033;
+    --muted: #6f7d90;
+    --border: #e4ebe6;
+    --card: #ffffff;
+    direction: inherit;
+  }
+
+  .contracts-head {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 18px;
+    margin-bottom: 18px;
+  }
+
+  .contracts-head h1 {
+    margin: 0;
+    font-size: 28px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .contracts-head p {
+    margin: 7px 0 0;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .alerts-wrap {
+    display: grid;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .contract-alert {
+    border-radius: 18px;
+    padding: 14px 16px;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    font-size: 13px;
+    line-height: 1.8;
+  }
+
+  .contract-alert i {
+    font-size: 17px;
+    margin-top: 2px;
+  }
+
+  .contract-alert.red {
+    background: var(--red-soft);
+    border: 1px solid #ffd8de;
+    color: #b42336;
+  }
+
+  .contract-alert.yellow {
+    background: var(--yellow-soft);
+    border: 1px solid #f7df93;
+    color: #9b6a00;
+  }
+
+  .contract-alert strong {
+    display: block;
+    font-weight: 950;
+    margin-bottom: 2px;
+  }
+
+  .contracts-kpis {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 14px;
+    margin-bottom: 18px;
+  }
+
+  .contract-kpi,
+  .contract-card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 24px;
+    box-shadow: 0 14px 34px rgba(15, 23, 42, 0.045);
+  }
+
+  .contract-kpi {
+    padding: 18px;
+    min-height: 118px;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .contract-kpi::after {
+    content: "";
+    position: absolute;
+    left: -42px;
+    bottom: -52px;
+    width: 118px;
+    height: 118px;
+    border-radius: 999px;
+    background: rgba(26, 86, 219, 0.055);
+  }
+
+  .kpi-icon {
+    width: 44px;
+    height: 44px;
+    border-radius: 16px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 12px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-icon.green { background: var(--green-soft); color: var(--green); }
+  .kpi-icon.blue { background: var(--blue-soft); color: var(--blue); }
+  .kpi-icon.yellow { background: var(--yellow-soft); color: #b17a00; }
+  .kpi-icon.red { background: var(--red-soft); color: var(--red); }
+
+  .kpi-label {
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 850;
+    margin-bottom: 5px;
+    position: relative;
+    z-index: 1;
+  }
+
+  .kpi-value {
+    color: var(--text);
+    font-size: 27px;
+    font-weight: 950;
+    direction: ltr;
+    text-align: right;
+    position: relative;
+    z-index: 1;
+  }
+
+  .contracts-layout {
+    display: grid;
+    grid-template-columns: minmax(0, 1.65fr) minmax(340px, 390px);
+    gap: 18px;
+    align-items: start;
+  }
+
+  .card-head {
+    padding: 18px 20px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .card-head h2 {
+    margin: 0;
+    font-size: 16px;
+    font-weight: 950;
+    color: var(--text);
+  }
+
+  .card-head span {
+    color: var(--muted);
+    background: #fbfdfc;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 7px 11px;
+    font-size: 12px;
+    font-weight: 850;
+    white-space: nowrap;
+  }
+
+  .card-body {
+    padding: 16px 20px 20px;
+  }
+
+  .contracts-side {
+    position: sticky;
+    top: 18px;
+  }
+
+  .table-wrap {
+    overflow-x: auto;
+    padding-bottom: 8px;
+  }
+
+  .table-wrap::-webkit-scrollbar {
+    height: 10px;
+  }
+
+  .table-wrap::-webkit-scrollbar-thumb {
+    background: #cfdbd2;
+    border-radius: 999px;
+  }
+
+  .table-wrap::-webkit-scrollbar-track {
+    background: #f4f7f5;
+    border-radius: 999px;
+  }
+
+  .contracts-table {
+    width: 100%;
+    min-width: 1120px;
+    border-collapse: separate;
+    border-spacing: 0;
+    font-size: 13px;
+  }
+
+  .contracts-table th {
+    background: #f8fcfa;
+    color: var(--muted);
+    padding: 14px 10px;
+    font-size: 12px;
+    font-weight: 950;
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    text-align: center;
+  }
+
+  .contracts-table td {
+    padding: 14px 10px;
+    border-bottom: 1px solid #edf2ef;
+    color: var(--text);
+    white-space: nowrap;
+    text-align: center;
+    vertical-align: middle;
+  }
+
+  .contracts-table tr:hover td {
+    background: #fbfefc;
+  }
+
+  .contract-number {
+    color: var(--green-dark);
+    font-weight: 950;
+  }
+
+  .contract-title {
+    color: var(--text);
+    font-weight: 950;
+  }
+
+  .money {
+    direction: ltr;
+    font-weight: 950;
+  }
+
+  .soft-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 5px 10px;
+    border-radius: 999px;
+    font-size: 11px;
+    font-weight: 950;
+    white-space: nowrap;
+  }
+
+  .badge-green { background: #eafff4; color: var(--green-dark); }
+  .badge-red { background: var(--red-soft); color: #c7384c; }
+  .badge-yellow { background: var(--yellow-soft); color: #9b6a00; }
+  .badge-gray { background: #f1f5f9; color: #64748b; }
+
+  .file-link {
+    color: #11885a;
+    font-size: 12px;
+    font-weight: 950;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+  }
+
+  .file-link:hover {
+    text-decoration: underline;
+  }
+
+  .action-row {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    flex-wrap: nowrap;
+  }
+
+  .mini-action {
+    min-height: 32px;
+    border: 1px solid var(--border);
+    border-radius: 11px;
+    background: #fff;
+    padding: 7px 10px;
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 12px;
+    font-weight: 900;
+    cursor: pointer;
+    transition: 0.15s ease;
+  }
+
+  .mini-action.edit { color: #11885a; }
+  .mini-action.delete { color: var(--red); }
+
+  .mini-action:hover {
+    background: #fbfdfc;
+    transform: translateY(-1px);
+  }
+
+  .edit-row td {
+    background: #fbfdfc !important;
+    padding: 0 10px 16px !important;
+  }
+
+  .edit-panel {
+    margin-top: 4px;
+    padding: 14px;
+    border: 1px solid var(--border);
+    border-radius: 18px;
+    background: #ffffff;
+  }
+
+  .edit-form {
+    display: grid;
+    grid-template-columns: 1fr 1fr 150px 150px;
+    gap: 10px;
+    align-items: start;
+  }
+
+  .contract-form {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .form-hint {
+    padding: 13px 14px;
+    border-radius: 16px;
+    background: linear-gradient(135deg, var(--green-soft), #ffffff);
+    border: 1px solid var(--border);
+    color: var(--muted);
+    font-size: 12px;
+    line-height: 1.8;
+    margin-bottom: 14px;
+  }
+
+  .field-block label {
+    display: block;
+    color: var(--muted);
+    font-size: 12px;
+    font-weight: 900;
+    margin-bottom: 6px;
+  }
+
+  .contract-input,
+  .contract-select,
+  .contract-textarea {
+    width: 100%;
+    height: 42px;
+    border: 1px solid #dde7e1;
+    border-radius: 14px;
+    padding: 0 13px;
+    background: #fff;
+    color: var(--text);
+    font-size: 13px;
+    font-weight: 700;
+  }
+
+  .contract-input[type="file"] {
+    padding: 8px 13px;
+    height: auto;
+    min-height: 42px;
+    font-size: 12px;
+  }
+
+  .contract-textarea {
+    height: auto;
+    min-height: 76px;
+    padding-top: 10px;
+    resize: vertical;
+  }
+
+  .contract-input:focus,
+  .contract-select:focus,
+  .contract-textarea:focus {
+    outline: none;
+    border-color: var(--green);
+    box-shadow: 0 0 0 4px rgba(26, 86, 219, 0.10);
+  }
+
+  .date-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .save-btn {
+    min-height: 42px;
+    border: 0;
+    border-radius: 15px;
+    background: linear-gradient(135deg, var(--lime), #b8c96a);
+    color: #172033;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px 15px;
+    font-size: 13px;
+    font-weight: 950;
+    cursor: pointer;
+    box-shadow: 0 8px 16px rgba(103, 197, 80, 0.24);
+    transition: 0.16s ease;
+  }
+
+  .save-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(0.98);
+  }
+
+  .empty-state {
+    padding: 36px 20px;
+    text-align: center;
+    color: var(--muted);
+    font-size: 13px;
+  }
+
+  @media (max-width: 1250px) {
+    .contracts-kpis {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .contracts-layout {
+      grid-template-columns: 1fr;
+    }
+
+    .contracts-side {
+      position: static;
+    }
+
+    .edit-form {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .edit-form .save-btn {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 700px) {
+    .contracts-head,
+    .card-head {
+      flex-direction: column;
+      align-items: stretch;
+    }
+
+    .contracts-kpis,
+    .edit-form,
+    .date-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+{% set ns = namespace(total_value=0, active_count=0) %}
+{% for c in contracts %}
+  {% set ns.total_value = ns.total_value + (c.contract_value or 0) %}
+  {% if c.status != 'cancelled' and not c.is_expired %}
+    {% set ns.active_count = ns.active_count + 1 %}
+  {% endif %}
+{% endfor %}
+
+<div class="contracts-page">
+
+  <div class="contracts-head">
+    <div>
+      <h1>{{ L("العقود", "Contracts") }}</h1>
+      <p>{{ L("إدارة عقود الفنادق والموردين ومتابعة التواريخ، الملفات، والقيمة التعاقدية بشكل منظم.", "Manage hotel and supplier contracts and track dates, files, and contract values in an organized way.") }}</p>
+    </div>
+  </div>
+
+  <div class="alerts-wrap">
+    {% if expired %}
+    <div class="contract-alert red">
+      <i class="bi bi-exclamation-triangle-fill"></i>
+      <div>
+        <strong>{{ L("عقود منتهية (", "Expired Contracts (") }}{{ expired|length }})</strong>
+        <div>{{ expired|map(attribute='title')|join('، ') }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    {% if expiring_soon %}
+    <div class="contract-alert yellow">
+      <i class="bi bi-clock-fill"></i>
+      <div>
+        <strong>{{ L("عقود قاربت على الانتهاء خلال 30 يوم", "Contracts expiring within 30 days") }}</strong>
+        <div>
+          {% for c in expiring_soon %}
+            {{ c.title }} ({{ c.days_remaining }} {{ L("يوم متبقي)", "day remaining)") }}{% if not loop.last %}{{ L("،", ",") }} {% endif %}
+          {% endfor %}
+        </div>
+      </div>
+    </div>
+    {% endif %}
+  </div>
+
+  <div class="contracts-kpis">
+    <div class="contract-kpi">
+      <div class="kpi-icon blue"><i class="bi bi-file-earmark-text"></i></div>
+      <div class="kpi-label">{{ L("إجمالي العقود", "Total Contracts") }}</div>
+      <div class="kpi-value">{{ contracts|length }}</div>
+    </div>
+
+    <div class="contract-kpi">
+      <div class="kpi-icon green"><i class="bi bi-check-circle"></i></div>
+      <div class="kpi-label">{{ L("عقود سارية", "Active Contracts") }}</div>
+      <div class="kpi-value">{{ ns.active_count }}</div>
+    </div>
+
+    <div class="contract-kpi">
+      <div class="kpi-icon red"><i class="bi bi-exclamation-circle"></i></div>
+      <div class="kpi-label">{{ L("عقود منتهية", "Expired Contracts") }}</div>
+      <div class="kpi-value">{{ expired|length if expired else 0 }}</div>
+    </div>
+
+    <div class="contract-kpi">
+      <div class="kpi-icon yellow"><i class="bi bi-cash-stack"></i></div>
+      <div class="kpi-label">{{ L("إجمالي القيمة", "Total Value") }}</div>
+      <div class="kpi-value">{{ "%.0f"|format(ns.total_value or 0) }}</div>
+    </div>
+  </div>
+
+  <div class="contracts-layout">
+
+    <div class="contract-card">
+      <div class="card-head">
+        <h2>{{ L("كل العقود", "All Contracts") }}</h2>
+        <span>{{ contracts|length }} {{ L("عقد", "Contract") }}</span>
+      </div>
+
+      <div class="card-body">
+        <div class="table-wrap">
+          <table class="contracts-table">
+            <thead>
+              <tr>
+                <th>{{ L("رقم العقد", "Contract No.") }}</th>
+                <th>{{ L("العنوان", "Address") }}</th>
+                <th>{{ L("الطرف", "Party") }}</th>
+                <th>{{ L("البداية", "Start") }}</th>
+                <th>{{ L("النهاية", "End") }}</th>
+                <th>{{ L("القيمة", "Value") }}</th>
+                <th>{{ L("الحالة", "Status") }}</th>
+                <th>{{ L("الملف", "File") }}</th>
+                <th>{{ L("إجراءات", "Actions") }}</th>
+              </tr>
+            </thead>
+
+            <tbody>
+              {% for c in contracts %}
+              <tr>
+                <td><span class="contract-number">{{ c.contract_number }}</span></td>
+
+                <td><span class="contract-title">{{ c.title }}</span></td>
+
+                <td>
+                  {{ c.party_name }}
+                  <span class="soft-badge badge-gray">
+                    {{ 'فندق' if c.party_type=='hotel' else 'مورد' }}
+                  </span>
+                </td>
+
+                <td>{{ c.start_date or '-' }}</td>
+                <td>{{ c.end_date or '-' }}</td>
+
+                <td class="money">{{ "%.2f"|format(c.contract_value or 0) }}</td>
+
+                <td>
+                  {% if c.status == 'cancelled' %}
+                    <span class="soft-badge badge-gray">{{ L("مفسوخ", "Terminated") }}</span>
+                  {% elif c.is_expired %}
+                    <span class="soft-badge badge-red">{{ L("منتهي", "Expired") }}</span>
+                  {% else %}
+                    <span class="soft-badge badge-green">{{ L("ساري", "Active") }}</span>
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if c.file_path %}
+                    <a href="{{ c.file_path }}" target="_blank" class="file-link">
+                      <i class="bi bi-file-earmark-text"></i>
+                      {{ L("عرض", "View") }}
+                    </a>
+                  {% else %}
+                    -
+                  {% endif %}
+                </td>
+
+                <td>
+                  {% if has_permission(current_user, "contracts.manage") %}
+<div class="action-row">
+                    <button type="button" onclick="document.getElementById('edit-{{ c.id }}').classList.toggle('hidden')" class="mini-action edit">
+                      <i class="bi bi-pencil-square"></i>
+                      {{ L("تعديل", "Edit") }}
+                    </button>
+
+                    <form method="post" action="/contracts/{{ c.id }}/delete" onsubmit="return confirm('تأكيد الحذف؟')">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <button class="mini-action delete" type="submit">
+                        <i class="bi bi-trash"></i>
+                        {{ L("حذف", "Delete") }}
+                      </button>
+                    </form>
+                  </div>
+{% endif %}
+                </td>
+              </tr>
+
+              <tr id="edit-{{ c.id }}" class="hidden edit-row">
+                <td colspan="9">
+                  <div class="edit-panel">
+                    <form method="post" action="/contracts/{{ c.id }}/edit" enctype="multipart/form-data" class="edit-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                      <input name="title" value="{{ c.title }}" required class="contract-input" style="grid-column: span 2;">
+
+                      <select name="party_type" class="contract-select">
+                        <option value="supplier" {{ 'selected' if c.party_type=='supplier' }}>{{ L("مورد", "Supplier") }}</option>
+                        <option value="hotel" {{ 'selected' if c.party_type=='hotel' }}>{{ L("فندق", "Hotel") }}</option>
+                      </select>
+
+                      <select name="status" class="contract-select">
+                        <option value="active" {{ 'selected' if c.status=='active' }}>{{ L("ساري", "Active") }}</option>
+                        <option value="cancelled" {{ 'selected' if c.status=='cancelled' }}>{{ L("مفسوخ", "Terminated") }}</option>
+                      </select>
+
+                      <select name="supplier_id" class="contract-select">
+                        <option value="">{{ L("-- مورد --", "-- Supplier --") }}</option>
+                        {% for s in suppliers %}
+                        <option value="{{ s.id }}" {{ 'selected' if c.supplier_id==s.id }}>{{ s.name }}</option>
+                        {% endfor %}
+                      </select>
+
+                      <select name="hotel_id" class="contract-select">
+                        <option value="">{{ L("-- فندق --", "-- Hotel --") }}</option>
+                        {% for h in hotels %}
+                        <option value="{{ h.id }}" {{ 'selected' if c.hotel_id==h.id }}>{{ h.name }}</option>
+                        {% endfor %}
+                      </select>
+
+                      <input name="start_date" type="date" value="{{ c.start_date or '' }}" class="contract-input">
+                      <input name="end_date" type="date" value="{{ c.end_date or '' }}" class="contract-input">
+                      <input name="contract_value" type="number" step="0.01" value="{{ c.contract_value or 0 }}" class="contract-input">
+                      <input name="file" type="file" class="contract-input" style="grid-column: span 2;">
+                      <textarea name="notes" class="contract-textarea" style="grid-column: span 2;" placeholder="{{ L("ملاحظات", "Notes") }}">{{ c.notes or '' }}</textarea>
+
+                      <button class="save-btn" style="grid-column: 1 / -1;">
+                        {{ L("حفظ التعديلات", "Save Changes") }}
+                      </button>
+                    </form>
+                  </div>
+                </td>
+              </tr>
+              {% endfor %}
+
+              {% if not contracts %}
+              <tr>
+                <td colspan="9">
+                  <div class="empty-state">{{ L("لا توجد عقود مسجّلة بعد", "No contracts registered yet") }}</div>
+                </td>
+              </tr>
+              {% endif %}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="contracts-side">
+      <div class="contract-card">
+        <div class="card-head">
+          <h2>{{ L("إضافة عقد جديد", "Add New Contract") }}</h2>
+        </div>
+
+        <div class="card-body">
+          <div class="form-hint">
+            {{ L("أضف بيانات العقد وحدد هل الطرف مورد أم فندق، ثم ارفع ملف العقد إن وجد.", "Add contract data and specify whether the party is a supplier or hotel, then upload the contract file if available.") }}
+          </div>
+
+          {% if has_permission(current_user, "contracts.manage") %}
+<form method="post" action="/contracts/add" enctype="multipart/form-data" class="contract-form">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <div class="field-block">
+              <label>{{ L("عنوان / موضوع العقد", "Contract Title / Subject") }}</label>
+              <input name="title" placeholder="{{ L("عنوان / موضوع العقد", "Contract Title / Subject") }}" required class="contract-input">
+            </div>
+
+            <div class="field-block">
+              <label>{{ L("نوع الطرف", "Party Type") }}</label>
+              <select name="party_type" id="party_type" class="contract-select" onchange="togglePartySelect()">
+                <option value="supplier">{{ L("مورد", "Supplier") }}</option>
+                <option value="hotel">{{ L("فندق", "Hotel") }}</option>
+              </select>
+            </div>
+
+            <div class="field-block" id="supplier_block">
+              <label>{{ L("المورد", "Supplier") }}</label>
+              <select name="supplier_id" id="supplier_select" class="contract-select">
+                <option value="">{{ L("اختر المورد", "Select Supplier") }}</option>
+                {% for s in suppliers %}
+                <option value="{{ s.id }}">{{ s.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="field-block hidden" id="hotel_block">
+              <label>{{ L("الفندق", "Hotel") }}</label>
+              <select name="hotel_id" id="hotel_select" class="contract-select">
+                <option value="">{{ L("اختر الفندق", "Select Hotel") }}</option>
+                {% for h in hotels %}
+                <option value="{{ h.id }}">{{ h.name }}</option>
+                {% endfor %}
+              </select>
+            </div>
+
+            <div class="date-grid">
+              <div class="field-block">
+                <label>{{ L("تاريخ البداية", "Start Date") }}</label>
+                <input name="start_date" type="date" class="contract-input">
+              </div>
+
+              <div class="field-block">
+                <label>{{ L("تاريخ النهاية", "End Date") }}</label>
+                <input name="end_date" type="date" class="contract-input">
+              </div>
+            </div>
+
+            <div class="field-block">
+              <label>{{ L("القيمة التعاقدية", "Contract Value") }}</label>
+              <input name="contract_value" type="number" step="0.01" placeholder="{{ L("القيمة التعاقدية (اختياري)", "Contract Value (Optional)") }}" class="contract-input">
+            </div>
+
+            <div class="field-block">
+              <label>{{ L("ملف العقد", "Contract File") }}</label>
+              <input name="file" type="file" class="contract-input">
+            </div>
+
+            <div class="field-block">
+              <label>{{ L("ملاحظات", "Notes") }}</label>
+              <textarea name="notes" placeholder="{{ L("ملاحظات", "Notes") }}" class="contract-textarea" rows="2"></textarea>
+            </div>
+
+            <button class="save-btn w-full" type="submit">
+              {{ L("حفظ العقد", "Save Contract") }}
+            </button>
+          </form>
+{% endif %}
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+  function togglePartySelect() {
+    const type = document.getElementById('party_type').value;
+    const supplierBlock = document.getElementById('supplier_block');
+    const hotelBlock = document.getElementById('hotel_block');
+
+    if (!supplierBlock || !hotelBlock) return;
+
+    supplierBlock.classList.toggle('hidden', type !== 'supplier');
+    hotelBlock.classList.toggle('hidden', type !== 'hotel');
+  }
+
+  document.addEventListener('DOMContentLoaded', togglePartySelect);
+</script>
+
+{% endblock %}
