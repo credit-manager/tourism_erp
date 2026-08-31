@@ -12,6 +12,8 @@ env/
 # Environment files
 .env
 .env.*
+.session_secret
+*.secret
 
 # Databases
 *.db
