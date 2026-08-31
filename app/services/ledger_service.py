@@ -131,8 +131,8 @@ class LedgerService:
                 JournalLine(
                     entry_id=entry.id,
                     account_id=account_id,
-                    debit=d,
-                    credit=c,
+                    debit=debit,
+                    credit=credit,
                 )
             )
 
